@@ -13,6 +13,11 @@ import ForgotPassword from "./pages/auth/Forgotpassword";
 
 // Dashboard pages
 import DashboardAdmin from "./pages/dashboard/admin/Dasboard";
+import Users from "./pages/dashboard/admin/Users"
+import UserDetail from "./pages/dashboard/admin/Users[id]";
+import Submissions from "./pages/dashboard/admin/Submissions";
+import SubmissionDetail from "./pages/dashboard/admin/Submissions[id]";
+
 import DashboardUser from "./pages/dashboard/user/Dashboard";
 
 // Home
@@ -72,6 +77,38 @@ function App() {
           element={
             <ProtectedRoute>
               <DashboardAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/admin/users"
+          element={
+            <ProtectedRoute>
+              <Users />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/admin/users/:id"
+          element={
+            <ProtectedRoute>
+              <UserDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/admin/submissions"
+          element={
+            <ProtectedRoute>
+              <Submissions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/admin/submissions/:id"
+          element={
+            <ProtectedRoute>
+              <SubmissionDetail />
             </ProtectedRoute>
           }
         />

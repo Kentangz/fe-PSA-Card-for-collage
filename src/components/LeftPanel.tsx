@@ -6,7 +6,7 @@ const LeftPanel: React.FC = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: "url('src/assets/Background.svg')"
+          backgroundImage: `url(/Background.svg)`
         }}
       ></div>
     </div>
