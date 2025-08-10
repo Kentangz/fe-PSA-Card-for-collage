@@ -19,6 +19,9 @@ import Submissions from "./pages/dashboard/admin/Submissions";
 import SubmissionDetail from "./pages/dashboard/admin/Submissions[id]";
 
 import DashboardUser from "./pages/dashboard/user/Dashboard";
+import UserSubmissions from "./pages/dashboard/user/Submissions";
+import UserTracking from "./pages/dashboard/user/Tracking";
+import UserTrackingDetail from "./pages/dashboard/user/Tracking[id]";
 
 // Home
 import Home from "./pages/home/Home";
@@ -117,6 +120,30 @@ function App() {
           element={
             <ProtectedRoute>
               <DashboardUser />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/user/submissions"
+          element={
+            <ProtectedRoute>
+              <UserSubmissions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/user/tracking"
+          element={
+            <ProtectedRoute>
+              <UserTracking />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/user/tracking/:id"
+          element={
+            <ProtectedRoute>
+              <UserTrackingDetail />
             </ProtectedRoute>
           }
         />

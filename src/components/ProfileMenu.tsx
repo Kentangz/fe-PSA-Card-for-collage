@@ -17,7 +17,8 @@ export default function ProfileMenu({ currentUser }: { currentUser?: UserType })
   const handleLogout = async () => {
     try {
       await axiosInstance.post('/logout');
-    } catch {
+    } catch (error){
+      console.error(error);
       // console.log('Logout API call failed');
     } finally {
       Cookies.remove('token');

@@ -106,8 +106,8 @@ export default function UserDetail() {
           }
         }
         
-      } catch {
-        // Silently handle errors
+      } catch (error) {
+        console.error(error);
       }
     };
 

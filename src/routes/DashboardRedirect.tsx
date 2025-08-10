@@ -12,11 +12,11 @@ const DashboardRedirect = () => {
     } else if (role === "user") {
       navigate("/dashboard/user");
     } else {
-      navigate("/signin"); // kalau gak ada role/token
+      navigate("/signin");
     }
   }, [navigate]);
 
-  return null; // gak perlu tampilan, langsung redirect
+  return null;
 };
 
 export default DashboardRedirect;

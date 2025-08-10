@@ -90,7 +90,8 @@ export default function Users() {
 
         const response = await axiosInstance.get<UserType>("/user");
         setCurrentUser(response.data);
-      } catch {
+      } catch (error){
+        console.error(error);
         Cookies.remove("token");
         Cookies.remove("role");
         navigate("/signin", { replace: true });
@@ -123,8 +124,8 @@ export default function Users() {
           setUsers({ data: [] });
         }
         
-      } catch {
-        // Handle error appropriately
+      } catch (error){
+        console.error(error);
         setUsers({ data: [] });
       }
     };

@@ -59,7 +59,8 @@ export default function DashboardAdmin() {
         const response = await axiosInstance.get<UserType>("/user");
         
         setCurrentUser(response.data);
-      } catch {
+      } catch (error) {
+        console.error(error);
         Cookies.remove("token");
         Cookies.remove("role");
         navigate("/signin", { replace: true });

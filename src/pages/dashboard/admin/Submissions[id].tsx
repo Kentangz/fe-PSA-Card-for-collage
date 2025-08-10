@@ -89,7 +89,8 @@ export default function SubmissionDetail() {
 
         const response = await axiosInstance.get<CurrentUserType>("/user");
         setCurrentUser(response.data);
-      } catch {
+      } catch (error) {
+        console.error(error);
         Cookies.remove("token");
         Cookies.remove("role");
         navigate("/signin", { replace: true });

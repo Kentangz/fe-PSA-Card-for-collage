@@ -23,8 +23,8 @@ export default function UpdateCard({ card }: { card?: CardType }) {
       if (response.status === 200) {
         await handleUpdateSubmission("done");
       }
-    } catch {
-      //
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -40,8 +40,8 @@ export default function UpdateCard({ card }: { card?: CardType }) {
         // Or navigate to specific route:
         // navigate('/dashboard', { replace: true });
       }
-    } catch {
-      // Handle error (show toast, etc.)
+    } catch (error) {
+      console.error(error);
     }
   };
 

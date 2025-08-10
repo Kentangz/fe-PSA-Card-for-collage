@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import axiosInstance from "../lib/axiosInstance";
 
 type UserType = {
   name: string;
@@ -10,6 +11,8 @@ type UserType = {
 };
 
 export default function UserForm({ user, id }: { user: UserType; id: string }) {
+  const navigate = useNavigate();
+
   const handleUpdate = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -24,10 +27,10 @@ export default function UserForm({ user, id }: { user: UserType; id: string }) {
 
     try {
       // setLoading(true);
-      const response = await axios.put(`/api/users/${id}`, userData);
+      const response = await axiosInstance.put(`/users/${id}`, userData);
       
       if (response.status === 200) {
-        // navigate("/dashboard/admin");
+        navigate(-1);
       }
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'response' in error) {
@@ -45,15 +48,15 @@ export default function UserForm({ user, id }: { user: UserType; id: string }) {
     e.preventDefault();
     
     try {
-      const response = await axios.put(`/api/users/toggle/${id}`, { 
-        is_active: !user.is_active 
+      const response = await axiosInstance.put(`/users/toggle/${id}`, { 
+        is_active:user.is_active 
       });
       
       if (response.status === 200) {
         window.location.reload();
       }
-    } catch {
-      // Handle error appropriately
+    } catch (error) {
+      console.error(error);
     }
   };
 
