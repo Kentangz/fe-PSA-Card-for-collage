@@ -30,14 +30,12 @@ export default function UpdateCard({ card }: { card?: CardType }) {
 
   const handleUpdateSubmission = async (status: string) => {
     try {
-      const response = await axiosInstance.post("/status/", { 
+      const response = await axiosInstance.post("/status", { 
         card_id: card?.id, 
         status: status 
       });
       if (response.status === 200) {
-        // Refresh the page or redirect
-        window.location.reload(); // Simple refresh
-        // Or navigate to specific route:
+        window.location.reload(); 
         // navigate('/dashboard', { replace: true });
       }
     } catch (error) {

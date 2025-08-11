@@ -1,43 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BsEye, BsPeopleFill } from "react-icons/bs";
 import { ImHome } from "react-icons/im";
 import { MdAssignment } from "react-icons/md";
 import Sidebar from "../../../components/SideBar";
 import ProfileMenu from "../../../components/ProfileMenu";
+import SubmissionFilter from "../../../components/SubmissionFilter";
 import axiosInstance from "../../../lib/axiosInstance";
 import formatDate from "../../../utils/FormatDate";
+import { filterAndSortSubmissions } from "../../../utils/submissionUtils";
+import type { CardType, CardsResponse, ApiResponse, FilterOptions, UserType } from "../../../types/submission";
 import Cookies from "js-cookie";
 
-// Type definitions
-export interface CardType {
-  id: string | number;
-  name: string;
-  year: string | number;
-  brand: string;
-  serial_number: string;
-  grade_target: string;
-  created_at: string;
-  latest_status: {
-    status: string;
-  };
-}
-
-interface CardsResponse {
-  data: CardType[];
-}
-
-// Alternative response structures
-interface ApiResponse {
-  cards?: CardType[];
-  data?: CardType[] | CardsResponse;
-}
-
-type UserType = {
-  name: string;
-  email: string;
-  role: string;
-};
+// All types are now imported from ../../../types/submission
 
 // Menu configuration
 const menu = [
@@ -113,6 +88,13 @@ export default function Submission() {
   const [currentUser, setCurrentUser] = useState<UserType | undefined>(undefined);
   const [cards, setCards] = useState<CardsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [filters, setFilters] = useState<FilterOptions>({
+    searchTerm: '',
+    statusFilter: '',
+    sortBy: 'created_at',
+    sortOrder: 'desc'
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -142,6 +124,7 @@ export default function Submission() {
   useEffect(() => {
     const fetchCards = async () => {
       try {
+        setLoading(true);
         setError(null);
         
         const response = await axiosInstance.get<ApiResponse | CardType[] | CardsResponse>("/card");
@@ -164,6 +147,8 @@ export default function Submission() {
         
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -171,6 +156,16 @@ export default function Submission() {
       fetchCards();
     }
   }, [currentUser]);
+
+  // Memoized filtered and sorted data
+  const filteredSubmissions = useMemo(() => {
+    if (!cards?.data) return [];
+    return filterAndSortSubmissions(cards.data, filters);
+  }, [cards?.data, filters]);
+
+  const handleFilterChange = (newFilters: FilterOptions) => {
+    setFilters(newFilters);
+  };
 
   if (error) {
     return (
@@ -198,7 +193,7 @@ export default function Submission() {
       <Sidebar menu={menu} />
       <nav className="w-full pl-62 mt-4">
         <div className="h-14 flex justify-between items-center px-2">
-          <p className="text-xl font-medium text-gray-800"></p>
+          <p className="text-xl font-medium text-gray-800">Submissions</p>
           <div className="flex items-center gap-4">
             <ProfileMenu currentUser={currentUser} />
           </div>
@@ -206,7 +201,15 @@ export default function Submission() {
       </nav>
       <div className="flex-grow p-4 ps-64">
         <div>
-          <h4 className="mb-4 text-lg font-medium text-gray-800">All Submissions</h4>
+          <h4 className="mb-6 text-lg font-medium text-gray-800">All Submissions</h4>
+          
+          {/* Filter Component */}
+          <SubmissionFilter
+            onFilterChange={handleFilterChange}
+            totalResults={filteredSubmissions.length}
+            isLoading={loading}
+          />
+          
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
@@ -221,7 +224,7 @@ export default function Submission() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {cards?.data && Array.isArray(cards.data) ? cards.data.map((item: CardType, index: number) => (
+                  {filteredSubmissions.map((item: CardType, index: number) => (
                     <tr key={item.id || index} className="hover:bg-gray-50">
                       <td className="py-3 px-6 whitespace-nowrap text-gray-800">{item.name}</td>
                       <td className="py-3 px-6 whitespace-nowrap text-gray-600">{item.year}</td>
@@ -245,15 +248,23 @@ export default function Submission() {
                         </Link>
                       </td>
                     </tr>
-                  )) : null}
+                  ))}
                 </tbody>
               </table>
             </div>
             
-            {cards?.data?.length === 0 && (
+            {/* Empty State */}
+            {filteredSubmissions.length === 0 && !loading && (
               <div className="py-12 text-center text-gray-500">
                 <MdAssignment className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                <p>No submissions found</p>
+                {filters.searchTerm || filters.statusFilter ? (
+                  <div>
+                    <p className="text-lg font-medium mb-2">No submissions found</p>
+                    <p className="text-sm">Try adjusting your search or filter criteria</p>
+                  </div>
+                ) : (
+                  <p>No submissions found</p>
+                )}
               </div>
             )}
           </div>
