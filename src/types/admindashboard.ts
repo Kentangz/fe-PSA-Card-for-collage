@@ -1,4 +1,4 @@
-// src/types/admindashboard.ts
+import type { ReactNode } from "react";
 
 export interface User {
 	id: number;
@@ -32,6 +32,7 @@ export interface MonthlyData {
 }
 
 export interface StatsCards {
+  rejectedCards: ReactNode;
 	totalSubmissions: number;
 	submittedCards: number;
 	acceptedCards: number;

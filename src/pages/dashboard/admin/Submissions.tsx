@@ -12,8 +12,6 @@ import { filterAndSortSubmissions } from "../../../utils/submissionUtils";
 import type { CardType, CardsResponse, ApiResponse, FilterOptions, UserType } from "../../../types/submission";
 import Cookies from "js-cookie";
 
-// All types are now imported from ../../../types/submission
-
 // Menu configuration
 const menu = [
   {
@@ -65,22 +63,40 @@ const fields = [
   },
 ];
 
-// Status styling function
 const getStatusStyle = (status: string) => {
-  switch (status.toLowerCase()) {
-    case 'pending':
+  const normalizedStatus = status.toLowerCase().trim();
+  
+  switch (normalizedStatus) {
+    case 'submitted':
+      return 'bg-orange-100 text-orange-800';
+    case 'accepted':
       return 'bg-yellow-100 text-yellow-800';
-    case 'in_process':
-    case 'processing':
-      return 'bg-blue-100 text-blue-800';
-    case 'completed':
-    case 'done':
-      return 'bg-green-100 text-green-800';
     case 'rejected':
-    case 'failed':
       return 'bg-red-100 text-red-800';
-    default:
+    case 'on process':
+    case 'processing':
+    case 'in_process':
+      return 'bg-blue-100 text-blue-800';
+    case 'done':
+    case 'completed':
+      return 'bg-green-100 text-green-800';
+    case 'pending':
       return 'bg-gray-100 text-gray-800';
+    default:
+      // Handle variations in status names
+      if (normalizedStatus.includes('submit')) {
+        return 'bg-orange-100 text-orange-800';
+      } else if (normalizedStatus.includes('accept')) {
+        return 'bg-yellow-100 text-yellow-800';
+      } else if (normalizedStatus.includes('reject')) {
+        return 'bg-red-100 text-red-800';
+      } else if (normalizedStatus.includes('process')) {
+        return 'bg-blue-100 text-blue-800';
+      } else if (normalizedStatus.includes('done') || normalizedStatus.includes('complete')) {
+        return 'bg-green-100 text-green-800';
+      } else {
+        return 'bg-gray-100 text-gray-800';
+      }
   }
 };
 

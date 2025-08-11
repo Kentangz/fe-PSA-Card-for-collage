@@ -2,11 +2,14 @@ import { useState, useEffect } from "react";
 import Sidebar from "../../../components/SideBar";
 import ProfileMenu from "../../../components/ProfileMenu";
 import UserNotification from "../../../components/UserNotifications";
+import UserDashboardStats from "../../../components/UserDashboardStats";
 import axiosInstance from "../../../lib/axiosInstance";
 import { ImHome } from "react-icons/im";
 import { MdAssignmentAdd, MdTrackChanges } from "react-icons/md";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
+import formatDate from "../../../utils/FormatDate";
+import type { CardType } from "../../../components/UserDashboardStats";
 
 const menu = [
   {
@@ -64,29 +67,27 @@ type UserType = {
   is_active: boolean;
 };
 
-export type CardType = {
-  id: string;
-  user_id: number;
-  name: string;
-  year: number;
-  brand: string;
-  serial_number: string;
-  latest_status: { 
-    id: number;
-    card_id: string;
-    status: string;
-    created_at: string;
-    updated_at: string;
-  };
-  grade_target: string;
-  grade: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
 type CardsResponse = CardType[];
 
-import formatDate from "../../../utils/FormatDate";
+// Helper function to get status styling
+const getStatusStyling = (status: string) => {
+  const normalizedStatus = status?.toLowerCase().trim() || '';
+  
+  switch (normalizedStatus) {
+    case 'submitted':
+      return 'bg-orange-100 text-orange-800';
+    case 'accepted':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'rejected':
+      return 'bg-red-100 text-red-800';
+    case 'on process':
+      return 'bg-blue-100 text-blue-800';
+    case 'done':
+      return 'bg-green-100 text-green-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
 
 export default function DashboardUser() {
   const [currentUser, setCurrentUser] = useState<UserType | undefined>(undefined);
@@ -136,31 +137,6 @@ export default function DashboardUser() {
     initializeDashboard();
   }, [navigate]);
 
-  // Calculate statistics from cards data
-  const getCardStatistics = () => {
-    if (!cards) return { submitted: 0, accepted: 0, inProcess: 0, done: 0 };
-    
-    const stats = cards.reduce((acc, card) => {
-      const status = card.latest_status?.status?.toLowerCase() || '';
-      
-      acc.submitted += 1;
-      
-      if (status === 'accepted') {
-        acc.accepted += 1;
-      } else if (status === 'in process' || status === 'processing') {
-        acc.inProcess += 1;
-      } else if (status === 'done' || status === 'completed') {
-        acc.done += 1;
-      }
-      
-      return acc;
-    }, { submitted: 0, accepted: 0, inProcess: 0, done: 0 });
-
-    return stats;
-  };
-
-  const stats = getCardStatistics();
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar menu={menu} />
@@ -176,25 +152,8 @@ export default function DashboardUser() {
       <div className="flex-grow p-4 ps-64">
         {/* Dashboard Content */}
         <div>
-          {/* Submission status summary */}
-          <div className="flex gap-2 flex-wrap mb-8">
-            <div className="bg-white border border-gray-200 w-60 p-4 text-center rounded-lg shadow-sm">
-              <h2 className="text-3xl font-bold mb-2 text-gray-800">{stats.submitted}</h2>
-              <p className="text-sm text-gray-600">cards submitted</p>
-            </div>
-            <div className="bg-blue-50 border border-blue-200 w-60 p-4 text-center rounded-lg shadow-sm">
-              <h2 className="text-3xl font-bold mb-2 text-blue-800">{stats.accepted}</h2>
-              <p className="text-sm text-blue-600">cards accepted</p>
-            </div>
-            <div className="bg-yellow-50 border border-yellow-200 w-60 p-4 text-center rounded-lg shadow-sm">
-              <h2 className="text-3xl font-bold mb-2 text-yellow-800">{stats.inProcess}</h2>
-              <p className="text-sm text-yellow-600">cards in process</p>
-            </div>
-            <div className="bg-green-50 border border-green-200 w-60 p-4 text-center rounded-lg shadow-sm">
-              <h2 className="text-3xl font-bold mb-2 text-green-800">{stats.done}</h2>
-              <p className="text-sm text-green-600">done</p>
-            </div>
-          </div>
+          {/* Submission status summary - Now using the component */}
+          <UserDashboardStats cards={cards} />
 
           {/* Submission history */}
           <h5 className="text-lg mt-8 mb-4 font-medium text-gray-800">Submission History</h5>
@@ -220,17 +179,7 @@ export default function DashboardUser() {
                         <td className="py-3 px-6 whitespace-nowrap text-gray-600">{card.serial_number}</td>
                         <td className="py-3 px-6 whitespace-nowrap text-gray-600">{card.grade_target}</td>
                         <td className="py-3 px-6 whitespace-nowrap">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            card.latest_status?.status?.toLowerCase() === 'accepted' 
-                              ? 'bg-blue-100 text-blue-800'
-                              : card.latest_status?.status?.toLowerCase() === 'done'
-                              ? 'bg-green-100 text-green-800'
-                              : card.latest_status?.status?.toLowerCase() === 'in process'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : card.latest_status?.status?.toLowerCase() === 'submitted'
-                              ? 'bg-gray-100 text-gray-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyling(card.latest_status?.status || '')}`}>
                             {card.latest_status?.status || 'Unknown'}
                           </span>
                         </td>

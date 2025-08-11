@@ -43,10 +43,6 @@ export default function UpdateCard({ card }: { card?: CardType }) {
     }
   };
 
-  const handleReject = async () => {
-    await handleUpdateSubmission("rejected");
-  };
-
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
       {card?.latest_status.status === "submitted" && (
@@ -60,7 +56,7 @@ export default function UpdateCard({ card }: { card?: CardType }) {
               Accept
             </button>
             <button 
-              onClick={handleReject}
+              onClick={() => handleUpdateSubmission("rejected")}
               className="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 border border-red-300 rounded cursor-pointer transition-colors font-medium"
             >
               Reject
@@ -80,7 +76,7 @@ export default function UpdateCard({ card }: { card?: CardType }) {
               Process
             </button>
             <button 
-              onClick={handleReject}
+              onClick={() => handleUpdateSubmission("rejected")}
               className="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 border border-red-300 rounded cursor-pointer transition-colors font-medium"
             >
               Reject

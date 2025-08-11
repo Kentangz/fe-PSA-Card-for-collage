@@ -1,5 +1,3 @@
-// src/types/submission.ts
-
 export interface CardType {
 	id: string | number;
 	name: string;

@@ -3,7 +3,6 @@ import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis, ResponsiveContaine
 import axiosInstance from "../lib/axiosInstance";
 import type { User, Submission, MonthlyData, StatsCards, DashboardStatsProps } from "../types/admindashboard";
 
-// Define types for API responses
 interface SubmissionsApiResponse {
   data?: Submission[];
   cards?: Submission[];
@@ -19,6 +18,7 @@ export default function DashboardStats({ onStatsLoad }: DashboardStatsProps) {
     totalSubmissions: 0,
     submittedCards: 0,
     acceptedCards: 0,
+    rejectedCards: 0,
     onProcessCards: 0,
     doneCards: 0,
     totalUsers: 0,
@@ -71,14 +71,15 @@ export default function DashboardStats({ onStatsLoad }: DashboardStatsProps) {
     return monthlyStats;
   }, []);
 
-  // Process stats cards with new status categories
+  // Process stats cards with new status categories including rejected
   const processStatsCards = useCallback((submissions: Submission[], users: User[]): StatsCards => {
     const now = new Date();
     const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     
-    // Count submissions by the 4 specific status phases
+    // Count submissions by the 5 specific status phases
     let submitted = 0;
     let accepted = 0;
+    let rejected = 0;
     let onProcess = 0;
     let done = 0;
 
@@ -90,6 +91,9 @@ export default function DashboardStats({ onStatsLoad }: DashboardStatsProps) {
           break;
         case 'accepted':
           accepted++;
+          break;
+        case 'rejected':
+          rejected++;
           break;
         case 'on process':
           onProcess++;
@@ -103,6 +107,8 @@ export default function DashboardStats({ onStatsLoad }: DashboardStatsProps) {
             submitted++;
           } else if (status.includes('accept')) {
             accepted++;
+          } else if (status.includes('reject')) {
+            rejected++;
           } else if (status.includes('process') || status.includes('processing')) {
             onProcess++;
           } else if (status.includes('done') || status.includes('complete') || status.includes('finish')) {
@@ -123,6 +129,7 @@ export default function DashboardStats({ onStatsLoad }: DashboardStatsProps) {
       totalSubmissions: submissions.length,
       submittedCards: submitted,
       acceptedCards: accepted,
+      rejectedCards: rejected,
       onProcessCards: onProcess,
       doneCards: done,
       totalUsers,
@@ -195,7 +202,7 @@ export default function DashboardStats({ onStatsLoad }: DashboardStatsProps) {
       <div className="space-y-6">
         {/* Loading skeleton for stats cards */}
         <div className="flex gap-2 flex-wrap">
-          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div key={i} className="bg-gray-200 animate-pulse w-60 h-24 rounded-lg"></div>
           ))}
         </div>
@@ -222,7 +229,7 @@ export default function DashboardStats({ onStatsLoad }: DashboardStatsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards - Updated to show 4 status phases + total + users */}
+      {/* Stats Cards - Updated to show 5 status phases + total + users */}
       <div className="flex gap-2 flex-wrap">
         <div className="bg-white border border-gray-200 w-60 p-4 text-center rounded-lg shadow-sm">
           <h2 className="text-3xl font-bold mb-2 text-gray-800">{statsCards.totalSubmissions}</h2>
@@ -237,6 +244,11 @@ export default function DashboardStats({ onStatsLoad }: DashboardStatsProps) {
         <div className="bg-yellow-50 border border-yellow-200 w-60 p-4 text-center rounded-lg shadow-sm">
           <h2 className="text-3xl font-bold mb-2 text-yellow-800">{statsCards.acceptedCards}</h2>
           <p className="text-sm text-yellow-600">accepted</p>
+        </div>
+        
+        <div className="bg-red-50 border border-red-200 w-60 p-4 text-center rounded-lg shadow-sm">
+          <h2 className="text-3xl font-bold mb-2 text-red-800">{statsCards.rejectedCards}</h2>
+          <p className="text-sm text-red-600">rejected</p>
         </div>
         
         <div className="bg-blue-50 border border-blue-200 w-60 p-4 text-center rounded-lg shadow-sm">
