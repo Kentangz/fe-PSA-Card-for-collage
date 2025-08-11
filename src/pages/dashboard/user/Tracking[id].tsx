@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../../../components/SideBar";
 import ProfileMenu from "../../../components/ProfileMenu";
-import UserNotification from "../../../components/UserNotifications";
+// import UserNotification from "../../../components/UserNotifications";
 import axiosInstance from "../../../lib/axiosInstance";
 import formatDate from "../../../utils/FormatDate";
 import { ImHome } from "react-icons/im";
@@ -159,7 +159,7 @@ export default function UserTrackingDetail() {
             <p className="text-xl font-medium text-gray-800">Card Details</p>
           </div>
           <div className="flex items-center gap-4">
-            <UserNotification />
+            {/* <UserNotification /> */}
             <ProfileMenu currentUser={currentUser} />
           </div>
         </div>

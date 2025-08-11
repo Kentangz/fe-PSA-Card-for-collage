@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../../../components/SideBar";
 import ProfileMenu from "../../../components/ProfileMenu";
-import UserNotification from "../../../components/UserNotifications";
+// import UserNotification from "../../../components/UserNotifications";
 import axiosInstance from "../../../lib/axiosInstance";
 import formatDate from "../../../utils/FormatDate";
 import { Link } from "react-router-dom";
@@ -182,7 +182,7 @@ export default function UserTracking() {
         <div className="h-14 flex justify-between items-center px-2">
           <p className="text-xl font-medium text-gray-800">Track Submission</p>
           <div className="flex items-center gap-4">
-            <UserNotification />
+            {/* <UserNotification /> */}
             <ProfileMenu currentUser={currentUser} />
           </div>
         </div>

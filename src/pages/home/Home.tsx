@@ -1,8 +1,18 @@
+import AboutSection from '../../components/landing-page/AboutSection';
+import HeroSection from '../../components/landing-page/HeroSection';
+import Navbar from '../../components/landing-page/Navbar';
+import Product from '../../components/landing-page/Product';
+import Testimonials from '../../components/landing-page/Testimonials';
+
 export default function Home() {
   return (
-    <div style={{ padding: "2rem" }}>
-      <h1>HOME</h1>
-      <p>HOME</p>
+    
+    <div>
+      <Navbar />
+      <HeroSection />
+      <AboutSection />
+      <Product />
+      <Testimonials/>
     </div>
   );
 }

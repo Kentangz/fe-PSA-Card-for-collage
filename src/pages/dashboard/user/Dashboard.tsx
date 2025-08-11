@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../../../components/SideBar";
 import ProfileMenu from "../../../components/ProfileMenu";
-import UserNotification from "../../../components/UserNotifications";
+// import UserNotification from "../../../components/UserNotifications";
 import UserDashboardStats from "../../../components/UserDashboardStats";
 import axiosInstance from "../../../lib/axiosInstance";
 import { ImHome } from "react-icons/im";
@@ -144,7 +144,7 @@ export default function DashboardUser() {
         <div className="h-14 flex justify-between items-center px-2">
           <p className="text-xl font-medium text-gray-800">Dashboard</p>
           <div className="flex items-center gap-4">
-            <UserNotification />
+            {/* <UserNotification /> */}
             <ProfileMenu currentUser={currentUser} />
           </div>
         </div>
