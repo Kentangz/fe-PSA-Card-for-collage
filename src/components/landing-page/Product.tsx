@@ -8,19 +8,19 @@ const Product: React.FC = () => {
     {
       id: 1,
       title: "The Fallen - Matte Art...",
-      image: "/api/placeholder/300/400", // Replace with actual image path
+      image: "/api/placeholder/300/400",
       category: "Dragon Shield"
     },
     {
       id: 2,
       title: "Ruby - Matte Dual Sle...",
-      image: "/api/placeholder/300/400", // Replace with actual image path
+      image: "/api/placeholder/300/400",
       category: "Dragon Shield"
     },
     {
       id: 3,
       title: "Rick & Morty - Cool Ri...",
-      image: "/api/placeholder/300/400", // Replace with actual image path
+      image: "/api/placeholder/300/400",
       category: "Rick & Morty"
     }
   ];
@@ -31,8 +31,8 @@ const Product: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-16">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
-            <span className="text-blue-600 font-medium text-sm uppercase tracking-wide">
+            <div className="w-2 h-2 bg-purple-800 rounded-full mr-3"></div>
+            <span className="text-purple-800 font-medium text-sm uppercase tracking-wide">
               Explore PSA's Services
             </span>
           </div>
