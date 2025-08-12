@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { useSearchParams, useNavigate, Link, useParams } from "react-router-dom";
 import axios from "axios";
 import FieldInput from "../../components/FieldInput";
 import LeftPanel from "../../components/LeftPanel";
@@ -10,8 +10,9 @@ interface ValidationErrors {
 }
 
 const ResetPassword: React.FC = () => {
+  const { token } = useParams(); // build
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  // const token = searchParams.get("token"); // development
   const emailParam = searchParams.get("email");
 
   const [error, setError] = useState<ValidationErrors>({});
