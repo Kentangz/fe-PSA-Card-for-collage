@@ -160,44 +160,66 @@ export default function UserSubmissions() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar menu={menu} />
-      <nav className="w-full pl-62 mt-4">
+      
+      {/* Navigation Bar - Responsive */}
+      <nav className="w-full lg:pl-64 pl-4 mt-4">
         <div className="h-14 flex justify-between items-center px-2">
-          <p className="text-xl font-medium text-gray-800">Create Submission</p>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center">
+            <div className="w-10 lg:w-0"></div>
+            <p className="text-lg lg:text-xl font-medium text-gray-800 truncate">
+              <span className="hidden sm:inline">Create Submission</span>
+              <span className="sm:hidden">Create Submission</span>
+            </p>
+          </div>
+          
+          {/* Right side menu - responsive */}
+          <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
             {/* <UserNotification /> */}
             <ProfileMenu currentUser={currentUser} />
           </div>
         </div>
       </nav>
-      <div className="flex-grow p-4 ps-64">
-        {/* Submissions Content */}
-        <div>
-          <div className="flex justify-between items-center mb-6">
+      
+      {/* Main Content */}
+      <div className="lg:pl-64 pl-4 pr-4 pb-4">
+        <div className="mt-4 space-y-4 sm:space-y-6">
+          {/* Action Button */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
             <button
               onClick={addSubmission}
               disabled={isSubmitting}
-              className="bg-white hover:bg-gray-50 border border-gray-300 px-4 py-2 rounded-lg text-gray-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto bg-white hover:bg-gray-50 border border-gray-300 px-4 py-2.5 rounded-lg text-gray-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             >
-              Add More Submission
+              <span className="sm:hidden">+ Add Submission</span>
+              <span className="hidden sm:inline">Add More Submission</span>
             </button>
+            
+            {/* Submission counter - mobile only */}
+            <div className="sm:hidden text-sm text-gray-600">
+              {submissions.length} submission{submissions.length !== 1 ? 's' : ''}
+            </div>
           </div>
 
+          {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4">
               <p className="text-red-800 text-sm font-medium">
-                Error: Please make sure all fields are filled and at least one image is uploaded for each submission.
+                <span className="hidden sm:inline">Error: Please make sure all fields are filled and at least one image is uploaded for each submission.</span>
+                <span className="sm:hidden">Please fill all fields and upload at least one image for each submission.</span>
               </p>
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Submissions Grid - Responsive */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
             {submissions.map((data, index) => (
               <div key={index} className="relative">
+                {/* Remove button - responsive positioning */}
                 {submissions.length > 1 && (
                   <button
                     onClick={() => removeSubmission(index)}
                     disabled={isSubmitting}
-                    className="absolute top-4 right-4 z-10 bg-red-100 hover:bg-red-200 text-red-600 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="absolute top-3 sm:top-4 right-3 sm:right-4 z-10 bg-red-100 hover:bg-red-200 text-red-600 rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     ×
                   </button>
@@ -212,23 +234,34 @@ export default function UserSubmissions() {
             ))}
           </div>
 
-          <div className="flex justify-between items-center">
+          {/* Action Buttons - Responsive */}
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-4 pt-2 sm:pt-4">
             <button
               onClick={() => navigate("/dashboard/user")}
               disabled={isSubmitting}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="order-2 sm:order-1 px-4 sm:px-6 py-2.5 sm:py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmitAll}
               disabled={isSubmitting || submissions.length === 0}
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="order-1 sm:order-2 px-6 sm:px-8 py-2.5 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base font-medium"
             >
               {isSubmitting && (
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
               )}
-              {isSubmitting ? "Submitting..." : "Submit All"}
+              {isSubmitting ? (
+                <>
+                  <span className="hidden sm:inline">Submitting...</span>
+                  <span className="sm:hidden">Submitting...</span>
+                </>
+              ) : (
+                <>
+                  <span className="hidden sm:inline">Submit All ({submissions.length})</span>
+                  <span className="sm:hidden">Submit All</span>
+                </>
+              )}
             </button>
           </div>
         </div>

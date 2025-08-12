@@ -178,83 +178,150 @@ export default function UserTracking() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar menu={menu} />
-      <nav className="w-full pl-62 mt-4">
+      
+      {/* Navigation Bar - Responsive */}
+      <nav className="w-full lg:pl-64 pl-4 mt-4">
         <div className="h-14 flex justify-between items-center px-2">
-          <p className="text-xl font-medium text-gray-800">Track Submission</p>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center">
+            <div className="w-10 lg:w-0"></div>
+            <p className="text-lg lg:text-xl font-medium text-gray-800 truncate">
+              <span className="hidden sm:inline">Track Submission</span>
+              <span className="sm:hidden">Track Submission</span>
+            </p>
+          </div>
+          
+          {/* Right side menu - responsive */}
+          <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
             {/* <UserNotification /> */}
             <ProfileMenu currentUser={currentUser} />
           </div>
         </div>
       </nav>
-      <div className="flex-grow p-4 ps-64">
-        {/* Tracking Content */}
-        <div>
-          
+      
+      {/* Main Content */}
+      <div className="lg:pl-64 pl-4 pr-4 pb-4">
+        <div className="mt-4 space-y-4 sm:space-y-6">
           {cards && cards.length > 0 ? (
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      {fields.map(field => (
-                        <th key={field.name} className="py-3 px-6 font-medium text-gray-700">
-                          {field.label}
-                        </th>
-                      ))}
-                      <th className="py-3 px-6 font-medium text-gray-700 text-center">Detail</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {cards.map((card: CardType, index: number) => (
-                      <tr key={card.id || index} className="hover:bg-gray-50">
-                        <td className="py-3 px-6 whitespace-nowrap text-gray-800 font-medium">
-                          {card.name}
-                        </td>
-                        <td className="py-3 px-6 whitespace-nowrap text-gray-600">
-                          {card.serial_number}
-                        </td>
-                        <td className="py-3 px-6 whitespace-nowrap">
-                          {card.grade ? (
-                            <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                              {card.grade}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-6 whitespace-nowrap">
-                          {getStatusBadge(card.latest_status?.status || 'Unknown')}
-                        </td>
-                        <td className="py-3 px-6 whitespace-nowrap text-gray-600">
-                          {formatDate(new Date(card.created_at))}
-                        </td>
-                        <td className="py-3 px-6 whitespace-nowrap text-center">
-                          <Link
-                            to={`/dashboard/user/tracking/${card.id}`}
-                            className="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
-                            title="View Details"
-                          >
-                            <BsEye className="w-4 h-4" />
-                          </Link>
-                        </td>
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden lg:block bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        {fields.map(field => (
+                          <th key={field.name} className="py-3 px-6 font-medium text-gray-700">
+                            {field.label}
+                          </th>
+                        ))}
+                        <th className="py-3 px-6 font-medium text-gray-700 text-center">Detail</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
-              <div className="text-center">
-                <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                  <MdTrackChanges className="w-8 h-8 text-gray-400" />
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {cards.map((card: CardType, index: number) => (
+                        <tr key={card.id || index} className="hover:bg-gray-50">
+                          <td className="py-3 px-6 whitespace-nowrap text-gray-800 font-medium">
+                            {card.name}
+                          </td>
+                          <td className="py-3 px-6 whitespace-nowrap text-gray-600">
+                            {card.serial_number}
+                          </td>
+                          <td className="py-3 px-6 whitespace-nowrap">
+                            {card.grade ? (
+                              <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                                {card.grade}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-6 whitespace-nowrap">
+                            {getStatusBadge(card.latest_status?.status || 'Unknown')}
+                          </td>
+                          <td className="py-3 px-6 whitespace-nowrap text-gray-600">
+                            {formatDate(new Date(card.created_at))}
+                          </td>
+                          <td className="py-3 px-6 whitespace-nowrap text-center">
+                            <Link
+                              to={`/dashboard/user/tracking/${card.id}`}
+                              className="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
+                              title="View Details"
+                            >
+                              <BsEye className="w-4 h-4" />
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <p className="text-gray-600 mb-2">No submissions to track</p>
-                <p className="text-sm text-gray-500 mb-4">You haven't submitted any cards yet</p>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="lg:hidden space-y-3 sm:space-y-4">
+                {cards.map((card: CardType, index: number) => (
+                  <div key={card.id || index} className="bg-white border border-gray-200 rounded-lg shadow-sm p-3 sm:p-4">
+                    {/* Header */}
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-grow min-w-0">
+                        <h3 className="font-medium text-gray-800 text-sm sm:text-base truncate">
+                          {card.name}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                          {card.serial_number}
+                        </p>
+                      </div>
+                      <div className="flex-shrink-0 ml-3">
+                        {getStatusBadge(card.latest_status?.status || 'Unknown')}
+                      </div>
+                    </div>
+
+                    {/* Details */}
+                    <div className="space-y-2 text-xs sm:text-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Verified Grade</span>
+                        {card.grade ? (
+                          <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                            {card.grade}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Submitted</span>
+                        <span className="text-gray-800">
+                          {formatDate(new Date(card.created_at))}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <Link
+                        to={`/dashboard/user/tracking/${card.id}`}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2 text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium"
+                      >
+                        <BsEye className="w-4 h-4" />
+                        View Details
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            /* Empty State */
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 sm:p-8">
+              <div className="text-center max-w-md mx-auto">
+                <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                  <MdTrackChanges className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
+                </div>
+                <p className="text-gray-600 mb-1 sm:mb-2 text-sm sm:text-base">No submissions to track</p>
+                <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">You haven't submitted any cards yet</p>
                 <button
                   onClick={() => navigate("/dashboard/user/submissions")}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base font-medium"
                 >
                   Create First Submission
                 </button>

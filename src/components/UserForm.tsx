@@ -61,9 +61,9 @@ export default function UserForm({ user, id }: { user: UserType; id: string }) {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-lg shadow-md max-w-full">
       <form onSubmit={handleUpdate}>
-        <div className="flex flex-col gap-4 w-80">
+        <div className="flex flex-col gap-4 w-full max-w-sm sm:max-w-md lg:max-w-lg mx-auto">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
             <input
@@ -71,7 +71,7 @@ export default function UserForm({ user, id }: { user: UserType; id: string }) {
               name="name"
               defaultValue={user.name}
               required
-              className="w-full px-3 py-2 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+              className="w-full px-3 py-2 lg:px-4 lg:py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm sm:text-base"
             />
           </div>
           
@@ -82,7 +82,7 @@ export default function UserForm({ user, id }: { user: UserType; id: string }) {
               name="email"
               defaultValue={user.email}
               required
-              className="w-full px-3 py-2 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+              className="w-full px-3 py-2 lg:px-4 lg:py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm sm:text-base"
             />
           </div>
           
@@ -93,7 +93,7 @@ export default function UserForm({ user, id }: { user: UserType; id: string }) {
               name="phone_number"
               defaultValue={user.phone_number}
               required
-              className="w-full px-3 py-2 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+              className="w-full px-3 py-2 lg:px-4 lg:py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm sm:text-base"
             />
           </div>
           
@@ -101,7 +101,7 @@ export default function UserForm({ user, id }: { user: UserType; id: string }) {
             <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
             <select 
               name="role" 
-              className="w-full px-3 py-2 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors" 
+              className="w-full px-3 py-2 lg:px-4 lg:py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm sm:text-base" 
               defaultValue={user.role}
             >
               <option value="user">User</option>
@@ -111,23 +111,28 @@ export default function UserForm({ user, id }: { user: UserType; id: string }) {
           
           <button 
             type="submit" 
-            className="bg-blue-600 h-10 hover:bg-blue-700 active:bg-blue-800 rounded-lg cursor-pointer text-white font-medium transition-colors"
+            className="bg-blue-600 h-10 lg:h-12 hover:bg-blue-700 active:bg-blue-800 rounded-lg cursor-pointer text-white font-medium transition-colors text-sm sm:text-base w-full"
           >
             Save Changes
           </button>
         </div>
         
-        <div className="mt-6">
+        <div className="mt-6 lg:mt-8 w-full max-w-sm sm:max-w-md lg:max-w-lg mx-auto">
           <button
             type="button"
             onClick={handleToggleAccount}
-            className={`h-10 rounded-lg cursor-pointer text-white font-medium w-80 transition-colors ${
+            className={`h-10 lg:h-12 rounded-lg cursor-pointer text-white font-medium w-full transition-colors text-sm sm:text-base ${
               user.is_active 
                 ? "bg-red-600 hover:bg-red-700 active:bg-red-800" 
                 : "bg-green-600 hover:bg-green-700 active:bg-green-800"
             }`}
           >
-            {user.is_active ? "Deactivate" : "Activate"} Account
+            <span className="hidden sm:inline">
+              {user.is_active ? "Deactivate" : "Activate"} Account
+            </span>
+            <span className="sm:hidden">
+              {user.is_active ? "Deactivate" : "Activate"}
+            </span>
           </button>
         </div>
       </form>

@@ -65,23 +65,32 @@ export default function DashboardAdmin() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar menu={menu} />
-      <nav className="w-full pl-62 mt-4">
+      
+      {/* Navigation Bar */}
+      <nav className="w-full lg:pl-64 pl-4 mt-4">
         <div className="h-14 flex justify-between items-center px-2">
-          <p className="text-xl font-medium text-gray-800">Admin Dashboard</p>
-          <div className="flex items-center gap-4">
-            {/* User Submissions Notifications */}
+          <div className="flex items-center">
+            <div className="w-10 lg:w-0"></div>
+            <p className="text-lg lg:text-xl font-medium text-gray-800 truncate">
+              <span className="hidden sm:inline">Dashboard Overview</span>
+              <span className="sm:hidden">Dashboard Overview</span>
+            </p>
+          </div>
+          
+          {/* Right side menu - responsive */}
+          <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
             <UserNotifications />
             <ProfileMenu currentUser={currentUser} />
           </div>
         </div>
       </nav>
-      <div className="flex-grow p-4 ps-64">
-        {/* Dashboard Content */}
-        <div>
-          <h4 className="mb-6 text-lg font-medium text-gray-800">Dashboard Overview</h4>
-         
-          {/* Dashboard Stats Component */}
-          <DashboardStats />
+      
+      {/* Main Content */}
+      <div className="lg:pl-64 pl-4 pr-4 pb-4">
+        <div className="mt-4">
+          <div className="w-full">
+            <DashboardStats />
+          </div>
         </div>
       </div>
     </div>

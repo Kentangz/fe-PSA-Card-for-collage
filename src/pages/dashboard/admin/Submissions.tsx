@@ -36,30 +36,37 @@ const fields = [
   {
     label: "Name",
     name: "name",
+    shortLabel: "Name"
   },
   {
     label: "Year",
-    name: "year"
+    name: "year",
+    shortLabel: "Year"
   },
   {
     label: "Brand",
-    name: "brand"
+    name: "brand",
+    shortLabel: "Brand"
   },
   {
     label: "Serial Number",
-    name: "serial_number"
+    name: "serial_number",
+    shortLabel: "Serial"
   },
   {
     label: "Grade Target",
-    name: "grade_target"
+    name: "grade_target",
+    shortLabel: "Grade"
   },
   {
     label: "Status",
-    name: "status"
+    name: "status",
+    shortLabel: "Status"
   },
   {
     label: "Submitted at",
     name: "submitted_at",
+    shortLabel: "Date"
   },
 ];
 
@@ -173,7 +180,7 @@ export default function Submission() {
     }
   }, [currentUser]);
 
-  // Memoized filtered and sorted data
+  // filtered and sorted data
   const filteredSubmissions = useMemo(() => {
     if (!cards?.data) return [];
     return filterAndSortSubmissions(cards.data, filters);
@@ -187,17 +194,32 @@ export default function Submission() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Sidebar menu={menu} />
-        <nav className="w-full pl-62 mt-4">
+        {/* Navigation Bar */}
+        <nav className="w-full lg:pl-64 pl-4 mt-4">
           <div className="h-14 flex justify-between items-center px-2">
-            <p className="text-xl font-medium text-gray-800">Submissions</p>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center">
+              <div className="w-10 lg:w-0"></div>
+              <p className="text-lg lg:text-xl font-medium text-gray-800 truncate">
+                <span className="hidden sm:inline">Submissions</span>
+                <span className="sm:hidden">Submissions</span>
+              </p>
+            </div>
+            <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
               <ProfileMenu currentUser={currentUser} />
             </div>
           </div>
         </nav>
-        <div className="flex-grow p-4 ps-64">
-          <div className="flex justify-center items-center h-64">
-            <div className="text-red-500">Error: {error}</div>
+        
+        {/* Main Content */}
+        <div className="lg:pl-64 pl-4 pr-4 pb-4">
+          <div className="mt-4 flex justify-center items-center h-64">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="text-red-500 text-center">
+                <MdAssignment className="h-12 w-12 mx-auto mb-4 text-red-300" />
+                <p className="text-lg font-medium mb-2">Error Loading Submissions</p>
+                <p className="text-sm text-gray-600">{error}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -207,45 +229,141 @@ export default function Submission() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar menu={menu} />
-      <nav className="w-full pl-62 mt-4">
+      
+      {/* Navigation Bar */}
+      <nav className="w-full lg:pl-64 pl-4 mt-4">
         <div className="h-14 flex justify-between items-center px-2">
-          <p className="text-xl font-medium text-gray-800">Submissions</p>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center">
+            <div className="w-10 lg:w-0"></div>
+            <p className="text-lg lg:text-xl font-medium text-gray-800 truncate">
+              <span className="hidden sm:inline">Submissions</span>
+              <span className="sm:hidden">Submissions</span>
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
             <ProfileMenu currentUser={currentUser} />
           </div>
         </div>
       </nav>
-      <div className="flex-grow p-4 ps-64">
-        <div>
-          <h4 className="mb-6 text-lg font-medium text-gray-800">All Submissions</h4>
+      
+      {/* Main Content */}
+      <div className="lg:pl-64 pl-4 pr-4 pb-4">
+        <div className="mt-4">
+          <h4 className="mb-4 lg:mb-6 text-base lg:text-lg font-medium text-gray-800">
+            All Submissions
+          </h4>
           
-          {/* Filter Component */}
-          <SubmissionFilter
-            onFilterChange={handleFilterChange}
-            totalResults={filteredSubmissions.length}
-            isLoading={loading}
-          />
+          <div className="mb-4 lg:mb-6">
+            <SubmissionFilter
+              onFilterChange={handleFilterChange}
+              totalResults={filteredSubmissions.length}
+              isLoading={loading}
+            />
+          </div>
           
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
+            {/* Mobile Card View */}
+            <div className="block lg:hidden">
+              {loading ? (
+                <div className="py-12 text-center text-gray-500">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-sm">Loading submissions...</p>
+                </div>
+              ) : filteredSubmissions.length === 0 ? (
+                <div className="py-12 text-center text-gray-500">
+                  <MdAssignment className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  {filters.searchTerm || filters.statusFilter ? (
+                    <div className="px-4">
+                      <p className="text-lg font-medium mb-2">No submissions found</p>
+                      <p className="text-sm">Try adjusting your search or filter criteria</p>
+                    </div>
+                  ) : (
+                    <p className="text-base px-4">No submissions found</p>
+                  )}
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-200">
+                  {filteredSubmissions.map((item: CardType, index: number) => (
+                    <div key={item.id || index} className="p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-medium text-gray-900 truncate" title={item.name}>
+                            {item.name}
+                          </h3>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {item.brand} • {item.year}
+                          </p>
+                        </div>
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ml-2 flex-shrink-0 ${getStatusStyle(item.latest_status.status)}`}>
+                          {item.latest_status.status}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-gray-600 mb-3">
+                        <div>
+                          <span className="font-medium">Serial:</span> {item.serial_number}
+                        </div>
+                        <div>
+                          <span className="font-medium">Grade:</span> {item.grade_target}
+                        </div>
+                        <div className="col-span-2">
+                          <span className="font-medium">Submitted:</span> {formatDate(new Date(item.created_at))}
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-end">
+                        <Link 
+                          to={`/dashboard/admin/submissions/${item.id}`}
+                          className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                        >
+                          <BsEye className="mr-1 h-3 w-3" />
+                          View Details
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full text-sm text-left min-w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     {fields.map(field => (
-                      <th className="py-3 px-6 font-medium text-gray-700" key={field.name}>
+                      <th 
+                        className="py-3 px-6 font-medium text-gray-700 whitespace-nowrap" 
+                        key={field.name}
+                      >
                         {field.label}
                       </th>
                     ))}
-                    <th className="py-3 px-6 font-medium text-gray-700">Detail</th>
+                    <th className="py-3 px-6 font-medium text-gray-700 whitespace-nowrap">
+                      Detail
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {filteredSubmissions.map((item: CardType, index: number) => (
                     <tr key={item.id || index} className="hover:bg-gray-50">
-                      <td className="py-3 px-6 whitespace-nowrap text-gray-800">{item.name}</td>
+                      <td className="py-3 px-6 text-gray-800">
+                        <div className="truncate max-w-[200px]" title={item.name}>
+                          {item.name}
+                        </div>
+                      </td>
                       <td className="py-3 px-6 whitespace-nowrap text-gray-600">{item.year}</td>
-                      <td className="py-3 px-6 whitespace-nowrap text-gray-600">{item.brand}</td>
-                      <td className="py-3 px-6 whitespace-nowrap text-gray-600">{item.serial_number}</td>
+                      <td className="py-3 px-6 text-gray-600">
+                        <div className="truncate max-w-[120px]" title={item.brand}>
+                          {item.brand}
+                        </div>
+                      </td>
+                      <td className="py-3 px-6 text-gray-600">
+                        <div className="truncate max-w-[150px]" title={item.serial_number}>
+                          {item.serial_number}
+                        </div>
+                      </td>
                       <td className="py-3 px-6 whitespace-nowrap text-gray-600">{item.grade_target}</td>
                       <td className="py-3 px-6 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusStyle(item.latest_status.status)}`}>
@@ -258,7 +376,7 @@ export default function Submission() {
                       <td className="py-3 px-6 whitespace-nowrap">
                         <Link 
                           to={`/dashboard/admin/submissions/${item.id}`}
-                          className="text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                          className="text-blue-600 hover:text-blue-800 transition-colors duration-200 inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-blue-50"
                         >
                           <BsEye className="text-lg" />
                         </Link>
@@ -269,20 +387,29 @@ export default function Submission() {
               </table>
             </div>
             
-            {/* Empty State */}
-            {filteredSubmissions.length === 0 && !loading && (
-              <div className="py-12 text-center text-gray-500">
-                <MdAssignment className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                {filters.searchTerm || filters.statusFilter ? (
-                  <div>
-                    <p className="text-lg font-medium mb-2">No submissions found</p>
-                    <p className="text-sm">Try adjusting your search or filter criteria</p>
-                  </div>
-                ) : (
-                  <p>No submissions found</p>
-                )}
-              </div>
-            )}
+            {/* Desktop Loading and Empty States */}
+            <div className="hidden lg:block">
+              {loading && (
+                <div className="py-12 text-center text-gray-500">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-base">Loading submissions...</p>
+                </div>
+              )}
+              
+              {filteredSubmissions.length === 0 && !loading && (
+                <div className="py-12 text-center text-gray-500">
+                  <MdAssignment className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  {filters.searchTerm || filters.statusFilter ? (
+                    <div className="px-4">
+                      <p className="text-lg font-medium mb-2">No submissions found</p>
+                      <p className="text-sm">Try adjusting your search or filter criteria</p>
+                    </div>
+                  ) : (
+                    <p className="text-base px-4">No submissions found</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

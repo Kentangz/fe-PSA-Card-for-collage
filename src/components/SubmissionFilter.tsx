@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BsSearch, BsX, BsFilter } from "react-icons/bs";
+import { BsSearch, BsX, BsFilter, BsChevronDown, BsChevronUp } from "react-icons/bs";
 import type { FilterOptions } from "../types/submission";
 
 interface SubmissionFilterProps {
@@ -60,21 +60,22 @@ export default function SubmissionFilter({
   const hasActiveFilters = searchTerm || statusFilter || sortBy !== 'created_at' || sortOrder !== 'desc';
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-sm mb-6">
-      {/* Main Search Bar */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-          {/* Search Input */}
-          <div className="relative flex-1 max-w-md">
+    <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+      {/* Main Filter Bar */}
+      <div className="p-3 sm:p-4">
+        {/* Mobile Layout */}
+        <div className="block lg:hidden space-y-3">
+          {/* Search Input - Mobile */}
+          <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <BsSearch className="h-4 w-4 text-gray-400" />
             </div>
             <input
               type="text"
-              placeholder="Search by name, serial number..."
+              placeholder="Search submissions..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             />
             {searchTerm && (
               <button
@@ -86,17 +87,76 @@ export default function SubmissionFilter({
             )}
           </div>
 
-          {/* Filter Toggle and Results Count */}
-          <div className="flex items-center gap-4">
+          {/* Mobile Controls Row */}
+          <div className="flex items-center justify-between gap-3">
+            {/* Results Count - Mobile */}
+            <div className="flex-1">
+              {!isLoading && (
+                <span className="text-xs sm:text-sm text-gray-500">
+                  {totalResults} result{totalResults !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+            
+            {/* Filter Button - Mobile */}
+            <button
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            >
+              <BsFilter className="h-4 w-4 mr-1.5" />
+              <span className="hidden sm:inline">Filters</span>
+              {showAdvancedFilters ? (
+                <BsChevronUp className="h-3 w-3 ml-1.5" />
+              ) : (
+                <BsChevronDown className="h-3 w-3 ml-1.5" />
+              )}
+              {hasActiveFilters && (
+                <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <span className="hidden sm:inline">Active</span>
+                  <span className="sm:hidden">•</span>
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Desktop Layout */}
+        <div className="hidden lg:flex lg:items-center lg:justify-between lg:gap-6">
+          {/* Search Input - Desktop */}
+          <div className="relative flex-1 max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <BsSearch className="h-4 w-4 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search by name, serial number..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="block w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                <BsX className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+              </button>
+            )}
+          </div>
+
+          {/* Desktop Controls */}
+          <div className="flex items-center gap-4 flex-shrink-0">
+            {/* Results Count - Desktop */}
             {!isLoading && (
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-500 whitespace-nowrap">
                 {totalResults} result{totalResults !== 1 ? 's' : ''} found
               </span>
             )}
             
+            {/* Filter Toggle - Desktop */}
             <button
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
             >
               <BsFilter className="h-4 w-4 mr-2" />
               Filters
@@ -110,83 +170,144 @@ export default function SubmissionFilter({
         </div>
       </div>
 
-      {/* Advanced Filters */}
+      {/* Advanced Filters Panel */}
       {showAdvancedFilters && (
-        <div className="p-4 bg-gray-50 border-t border-gray-200">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Status Filter */}
-            <div>
-              <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                id="status-filter"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              >
-                {statusOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+        <div className="border-t border-gray-200 bg-gray-50">
+          <div className="p-3 sm:p-4">
+            {/* Mobile Filter Layout */}
+            <div className="block lg:hidden space-y-4">
+              {/* Status Filter - Mobile */}
+              <div>
+                <label htmlFor="status-filter-mobile" className="block text-sm font-medium text-gray-700 mb-2">
+                  Filter by Status
+                </label>
+                <select
+                  id="status-filter-mobile"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                >
+                  {statusOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Sort Controls - Mobile */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="sort-by-mobile" className="block text-sm font-medium text-gray-700 mb-2">
+                    Sort By
+                  </label>
+                  <select
+                    id="sort-by-mobile"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  >
+                    {sortOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="sort-order-mobile" className="block text-sm font-medium text-gray-700 mb-2">
+                    Order
+                  </label>
+                  <select
+                    id="sort-order-mobile"
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+                    className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  >
+                    <option value="desc">Newest First</option>
+                    <option value="asc">Oldest First</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
-            {/* Sort By */}
-            <div>
-              <label htmlFor="sort-by" className="block text-sm font-medium text-gray-700 mb-1">
-                Sort By
-              </label>
-              <select
-                id="sort-by"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              >
-                {sortOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+            {/* Desktop Filter Layout */}
+            <div className="hidden lg:grid lg:grid-cols-3 lg:gap-6">
+              {/* Status Filter - Desktop */}
+              <div>
+                <label htmlFor="status-filter-desktop" className="block text-sm font-medium text-gray-700 mb-2">
+                  Status
+                </label>
+                <select
+                  id="status-filter-desktop"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                >
+                  {statusOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Sort By - Desktop */}
+              <div>
+                <label htmlFor="sort-by-desktop" className="block text-sm font-medium text-gray-700 mb-2">
+                  Sort By
+                </label>
+                <select
+                  id="sort-by-desktop"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                >
+                  {sortOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Sort Order - Desktop */}
+              <div>
+                <label htmlFor="sort-order-desktop" className="block text-sm font-medium text-gray-700 mb-2">
+                  Sort Order
+                </label>
+                <select
+                  id="sort-order-desktop"
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+                  className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                >
+                  <option value="desc">Newest First</option>
+                  <option value="asc">Oldest First</option>
+                </select>
+              </div>
             </div>
 
-            {/* Sort Order */}
-            <div>
-              <label htmlFor="sort-order" className="block text-sm font-medium text-gray-700 mb-1">
-                Sort Order
-              </label>
-              <select
-                id="sort-order"
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              >
-                <option value="desc">Newest First</option>
-                <option value="asc">Oldest First</option>
-              </select>
-            </div>
+            {/* Clear Filters Button */}
+            {hasActiveFilters && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <button
+                  onClick={handleClearFilters}
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                >
+                  <BsX className="h-4 w-4 mr-1.5" />
+                  Clear All Filters
+                </button>
+              </div>
+            )}
           </div>
-
-          {/* Clear Filters Button */}
-          {hasActiveFilters && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <button
-                onClick={handleClearFilters}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <BsX className="h-4 w-4 mr-1" />
-                Clear All Filters
-              </button>
-            </div>
-          )}
         </div>
       )}
 
       {/* Loading Indicator */}
       {isLoading && (
-        <div className="p-4 text-center">
+        <div className="border-t border-gray-200 p-4 text-center">
           <div className="inline-flex items-center text-sm text-gray-500">
             <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

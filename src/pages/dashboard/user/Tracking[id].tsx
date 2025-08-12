@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import Sidebar from "../../../components/SideBar";
 import ProfileMenu from "../../../components/ProfileMenu";
 // import UserNotification from "../../../components/UserNotifications";
@@ -7,6 +7,7 @@ import axiosInstance from "../../../lib/axiosInstance";
 import formatDate from "../../../utils/FormatDate";
 import { ImHome } from "react-icons/im";
 import { MdAssignmentAdd, MdTrackChanges } from "react-icons/md";
+import { BsArrowLeft, BsImage } from "react-icons/bs";
 import Cookies from "js-cookie";
 import { BE_URL } from "../../../lib/api";
 
@@ -72,6 +73,7 @@ export default function UserTrackingDetail() {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<UserType | undefined>(undefined);
   const [card, setCard] = useState<CardDetailType | undefined>(undefined);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     const initializeTrackingDetail = async () => {
@@ -89,7 +91,6 @@ export default function UserTrackingDetail() {
           return;
         }
 
-        // Get current user
         const userResponse = await axiosInstance.get<UserType>("/user");
         
         if (!userResponse.data.is_active) {
@@ -106,14 +107,12 @@ export default function UserTrackingDetail() {
 
         setCurrentUser(userResponse.data);
 
-        // Get card detail - fixed: access .data property from response
         const cardResponse = await axiosInstance.get<CardDetailType>(`/user-cards/${id}`);
         // console.log(cardResponse.data)
         setCard(cardResponse.data);
         
       } catch (error) {
         console.error(error);
-        // If card not found or access denied, redirect to tracking page
         navigate("/dashboard/user/tracking", { replace: true });
       }
     };
@@ -127,24 +126,28 @@ export default function UserTrackingDetail() {
     
     switch (statusLower) {
       case 'submitted':
-        badgeClass += isCurrentStatus ? "bg-gray-200 text-gray-800" : "bg-gray-100 text-gray-600";
+        badgeClass += isCurrentStatus ? "bg-orange-100 text-orange-800 border-orange-200" : "bg-orange-50 text-orange-600";
         break;
       case 'accepted':
-        badgeClass += isCurrentStatus ? "bg-blue-200 text-blue-800" : "bg-blue-100 text-blue-600";
+        badgeClass += isCurrentStatus ? "bg-yellow-100 text-yellow-800 border-yellow-200" : "bg-yellow-50 text-yellow-600";
         break;
       case 'in process':
       case 'processing':
-        badgeClass += isCurrentStatus ? "bg-yellow-200 text-yellow-800" : "bg-yellow-100 text-yellow-600";
+        badgeClass += isCurrentStatus ? "bg-blue-100 text-blue-800 border-blue-200" : "bg-blue-50 text-blue-600";
         break;
       case 'done':
       case 'completed':
-        badgeClass += isCurrentStatus ? "bg-green-200 text-green-800" : "bg-green-100 text-green-600";
+        badgeClass += isCurrentStatus ? "bg-green-100 text-green-800 border-green-200" : "bg-green-50 text-green-600";
         break;
       case 'rejected':
-        badgeClass += isCurrentStatus ? "bg-red-200 text-red-800" : "bg-red-100 text-red-600";
+        badgeClass += isCurrentStatus ? "bg-red-100 text-red-800 border-red-200" : "bg-red-50 text-red-600";
         break;
       default:
-        badgeClass += isCurrentStatus ? "bg-gray-200 text-gray-800" : "bg-gray-100 text-gray-600";
+        badgeClass += isCurrentStatus ? "bg-gray-100 text-gray-800 border-gray-200" : "bg-gray-50 text-gray-600";
+    }
+    
+    if (isCurrentStatus) {
+      badgeClass += " border";
     }
     
     return badgeClass;
@@ -153,144 +156,290 @@ export default function UserTrackingDetail() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar menu={menu} />
-      <nav className="w-full pl-62 mt-4">
+      
+      {/* Navigation Bar */}
+      <nav className="w-full lg:pl-64 pl-4 mt-4">
         <div className="h-14 flex justify-between items-center px-2">
-          <div className="flex items-center gap-4">
-            <p className="text-xl font-medium text-gray-800">Card Details</p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 lg:w-0"></div>
+            <Link 
+              to="/dashboard/user/tracking"
+              className="lg:hidden text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <BsArrowLeft className="h-5 w-5" />
+            </Link>
+            <p className="text-lg lg:text-xl font-medium text-gray-800 truncate">
+              <span className="hidden lg:inline">Card Details</span>
+              <span className="lg:hidden">Details</span>
+            </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
             {/* <UserNotification /> */}
             <ProfileMenu currentUser={currentUser} />
           </div>
         </div>
       </nav>
-      <div className="flex-grow p-4 ps-64">
-        {/* Card Detail Content */}
-        <div className="flex flex-col lg:flex-row gap-8 mb-8">
-          {/* Card Information */}
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 lg:w-96 flex-shrink-0">
-            <div className="flex items-start gap-2 mb-4">
-              <h3 className="text-2xl font-semibold text-gray-800">{card?.name}</h3>
-              <span className="text-sm text-gray-500 mt-1">({card?.year})</span>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex">
-                <span className="w-32 text-sm font-medium text-gray-600">Brand</span>
-                <span className="text-sm text-gray-800">: {card?.brand}</span>
-              </div>
-              <div className="flex">
-                <span className="w-32 text-sm font-medium text-gray-600">Serial Number</span>
-                <span className="text-sm text-gray-800">: {card?.serial_number}</span>
-              </div>
-              <div className="flex">
-                <span className="w-32 text-sm font-medium text-gray-600">Verified Grade</span>
-                <span className="text-sm">
-                  : {card?.grade ? (
-                    <span className="ml-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                      {card.grade}
-                    </span>
-                  ) : (
-                    <span className="text-gray-400 ml-1">-</span>
-                  )}
-                </span>
-              </div>
-              <div className="flex">
-                <span className="w-32 text-sm font-medium text-gray-600">Target Grade</span>
-                <span className="text-sm text-gray-800">: {card?.grade_target}</span>
-              </div>
-              <div className="flex">
-                <span className="w-32 text-sm font-medium text-gray-600">Submitted At</span>
-                <span className="text-sm text-gray-800">: {card?.created_at && formatDate(new Date(card.created_at))}</span>
-              </div>
-              <div className="flex">
-                <span className="w-32 text-sm font-medium text-gray-600">Status</span>
-                <span className="text-sm">
-                  : {card?.latest_status && (
-                    <span className={`ml-1 ${getStatusBadge(card.latest_status.status, true)}`}>
+
+      {/* Main Content */}
+      <div className="lg:pl-64 pl-4 pr-4 pb-4">
+        <div className="mt-4">
+          {/* Breadcrumb - Desktop Only */}
+          <div className="hidden lg:flex mb-4 text-sm text-gray-500">
+            <Link to="/dashboard/user/tracking" className="hover:text-gray-700 transition-colors">
+              Track Submission
+            </Link>
+            <span className="mx-2">/</span>
+            <span className="text-gray-900">Details</span>
+          </div>
+
+          {card ? (
+            <div className="space-y-6">
+              {/* Mobile Card Info */}
+              <div className="block lg:hidden">
+                <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h1 className="text-xl font-semibold text-gray-900">{card.name}</h1>
+                      <p className="text-sm text-gray-600">{card.brand} • {card.year}</p>
+                    </div>
+                    <span className={getStatusBadge(card.latest_status.status, true)}>
                       {card.latest_status.status}
                     </span>
-                  )}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Status Timeline */}
-          <div className="flex-grow">
-            <h4 className="text-lg font-medium text-gray-800 mb-4">Status History</h4>
-            <div className="relative">
-              {card?.statuses?.map((status: StatusType, index: number) => (
-                <div
-                  key={status.id}
-                  className="flex items-start pb-6 last:pb-0 relative"
-                >
-                  {/* Timeline line */}
-                  {index < (card.statuses?.length || 0) - 1 && (
-                    <div className="absolute left-4 top-8 w-0.5 h-full bg-gray-200"></div>
-                  )}
-                  
-                  {/* Timeline dot */}
-                  <div className="w-8 h-8 bg-white border-2 border-gray-300 rounded-full flex items-center justify-center flex-shrink-0 z-10">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                   </div>
                   
-                  {/* Status content */}
-                  <div className="ml-4 flex-grow">
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className={getStatusBadge(status.status)}>
-                        {status.status}
+                  <div className="grid grid-cols-1 gap-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Serial Number:</span>
+                      <span className="text-gray-900 font-medium">{card.serial_number}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Target Grade:</span>
+                      <span className="text-gray-900 font-medium">{card.grade_target}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Verified Grade:</span>
+                      <span className="text-gray-900 font-medium">
+                        {card.grade ? (
+                          <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                            {card.grade}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
                       </span>
                     </div>
-                    {status.status.toLowerCase() === "done" && card.grade && (
-                      <div className="mb-1">
-                        <p className="text-sm text-green-600 mb-2">
-                          Card is verified (grade: {card.grade})
-                        </p>
-                        <a
-                          href="https://theospro.com"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          Proceed to Payment
-                          <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                        </a>
-                      </div>
-                    )}
-                    <p className="text-sm text-gray-500">
-                      {formatDate(new Date(status.created_at))}
-                    </p>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Submitted:</span>
+                      <span className="text-gray-900 font-medium">{formatDate(new Date(card.created_at))}</span>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
+              </div>
 
-        {/* Card Images */}
-        <div>
-          <h4 className="text-lg font-medium text-gray-800 mb-4">Card Pictures</h4>
-          {card?.images && card.images.length > 0 ? (
-            <div className="flex gap-4 overflow-x-auto pb-4">
-              {card.images.map((image: ImageType, index: number) => (
-                <div
-                  key={image.id}
-                  className="bg-gray-100 border border-gray-200 rounded-lg overflow-hidden flex-shrink-0 w-80 h-80"
-                >
-                  <img
-                    src={`${BE_URL}/storage/${image.path}`}
-                    alt={`Card image ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
+              {/* Desktop Layout */}
+              <div className="hidden lg:flex lg:gap-8">
+                {/* Card Information */}
+                <div className="w-96 bg-white border border-gray-200 rounded-lg shadow-sm p-6 flex-shrink-0">
+                  <div className="flex items-start gap-2 mb-4">
+                    <h3 className="text-2xl font-semibold text-gray-800">{card?.name}</h3>
+                    <span className="text-sm text-gray-500 mt-1">({card?.year})</span>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex">
+                      <span className="w-32 text-sm font-medium text-gray-600">Brand</span>
+                      <span className="text-sm text-gray-800">: {card?.brand}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="w-32 text-sm font-medium text-gray-600">Serial Number</span>
+                      <span className="text-sm text-gray-800">: {card?.serial_number}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="w-32 text-sm font-medium text-gray-600">Verified Grade</span>
+                      <span className="text-sm">
+                        : {card?.grade ? (
+                          <span className="ml-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                            {card.grade}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 ml-1">-</span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex">
+                      <span className="w-32 text-sm font-medium text-gray-600">Target Grade</span>
+                      <span className="text-sm text-gray-800">: {card?.grade_target}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="w-32 text-sm font-medium text-gray-600">Submitted At</span>
+                      <span className="text-sm text-gray-800">: {card?.created_at && formatDate(new Date(card.created_at))}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="w-32 text-sm font-medium text-gray-600">Status</span>
+                      <span className="text-sm">
+                        : {card?.latest_status && (
+                          <span className={`ml-1 ${getStatusBadge(card.latest_status.status, true)}`}>
+                            {card.latest_status.status}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              ))}
+
+                {/* Status Timeline */}
+                <div className="flex-grow">
+                  <h4 className="text-lg font-medium text-gray-800 mb-4">Status History</h4>
+                  <div className="relative">
+                    {card?.statuses?.map((status: StatusType, index: number) => (
+                      <div
+                        key={status.id}
+                        className="flex items-start pb-6 last:pb-0 relative"
+                      >
+                        {/* Timeline line */}
+                        {index < (card.statuses?.length || 0) - 1 && (
+                          <div className="absolute left-4 top-8 w-0.5 h-full bg-gray-200"></div>
+                        )}
+                        
+                        {/* Timeline dot */}
+                        <div className="w-8 h-8 bg-white border-2 border-gray-300 rounded-full flex items-center justify-center flex-shrink-0 z-10">
+                          <div className={`w-3 h-3 rounded-full ${index === 0 ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+                        </div>
+                        
+                        {/* Status content */}
+                        <div className="ml-4 flex-grow">
+                          <div className="flex items-center gap-3 mb-1">
+                            <span className={getStatusBadge(status.status)}>
+                              {status.status}
+                            </span>
+                          </div>
+                          {status.status.toLowerCase() === "done" && card.grade && (
+                            <div className="mb-1">
+                              <p className="text-sm text-green-600 mb-2">
+                                Card is verified (grade: {card.grade})
+                              </p>
+                              <a
+                                href="https://theospro.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                              >
+                                Proceed to Payment
+                                <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                              </a>
+                            </div>
+                          )}
+                          <p className="text-sm text-gray-500">
+                            {formatDate(new Date(status.created_at))}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Status Timeline */}
+              <div className="block lg:hidden">
+                <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                  <h4 className="text-lg font-medium text-gray-800 mb-4">Status History</h4>
+                  <div className="space-y-4">
+                    {card?.statuses?.map((status: StatusType, index: number) => (
+                      <div key={status.id} className="flex items-start">
+                        <div className="flex flex-col items-center mr-4">
+                          <div className={`h-3 w-3 rounded-full border-2 ${
+                            index === 0 ? 'bg-blue-500 border-blue-500' : 'bg-gray-300 border-gray-300'
+                          }`}></div>
+                          {index < (card.statuses?.length || 0) - 1 && (
+                            <div className="w-px h-8 bg-gray-300 mt-2"></div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-gray-900 font-medium capitalize">{status.status}</p>
+                          {status.status.toLowerCase() === "done" && card.grade && (
+                            <div className="mt-1">
+                              <p className="text-sm text-green-600 mb-2">
+                                Card is verified (grade: {card.grade})
+                              </p>
+                              <a
+                                href="https://theospro.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                              >
+                                Proceed to Payment
+                                <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                              </a>
+                            </div>
+                          )}
+                          <p className="text-sm text-gray-500 mt-1">
+                            {formatDate(new Date(status.created_at))}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Card Images */}
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 lg:p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <BsImage className="h-5 w-5 text-gray-600" />
+                  <h4 className="text-lg font-medium text-gray-800">Card Pictures</h4>
+                </div>
+                {card?.images && card.images.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {card.images.map((image: ImageType, index: number) => (
+                      <div
+                        key={image.id}
+                        className="aspect-w-16 aspect-h-9 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden"
+                      >
+                        <img
+                          src={`${BE_URL}/storage/${image.path}`}
+                          alt={`Card image ${index + 1}`}
+                          className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200"
+                          onClick={() => setSelectedImage(`${BE_URL}/storage/${image.path}`)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    <BsImage className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                    <p>No images available for this card</p>
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
-            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-              <p className="text-gray-500">No images available for this card</p>
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+              <div className="animate-pulse">
+                <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+              </div>
+            </div>
+          )}
+
+          {/* Image Modal */}
+          {selectedImage && (
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+              onClick={() => setSelectedImage(null)}
+            >
+              <div className="max-w-4xl max-h-full">
+                <img 
+                  src={selectedImage} 
+                  alt="Card full size"
+                  className="max-w-full max-h-full object-contain"
+                />
+              </div>
             </div>
           )}
         </div>

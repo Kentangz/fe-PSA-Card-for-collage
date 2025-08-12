@@ -48,76 +48,107 @@ export default function SubmissionForm({
   };
 
   return (
-    <div className="border border-gray-200 bg-white p-6 rounded-lg shadow-sm">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Card Name</label>
-          <input
-            type="text"
-            placeholder="Enter card name"
-            name="name"
-            required
-            value={data.name}
-            disabled={disabled}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => 
-              updateField("name", e.target.value)
-            }
-            className="w-full px-4 py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
-          />
+    <div className="border border-gray-200 bg-white p-3 sm:p-4 lg:p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+      {/* Form Header - Mobile */}
+      <div className="sm:hidden mb-4 pb-3 border-b border-gray-100">
+        <h3 className="text-sm font-medium text-gray-800">
+          Submission {index + 1}
+        </h3>
+      </div>
+
+      {/* Form Fields - Responsive Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div className="sm:col-span-2 sm:grid sm:grid-cols-2 sm:gap-4 space-y-3 sm:space-y-0">
+          {/* Card Name */}
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+              Card Name
+            </label>
+            <input
+              type="text"
+              placeholder="Enter card name"
+              name="name"
+              required
+              value={data.name}
+              disabled={disabled}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => 
+                updateField("name", e.target.value)
+              }
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed text-sm sm:text-base"
+            />
+          </div>
+          
+          {/* Year */}
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+              Year
+            </label>
+            <input
+              type="number"
+              placeholder="Enter year"
+              name="year"
+              required
+              value={data.year}
+              disabled={disabled}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => 
+                updateField("year", e.target.value)
+              }
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed text-sm sm:text-base"
+            />
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
-          <input
-            type="number"
-            placeholder="Enter year"
-            name="year"
-            required
-            value={data.year}
-            disabled={disabled}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => 
-              updateField("year", e.target.value)
-            }
-            className="w-full px-4 py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
-          />
+        
+        <div className="sm:col-span-2 sm:grid sm:grid-cols-2 sm:gap-4 space-y-3 sm:space-y-0">
+          {/* Brand */}
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+              Brand
+            </label>
+            <input
+              type="text"
+              placeholder="Enter brand"
+              name="brand"
+              required
+              value={data.brand}
+              disabled={disabled}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => 
+                updateField("brand", e.target.value)
+              }
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed text-sm sm:text-base"
+            />
+          </div>
+          
+          {/* Serial Number */}
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+              Serial Number
+            </label>
+            <input
+              type="text"
+              placeholder="Enter serial number"
+              name="serial_number"
+              required
+              value={data.serial_number}
+              disabled={disabled}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => 
+                updateField("serial_number", e.target.value)
+              }
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed text-sm sm:text-base"
+            />
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Brand</label>
-          <input
-            type="text"
-            placeholder="Enter brand"
-            name="brand"
-            required
-            value={data.brand}
-            disabled={disabled}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => 
-              updateField("brand", e.target.value)
-            }
-            className="w-full px-4 py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Serial Number</label>
-          <input
-            type="text"
-            placeholder="Enter serial number"
-            name="serial_number"
-            required
-            value={data.serial_number}
-            disabled={disabled}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => 
-              updateField("serial_number", e.target.value)
-            }
-            className="w-full px-4 py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
-          />
-        </div>
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Grade Target</label>
+        
+        {/* Grade Target */}
+        <div className="sm:col-span-2">
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+            Grade Target
+          </label>
           <select
             name="grade_target"
             value={data.grade_target}
             disabled={disabled}
             onChange={(e) => updateField("grade_target", e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed text-sm sm:text-base"
           >
             <option value="">Select grade target</option>
             <option value="A">A</option>
@@ -127,52 +158,70 @@ export default function SubmissionForm({
         </div>
       </div>
 
+      {/* Images Section */}
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-3">Card Images</label>
+        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">
+          Card Images
+          {data.images?.length > 0 && (
+            <span className="ml-2 text-xs text-gray-500">
+              ({data.images.length} image{data.images.length !== 1 ? 's' : ''})
+            </span>
+          )}
+        </label>
         
+        {/* Image Preview Grid - Responsive */}
         {data.images?.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 mb-3 sm:mb-4">
             {data.images.map((item, i) => (
               <div
                 key={i}
-                className="relative border border-gray-200 rounded-lg overflow-hidden bg-gray-50"
+                className="relative border border-gray-200 rounded-lg overflow-hidden bg-gray-50 aspect-square"
               >
                 <img
                   src={URL.createObjectURL(item)}
                   alt={`Preview ${i + 1}`}
-                  className="w-full h-32 object-cover"
+                  className="w-full h-full object-cover"
                 />
                 {!disabled && (
                   <button
                     onClick={() => removeImage(i)}
-                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-colors"
+                    className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs font-bold transition-colors"
                     type="button"
                   >
                     ×
                   </button>
                 )}
-                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-2">
-                  {item.name}
+                {/* Image name - only on larger screens */}
+                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 sm:p-2 hidden sm:block">
+                  <div className="truncate">
+                    {item.name}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
 
+        {/* Upload Button - Responsive */}
         <label
           htmlFor={`picture-${index}`}
           className={`
-            flex items-center justify-center gap-2 w-full h-12 
+            flex items-center justify-center gap-2 w-full h-10 sm:h-12 
             border-2 border-dashed border-gray-300 rounded-lg
-            text-gray-600 cursor-pointer transition-all
+            text-gray-600 cursor-pointer transition-all text-sm sm:text-base
             ${disabled 
               ? 'bg-gray-50 cursor-not-allowed opacity-50' 
               : 'hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600'
             }
           `}
         >
-          <LuUpload className="w-5 h-5" />
-          {data.images?.length > 0 ? 'Add More Images' : 'Upload Card Images'}
+          <LuUpload className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="hidden sm:inline">
+            {data.images?.length > 0 ? 'Add More Images' : 'Upload Card Images'}
+          </span>
+          <span className="sm:hidden">
+            {data.images?.length > 0 ? 'Add Images' : 'Upload Images'}
+          </span>
         </label>
         <input
           type="file"
@@ -185,9 +234,11 @@ export default function SubmissionForm({
           disabled={disabled}
         />
         
+        {/* Upload Instructions */}
         {data.images?.length === 0 && (
-          <p className="text-xs text-gray-500 mt-2">
-            Please upload at least one image of your card
+          <p className="text-xs text-gray-500 mt-1 sm:mt-2">
+            <span className="hidden sm:inline">Please upload at least one image of your card</span>
+            <span className="sm:hidden">Upload at least one image</span>
           </p>
         )}
       </div>

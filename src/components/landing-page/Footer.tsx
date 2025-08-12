@@ -26,7 +26,7 @@ const Footer = () => {
                   <span className="block">Ready to Authenticate</span>
                   <span className="block">and Grade Your</span>
                 </span>
-                <br className="hidden md:block" />
+                
                 <span 
                   className="inline-block text-white transition-all duration-500 ease-out mt-2 md:mt-4"
                   style={{
@@ -39,15 +39,15 @@ const Footer = () => {
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    transform: 'rotate(1deg)',
+                    transform: 'rotate(3deg)',
                     cursor: 'pointer',
                     fontSize: window.innerWidth < 768 ? '1rem' : 'inherit'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'rotate(-3.03deg)';
+                    e.currentTarget.style.transform = 'rotate(-3deg)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'rotate(1deg)';
+                    e.currentTarget.style.transform = 'rotate(3deg)';
                   }}
                 >
                   Collectibles?

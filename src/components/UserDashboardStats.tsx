@@ -34,7 +34,6 @@ interface UserDashboardStatsProps {
 }
 
 export default function UserDashboardStats({ cards }: UserDashboardStatsProps) {
-  // Calculate statistics from cards data
   const stats: UserStatsCards = useMemo(() => {
     if (!cards || cards.length === 0) {
       return { 
@@ -69,7 +68,7 @@ export default function UserDashboardStats({ cards }: UserDashboardStatsProps) {
           acc.done += 1;
           break;
         default:
-          // Handle variations in status names
+
           if (status.includes('submit')) {
             acc.submitted += 1;
           } else if (status.includes('accept')) {
@@ -98,35 +97,63 @@ export default function UserDashboardStats({ cards }: UserDashboardStatsProps) {
   }, [cards]);
 
   return (
-    <div className="flex gap-2 flex-wrap mb-8">
-      <div className="bg-white border border-gray-200 w-60 p-4 text-center rounded-lg shadow-sm">
-        <h2 className="text-3xl font-bold mb-2 text-gray-800">{stats.totalSubmitted}</h2>
-        <p className="text-sm text-gray-600">total cards submitted</p>
-      </div>
-      
-      <div className="bg-orange-50 border border-orange-200 w-60 p-4 text-center rounded-lg shadow-sm">
-        <h2 className="text-3xl font-bold mb-2 text-orange-800">{stats.submitted}</h2>
-        <p className="text-sm text-orange-600">submitted</p>
-      </div>
-      
-      <div className="bg-yellow-50 border border-yellow-200 w-60 p-4 text-center rounded-lg shadow-sm">
-        <h2 className="text-3xl font-bold mb-2 text-yellow-800">{stats.accepted}</h2>
-        <p className="text-sm text-yellow-600">accepted</p>
-      </div>
-      
-      <div className="bg-red-50 border border-red-200 w-60 p-4 text-center rounded-lg shadow-sm">
-        <h2 className="text-3xl font-bold mb-2 text-red-800">{stats.rejected}</h2>
-        <p className="text-sm text-red-600">rejected</p>
-      </div>
-      
-      <div className="bg-blue-50 border border-blue-200 w-60 p-4 text-center rounded-lg shadow-sm">
-        <h2 className="text-3xl font-bold mb-2 text-blue-800">{stats.inProcess}</h2>
-        <p className="text-sm text-blue-600">on process</p>
-      </div>
-      
-      <div className="bg-green-50 border border-green-200 w-60 p-4 text-center rounded-lg shadow-sm">
-        <h2 className="text-3xl font-bold mb-2 text-green-800">{stats.done}</h2>
-        <p className="text-sm text-green-600">done</p>
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4 mb-4 sm:mb-6 lg:mb-8">
+      {/* Stats Cards - Responsive Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 lg:gap-4">
+        {/* Total Cards Submitted */}
+        <div className="bg-white border border-gray-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-gray-800">
+            {(stats?.totalSubmitted ?? 0).toLocaleString()}
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-600 leading-tight">
+            <span className="hidden sm:inline">Total Cards</span>
+            <br className="sm:hidden" />
+            <span>Submitted</span>
+          </p>
+        </div>
+        
+        {/* Submitted Cards */}
+        <div className="bg-orange-50 border border-orange-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-orange-800">
+            {(stats?.submitted ?? 0).toLocaleString()}
+          </h2>
+          <p className="text-xs sm:text-sm text-orange-700 leading-tight">Submitted</p>
+        </div>
+        
+        {/* Accepted Cards */}
+        <div className="bg-yellow-50 border border-yellow-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-yellow-800">
+            {(stats?.accepted ?? 0).toLocaleString()}
+          </h2>
+          <p className="text-xs sm:text-sm text-yellow-700 leading-tight">Accepted</p>
+        </div>
+        
+        {/* Rejected Cards */}
+        <div className="bg-red-50 border border-red-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-red-800">
+            {(stats?.rejected ?? 0).toLocaleString()}
+          </h2>
+          <p className="text-xs sm:text-sm text-red-700 leading-tight">Rejected</p>
+        </div>
+        
+        {/* On Process Cards */}
+        <div className="bg-blue-50 border border-blue-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-blue-800">
+            {(stats?.inProcess ?? 0).toLocaleString()}
+          </h2>
+          <p className="text-xs sm:text-sm text-blue-700 leading-tight">
+            <span className="hidden sm:inline">On Process</span>
+            <span className="sm:hidden">Processing</span>
+          </p>
+        </div>
+        
+        {/* Done Cards */}
+        <div className="bg-green-50 border border-green-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-green-800">
+            {(stats?.done ?? 0).toLocaleString()}
+          </h2>
+          <p className="text-xs sm:text-sm text-green-700 leading-tight">Done</p>
+        </div>
       </div>
     </div>
   );
