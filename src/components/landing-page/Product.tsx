@@ -190,7 +190,7 @@ const Product: React.FC = () => {
           {/* Loading State */}
           {isLoading && (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
+              {[1, 2, 3].map((i) => (
                 <div key={i} className="animate-pulse">
                   <div className="bg-gray-300 rounded-2xl aspect-[3/4] mb-4"></div>
                 </div>
