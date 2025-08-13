@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { HashLink } from 'react-router-hash-link';
+
 
 const Navbar: React.FC = () => {
+  const navigate = useNavigate();
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
@@ -26,7 +31,6 @@ const Navbar: React.FC = () => {
     <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 lg:h-20">
-          {/* Logo */}
           <div className="flex-shrink-0">
             <img
               src="/Logo.svg"
@@ -38,54 +42,63 @@ const Navbar: React.FC = () => {
           {/* Desktop Navigation Menu */}
           <div className="hidden lg:block">
             <div className="flex items-center space-x-4 xl:space-x-6 2xl:space-x-8">
-              <a
-                href="#"
+
+              <HashLink
+                to="/#"
                 className="text-gray-700 hover:text-purple-800 px-3 py-2 text-sm xl:text-base font-medium transition-colors duration-200 whitespace-nowrap relative group"
               >
                 All Categories
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-800 group-hover:w-full transition-all duration-200"></span>
-              </a>
-              <a
-                href="#about"
+              </HashLink>
+
+              <HashLink
+                to="/#about"
                 className="text-gray-700 hover:text-purple-800 px-3 py-2 text-sm xl:text-base font-medium transition-colors duration-200 whitespace-nowrap relative group"
               >
                 Our PSA Journey
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-800 group-hover:w-full transition-all duration-200"></span>
-              </a>
-              <a
-                href="#testimonials"
+              </HashLink>
+
+              <HashLink
+                to="/#testimonials"
                 className="text-gray-700 hover:text-purple-800 px-3 py-2 text-sm xl:text-base font-medium transition-colors duration-200 whitespace-nowrap relative group"
               >
                 Testimonials
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-800 group-hover:w-full transition-all duration-200"></span>
-              </a>
-              <a
-                href="#faq"
+              </HashLink>
+              
+              <HashLink 
+                to="/#faq"
                 className="text-gray-700 hover:text-purple-800 px-3 py-2 text-sm xl:text-base font-medium transition-colors duration-200 whitespace-nowrap relative group"
               >
                 FAQ
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-800 group-hover:w-full transition-all duration-200"></span>
-              </a>
-              <a
-                href="#footer"
+              </HashLink>
+              
+              <HashLink
+                to="/#footer"
                 className="text-gray-700 hover:text-purple-800 px-3 py-2 text-sm xl:text-base font-medium transition-colors duration-200 whitespace-nowrap relative group"
               >
                 About Us
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-800 group-hover:w-full transition-all duration-200"></span>
-              </a>
+              </HashLink>
             </div>
           </div>
 
           {/* Desktop CTA Button */}
           <div className="hidden lg:block">
-            <button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 xl:px-6 xl:py-3 rounded-full text-sm xl:text-base font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 transform whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
+            <button
+              onClick={() => navigate("/dashboard/user/submissions")}
+              className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 xl:px-6 xl:py-3 rounded-full text-sm xl:text-base font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 transform whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
               Start Submission
             </button>
           </div>
 
           {/* Tablet CTA Button */}
           <div className="hidden md:block lg:hidden">
-            <button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 transform whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
+            <button
+              onClick={() => navigate("/dashboard/user/submissions")}
+              className="bg-[gradient-to-r from-orange-500 to-orange-600] hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 transform whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
               Start Submission
             </button>
           </div>
@@ -113,46 +126,46 @@ const Navbar: React.FC = () => {
       {/* Mobile Menu */}
       <div className={`lg:hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
         <div className="px-4 pt-2 pb-4 space-y-1 sm:px-6 bg-white border-t border-gray-100 shadow-lg">
-          <a
-            href="#categories"
+          <HashLink
+            to="/#"
             onClick={closeMobileMenu}
             className="text-gray-700 hover:text-purple-800 hover:bg-purple-50 block px-4 py-3 text-base font-medium transition-all duration-200 rounded-lg border-l-4 border-transparent hover:border-purple-800"
           >
             All Categories
-          </a>
-          <a
-            href="#about"
+          </HashLink>
+          <HashLink
+            to="/#about"
             onClick={closeMobileMenu}
             className="text-gray-700 hover:text-purple-800 hover:bg-purple-50 block px-4 py-3 text-base font-medium transition-all duration-200 rounded-lg border-l-4 border-transparent hover:border-purple-800"
           >
             Our PSA Journey
-          </a>
-          <a
-            href="#testimonials"
+          </HashLink>
+          <HashLink
+            to="/#testimonials"
             onClick={closeMobileMenu}
             className="text-gray-700 hover:text-purple-800 hover:bg-purple-50 block px-4 py-3 text-base font-medium transition-all duration-200 rounded-lg border-l-4 border-transparent hover:border-purple-800"
           >
             Testimonials
-          </a>
-          <a
-            href="#faq"
+          </HashLink>
+          <HashLink
+            to="/#faq"
             onClick={closeMobileMenu}
             className="text-gray-700 hover:text-purple-800 hover:bg-purple-50 block px-4 py-3 text-base font-medium transition-all duration-200 rounded-lg border-l-4 border-transparent hover:border-purple-800"
           >
             FAQ
-          </a>
-          <a
-            href="#footer"
+          </HashLink>
+          <HashLink
+            to="/#footer"
             onClick={closeMobileMenu}
             className="text-gray-700 hover:text-purple-800 hover:bg-purple-50 block px-4 py-3 text-base font-medium transition-all duration-200 rounded-lg border-l-4 border-transparent hover:border-purple-800"
           >
             About Us
-          </a>
+          </HashLink>
           
           {/* Mobile CTA Button */}
           <div className="px-4 pt-4 md:hidden">
             <button 
-              onClick={closeMobileMenu}
+              onClick={() => navigate("/dashboard/user/submissions")}
               className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-full text-base font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
             >
               Start Submission

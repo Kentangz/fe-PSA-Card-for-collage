@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface HeroSlide {
   id: number;
@@ -12,6 +13,7 @@ interface HeroSlide {
 }
 
 const HeroSection: React.FC = () => {
+  const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const slides: HeroSlide[] = [
@@ -32,6 +34,7 @@ const HeroSection: React.FC = () => {
       subtitle: 'in Grading',
       description: 'From vintage classics to modern hits, PSA helps preserve the legacy of your collection with industry-leading authentication and secure encapsulation.',
       buttonText: 'Grade with Confidence'
+
     },
     {
       id: 3,
@@ -156,7 +159,9 @@ const HeroSection: React.FC = () => {
                   animation: 'fadeIn 1000ms ease-out 600ms forwards'
                 }}
               >
-                <button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 sm:px-8 sm:py-4 lg:px-10 lg:py-5 rounded-full text-base sm:text-lg lg:text-xl font-semibold transition-all duration-300 shadow-2xl hover:shadow-purple-500/25 hover:scale-105 active:scale-95">
+                <button
+                  onClick={() => navigate("/signin")}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 sm:px-8 sm:py-4 lg:px-10 lg:py-5 rounded-full text-base sm:text-lg lg:text-xl font-semibold transition-all duration-300 shadow-2xl hover:shadow-purple-500/25 hover:scale-105 active:scale-95">
                   {currentSlideData.buttonText}
                 </button>
               </div>

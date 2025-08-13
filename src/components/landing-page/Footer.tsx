@@ -1,6 +1,8 @@
 import { ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Footer = () => {
+  const navigate = useNavigate()
   return (
     <footer id='footer' className="bg-gray-900 text-white">
       {/* CTA Section with Background */}
@@ -62,10 +64,14 @@ const Footer = () => {
             
             <div className="flex flex-shrink-0 w-full lg:w-auto justify-center lg:justify-end">
               <div className="flex items-center gap-0">
-                <button className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 sm:px-7 py-2 sm:py-3 rounded-full font-medium transition-colors duration-200 text-sm sm:text-base">
+                <button
+                  onClick={() => navigate("/signin")}
+                  className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 sm:px-7 py-2 rounded-full font-medium transition-colors duration-200 text-sm sm:text-base">
                   <span>Join PSA</span>
                 </button>
-                <button className="flex items-center bg-orange-500 hover:bg-orange-600 text-white px-1 py-1 rounded-full font-medium transition-colors duration-200">
+                <button
+                  onClick={() => navigate("/signin")}
+                  className="flex items-center bg-orange-500 hover:bg-orange-600 text-white px-1 py-1 rounded-full font-medium transition-colors duration-200">
                   <div className="flex items-center bg-orange bg-opacity-100 rounded-full p-2">
                     <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 rotate-315" />
                   </div>
@@ -95,7 +101,9 @@ const Footer = () => {
                 With over 80 million items certified, we help collectors protect and value 
                 their most prized assets.
               </p>
-              <button className="flex items-center gap-2 text-white px-4 sm:px-6 py-2 sm:py-3 bg-[#462895] hover:bg-purple-900 rounded-full font-medium transition-colors duration-200 text-sm">
+              <button
+                onClick={() => navigate("/signin")}
+                className="flex items-center gap-2 text-white px-4 sm:px-6 py-2 sm:py-3 bg-[#462895] hover:bg-purple-900 rounded-full font-medium transition-colors duration-200 text-sm">
                 <span>Get Started</span>
                 <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 transform rotate-315" />
               </button>

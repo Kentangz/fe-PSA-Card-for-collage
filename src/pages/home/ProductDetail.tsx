@@ -42,6 +42,8 @@ const ProductDetail: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+    
     if (id) {
       fetchCardDetail(id);
     }

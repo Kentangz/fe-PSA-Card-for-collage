@@ -320,7 +320,7 @@ export default function UserTracking() {
                 <p className="text-gray-600 mb-1 sm:mb-2 text-sm sm:text-base">No submissions to track</p>
                 <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">You haven't submitted any cards yet</p>
                 <button
-                  onClick={() => navigate("/dashboard/user/submissions")}
+                  
                   className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base font-medium"
                 >
                   Create First Submission
