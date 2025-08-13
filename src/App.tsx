@@ -25,6 +25,7 @@ import UserTrackingDetail from "./pages/dashboard/user/Tracking[id]";
 
 // Home
 import Home from "./pages/home/Home";
+import ProductDetail from "./pages/home/ProductDetail";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Home />} />
+        <Route path="/product/:id" element={<ProductDetail />} />
 
         {/* Auth routes */}
         <Route
