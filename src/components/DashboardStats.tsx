@@ -12,15 +12,50 @@ interface UsersApiResponse {
   data?: User[];
 }
 
+interface NewStatsCards {
+  totalSubmissions: number;
+  initialProcessing: number;
+  japanWarehouse: number;
+  psaGrading: number;
+  returnProcess: number;
+  finalDelivery: number;
+  completed: number;
+  rejected: number;
+  totalUsers: number;
+  newUsersThisMonth: number;
+}
+
+// Timeline phases mapping from AdminTimeline.tsx
+const TIMELINE_PHASES = {
+  initial: ["submit", "received_by_us", "data_input", "delivery_to_jp"],
+  japan_wh: ["received_by_jp_wh", "delivery_to_psa"],
+  psa_grading: [
+    "psa_arrival_of_submission",
+    "psa_order_processed", 
+    "psa_research",
+    "psa_grading",
+    "psa_holder_sealed",
+    "psa_qc",
+    "psa_grading_completed",
+    "psa_completion"
+  ],
+  return_process: ["delivery_to_jp_wh", "waiting_to_delivery_to_id", "delivery_process_to_id"],
+  final_delivery: ["received_by_wh_id", "payment_request", "delivery_to_customer", "received_by_customer"],
+  completion: ["done"],
+  rejected: ["rejected"]
+};
+
 export default function DashboardStats({ onStatsLoad }: DashboardStatsProps) {
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
-  const [statsCards, setStatsCards] = useState<StatsCards>({
+  const [statsCards, setStatsCards] = useState<NewStatsCards>({
     totalSubmissions: 0,
-    submittedCards: 0,
-    acceptedCards: 0,
-    rejectedCards: 0,
-    onProcessCards: 0,
-    doneCards: 0,
+    initialProcessing: 0,
+    japanWarehouse: 0,
+    psaGrading: 0,
+    returnProcess: 0,
+    finalDelivery: 0,
+    completed: 0,
+    rejected: 0,
     totalUsers: 0,
     newUsersThisMonth: 0,
   });
@@ -67,48 +102,70 @@ export default function DashboardStats({ onStatsLoad }: DashboardStatsProps) {
     return monthlyStats;
   }, []);
 
-  // Process stats cards with new status categories including rejected
-  const processStatsCards = useCallback((submissions: Submission[], users: User[]): StatsCards => {
+  // Helper function to normalize status for comparison
+  const normalizeStatus = useCallback((status: string): string => {
+    return status.toLowerCase().trim().replace(/\s+/g, '_');
+  }, []);
+
+  // Helper function to check if status belongs to a phase
+  const isStatusInPhase = useCallback((status: string, phaseStatuses: string[]): boolean => {
+    const normalizedStatus = normalizeStatus(status);
+    return phaseStatuses.some(phaseStatus => {
+      const normalizedPhaseStatus = normalizeStatus(phaseStatus);
+      return normalizedStatus === normalizedPhaseStatus ||
+             normalizedStatus.includes(normalizedPhaseStatus) ||
+             normalizedPhaseStatus.includes(normalizedStatus);
+    });
+  }, [normalizeStatus]);
+
+  // Process stats cards with new phase-based categories
+  const processStatsCards = useCallback((submissions: Submission[], users: User[]): NewStatsCards => {
     const now = new Date();
     const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     
-    let submitted = 0;
-    let accepted = 0;
+    let initialProcessing = 0;
+    let japanWarehouse = 0;
+    let psaGrading = 0;
+    let returnProcess = 0;
+    let finalDelivery = 0;
+    let completed = 0;
     let rejected = 0;
-    let onProcess = 0;
-    let done = 0;
 
     submissions.forEach(submission => {
-      const status = submission.latest_status.status.toLowerCase().trim();
-      switch (status) {
-        case 'submitted':
-          submitted++;
-          break;
-        case 'accepted':
-          accepted++;
-          break;
-        case 'rejected':
+      const status = submission.latest_status.status;
+      
+      // Check each phase
+      if (isStatusInPhase(status, TIMELINE_PHASES.initial)) {
+        initialProcessing++;
+      } else if (isStatusInPhase(status, TIMELINE_PHASES.japan_wh)) {
+        japanWarehouse++;
+      } else if (isStatusInPhase(status, TIMELINE_PHASES.psa_grading)) {
+        psaGrading++;
+      } else if (isStatusInPhase(status, TIMELINE_PHASES.return_process)) {
+        returnProcess++;
+      } else if (isStatusInPhase(status, TIMELINE_PHASES.final_delivery)) {
+        finalDelivery++;
+      } else if (isStatusInPhase(status, TIMELINE_PHASES.completion)) {
+        completed++;
+      } else if (isStatusInPhase(status, TIMELINE_PHASES.rejected)) {
+        rejected++;
+      } else {
+        // Fallback: try to match with common patterns
+        const normalizedStatus = normalizeStatus(status);
+        if (normalizedStatus.includes('submit') || normalizedStatus.includes('received_by_us')) {
+          initialProcessing++;
+        } else if (normalizedStatus.includes('psa')) {
+          psaGrading++;
+        } else if (normalizedStatus.includes('delivery') || normalizedStatus.includes('return')) {
+          returnProcess++;
+        } else if (normalizedStatus.includes('done') || normalizedStatus.includes('complete')) {
+          completed++;
+        } else if (normalizedStatus.includes('reject')) {
           rejected++;
-          break;
-        case 'on process':
-          onProcess++;
-          break;
-        case 'done':
-          done++;
-          break;
-        default:
-          if (status.includes('submit')) {
-            submitted++;
-          } else if (status.includes('accept')) {
-            accepted++;
-          } else if (status.includes('reject')) {
-            rejected++;
-          } else if (status.includes('process') || status.includes('processing')) {
-            onProcess++;
-          } else if (status.includes('done') || status.includes('complete') || status.includes('finish')) {
-            done++;
-          }
-          break;
+        } else {
+          // Default to initial processing for unknown statuses
+          initialProcessing++;
+        }
       }
     });
 
@@ -120,15 +177,17 @@ export default function DashboardStats({ onStatsLoad }: DashboardStatsProps) {
 
     return {
       totalSubmissions: submissions.length,
-      submittedCards: submitted,
-      acceptedCards: accepted,
-      rejectedCards: rejected,
-      onProcessCards: onProcess,
-      doneCards: done,
+      initialProcessing,
+      japanWarehouse,
+      psaGrading,
+      returnProcess,
+      finalDelivery,
+      completed,
+      rejected,
       totalUsers,
       newUsersThisMonth,
     };
-  }, []);
+  }, [isStatusInPhase, normalizeStatus]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -171,7 +230,18 @@ export default function DashboardStats({ onStatsLoad }: DashboardStatsProps) {
         setStatsCards(stats);
 
         if (onStatsLoad) {
-          onStatsLoad(stats);
+          // Convert NewStatsCards to original StatsCards format for compatibility
+          const compatibleStats: StatsCards = {
+            totalSubmissions: stats.totalSubmissions,
+            submittedCards: stats.initialProcessing, // Map initial processing to submitted
+            acceptedCards: 0, // No longer used, set to 0
+            rejectedCards: stats.rejected,
+            onProcessCards: stats.japanWarehouse + stats.psaGrading + stats.returnProcess + stats.finalDelivery, // Sum of all processing phases
+            doneCards: stats.completed,
+            totalUsers: stats.totalUsers,
+            newUsersThisMonth: stats.newUsersThisMonth,
+          };
+          onStatsLoad(compatibleStats);
         }
 
       } catch (err) {
@@ -189,8 +259,8 @@ export default function DashboardStats({ onStatsLoad }: DashboardStatsProps) {
     return (
       <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
         {/* Loading skeleton for stats cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
             <div key={i} className="bg-gray-200 animate-pulse h-16 sm:h-20 lg:h-24 rounded-lg"></div>
           ))}
         </div>
@@ -223,8 +293,8 @@ export default function DashboardStats({ onStatsLoad }: DashboardStatsProps) {
 
   return (
     <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
-      {/* Stats Cards - Responsive Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
+      {/* Stats Cards - Updated with Phase-based Categories */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
         {/* Total Submissions */}
         <div className="bg-white border border-gray-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
           <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-gray-800">
@@ -237,55 +307,88 @@ export default function DashboardStats({ onStatsLoad }: DashboardStatsProps) {
           </p>
         </div>
         
-        {/* Submitted Cards */}
-        <div className="bg-orange-50 border border-orange-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
-          <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-orange-800">
-            {(statsCards?.submittedCards ?? 0).toLocaleString()}
-          </h2>
-          <p className="text-xs sm:text-sm text-orange-700 leading-tight">Submitted</p>
-        </div>
-        
-        {/* Accepted Cards */}
-        <div className="bg-yellow-50 border border-yellow-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
-          <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-yellow-800">
-            {(statsCards?.acceptedCards ?? 0).toLocaleString()}
-          </h2>
-          <p className="text-xs sm:text-sm text-yellow-700 leading-tight">Accepted</p>
-        </div>
-        
-        {/* Rejected Cards */}
-        <div className="bg-red-50 border border-red-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
-          <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-red-800">
-            {(statsCards?.rejectedCards ?? 0).toLocaleString()}
-          </h2>
-          <p className="text-xs sm:text-sm text-red-700 leading-tight">Rejected</p>
-        </div>
-        
-        {/* On Process Cards */}
+        {/* Initial Processing */}
         <div className="bg-blue-50 border border-blue-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
           <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-blue-800">
-            {(statsCards?.onProcessCards ?? 0).toLocaleString()}
+            {(statsCards?.initialProcessing ?? 0).toLocaleString()}
           </h2>
           <p className="text-xs sm:text-sm text-blue-700 leading-tight">
-            <span className="hidden sm:inline">On Process</span>
-            <span className="sm:hidden">Processing</span>
+            <span className="hidden lg:inline">Initial</span>
+            <br className="lg:hidden" />
+            <span>Processing</span>
           </p>
         </div>
         
-        {/* Done Cards */}
+        {/* Japan Warehouse */}
+        <div className="bg-purple-50 border border-purple-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-purple-800">
+            {(statsCards?.japanWarehouse ?? 0).toLocaleString()}
+          </h2>
+          <p className="text-xs sm:text-sm text-purple-700 leading-tight">
+            <span className="hidden lg:inline">Japan</span>
+            <br className="lg:hidden" />
+            <span>Warehouse</span>
+          </p>
+        </div>
+        
+        {/* PSA Grading */}
+        <div className="bg-yellow-50 border border-yellow-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-yellow-800">
+            {(statsCards?.psaGrading ?? 0).toLocaleString()}
+          </h2>
+          <p className="text-xs sm:text-sm text-yellow-700 leading-tight">
+            <span className="hidden lg:inline">PSA</span>
+            <br className="lg:hidden" />
+            <span>Grading</span>
+          </p>
+        </div>
+        
+        {/* Return Process */}
+        <div className="bg-orange-50 border border-orange-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-orange-800">
+            {(statsCards?.returnProcess ?? 0).toLocaleString()}
+          </h2>
+          <p className="text-xs sm:text-sm text-orange-700 leading-tight">
+            <span className="hidden lg:inline">Return</span>
+            <br className="lg:hidden" />
+            <span>Process</span>
+          </p>
+        </div>
+        
+        {/* Final Delivery */}
+        <div className="bg-teal-50 border border-teal-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-teal-800">
+            {(statsCards?.finalDelivery ?? 0).toLocaleString()}
+          </h2>
+          <p className="text-xs sm:text-sm text-teal-700 leading-tight">
+            <span className="hidden lg:inline">Final</span>
+            <br className="lg:hidden" />
+            <span>Delivery</span>
+          </p>
+        </div>
+        
+        {/* Completed */}
         <div className="bg-green-50 border border-green-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
           <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-green-800">
-            {(statsCards?.doneCards ?? 0).toLocaleString()}
+            {(statsCards?.completed ?? 0).toLocaleString()}
           </h2>
-          <p className="text-xs sm:text-sm text-green-700 leading-tight">Done</p>
+          <p className="text-xs sm:text-sm text-green-700 leading-tight">Completed</p>
+        </div>
+        
+        {/* Rejected */}
+        <div className="bg-red-50 border border-red-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-red-800">
+            {(statsCards?.rejected ?? 0).toLocaleString()}
+          </h2>
+          <p className="text-xs sm:text-sm text-red-700 leading-tight">Rejected</p>
         </div>
 
         {/* Total Users */}
-        <div className="bg-purple-50 border border-purple-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
-          <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-purple-800">
+        <div className="bg-indigo-50 border border-indigo-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-indigo-800">
             {(statsCards?.totalUsers ?? 0).toLocaleString()}
           </h2>
-          <p className="text-xs sm:text-sm text-purple-700 leading-tight">
+          <p className="text-xs sm:text-sm text-indigo-700 leading-tight">
             <span className="hidden sm:inline">Total</span>
             <br className="sm:hidden" />
             <span>Users</span>
@@ -293,11 +396,11 @@ export default function DashboardStats({ onStatsLoad }: DashboardStatsProps) {
         </div>
 
         {/* New Users This Month */}
-        <div className="bg-indigo-50 border border-indigo-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
-          <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-indigo-800">
+        <div className="bg-pink-50 border border-pink-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-pink-800">
             {(statsCards?.newUsersThisMonth ?? 0).toLocaleString()}
           </h2>
-          <p className="text-xs sm:text-sm text-indigo-700 leading-tight">
+          <p className="text-xs sm:text-sm text-pink-700 leading-tight">
             <span className="hidden lg:inline">New This Month</span>
             <span className="lg:hidden">New Users</span>
           </p>

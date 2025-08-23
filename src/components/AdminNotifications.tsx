@@ -42,7 +42,7 @@ const UserNotifications: React.FC<UserNotificationsProps> = ({ className }) => {
     try {
       const response = await axiosInstance.get<UserCard[]>('/card');
       // Filter submitted cards
-      const submittedCards = response.data.filter((card: UserCard) => card.latest_status.status === 'submitted');
+      const submittedCards = response.data.filter((card: UserCard) => card.latest_status.status === 'submit');
       setNotifications(submittedCards);
       setUnreadCount(submittedCards.length);
     } catch (error) {
