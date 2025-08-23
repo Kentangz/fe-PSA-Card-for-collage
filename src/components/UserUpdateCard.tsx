@@ -173,8 +173,8 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
 
   const currentStatus = card?.latest_status.status;
 
-  // Show for delivery_to_jp status (existing functionality)
-  if (currentStatus === "delivery_to_jp") {
+  // ADDED: Show for data_input status (NEW functionality)
+  if (currentStatus === "data_input") {
     return (
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-3 sm:p-4 lg:p-6">
         {/* Status Display */}
@@ -182,7 +182,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-gray-600">Current Status:</span>
             <span className="text-sm font-medium text-gray-900 capitalize">
-              Delivery to Japan
+              Data Input
             </span>
           </div>
         </div>
@@ -197,7 +197,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
           </div>
           
           <button 
-            onClick={() => handleUpdateSubmission("received_by_jp_wh")}
+            onClick={() => handleUpdateSubmission("delivery_to_jp")}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors text-sm sm:text-base flex items-center justify-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -277,7 +277,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
     );
   }
 
-  // MODIFIED: Show for received_by_customer status - now goes directly to "done"
+  // Show for received_by_customer status
   if (currentStatus === "received_by_customer") {
     return (
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-3 sm:p-4 lg:p-6">
@@ -397,7 +397,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
               </div>
             )}
 
-            {/* MODIFIED: Complete Submission Button - now goes directly to "done" */}
+            {/* Complete Submission Button */}
             {deliveryProofs.length > 0 && (
               <button 
                 onClick={() => handleUpdateSubmission("done")}
@@ -410,7 +410,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
               </button>
             )}
 
-            {/* MODIFIED: Updated Instructions */}
+            {/* Instructions */}
             <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
               <h5 className="text-xs font-medium text-gray-700 mb-2">📋 Instructions:</h5>
               <ol className="text-xs text-gray-600 space-y-1">

@@ -1,7 +1,6 @@
 import axiosInstance from "../lib/axiosInstance";
 import type { FormEvent } from "react";
 import { useState, useEffect, useCallback } from "react";
-// import { BE_URL } from "../lib/api";
 
 // Type definition
 type LatestStatus = {
@@ -129,14 +128,14 @@ export default function UpdateCard({ card }: { card?: CardType }) {
         nextStatus: 'delivery_to_jp',
         nextLabel: 'Send to Japan',
         hasReject: true,
-        hasSpecialForm: false
+        hasSpecialForm: false,
+        isWaitingUser: true // ADDED: Admin waits for user action
       },
       'delivery_to_jp': {
         nextStatus: 'received_by_jp_wh',
         nextLabel: 'Mark as Received',
         hasReject: true,
-        hasSpecialForm: false,
-        isWaitingUser: true
+        hasSpecialForm: false
       },
       'received_by_jp_wh': {
         nextStatus: 'delivery_to_psa',
@@ -273,6 +272,23 @@ export default function UpdateCard({ card }: { card?: CardType }) {
           </span>
         </div>
       </div>
+
+      {/* ADDED: Waiting for User Action - data_input */}
+      {statusConfig?.isWaitingUser && currentStatus === "data_input" && (
+        <div className="mb-4">
+          <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+              <h5 className="text-sm font-medium text-yellow-800">
+                Waiting for User Action
+              </h5>
+            </div>
+            <p className="text-sm text-yellow-700">
+              User needs to confirm that the card has been sent to Japan before you can proceed to the next step.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Waiting for User Action - delivery_to_jp */}
       {statusConfig?.isWaitingUser && currentStatus === "delivery_to_jp" && (
@@ -437,15 +453,13 @@ export default function UpdateCard({ card }: { card?: CardType }) {
         </div>
       )}
 
-      {/* Regular Action Buttons */}
+      {/* Regular Action Buttons - FIXED: properly exclude all special status handling */}
       {statusConfig && 
        !statusConfig.hasSpecialForm && 
        !statusConfig.isWaitingUser && 
        currentStatus !== "done" && 
        currentStatus !== "rejected" && 
-       currentStatus !== "received_by_jp_wh" && 
-       currentStatus !== "received_by_wh_id" && 
-       currentStatus !== "payment_request" && 
+       currentStatus !== "delivery_to_jp" && 
        currentStatus !== "delivery_to_customer" && 
        currentStatus !== "received_by_customer" && (
         <div>
@@ -471,8 +485,8 @@ export default function UpdateCard({ card }: { card?: CardType }) {
         </div>
       )}
 
-      {/* Show actions for received_by_jp_wh (after user confirms delivery) */}
-      {currentStatus === "received_by_jp_wh" && statusConfig && (
+      {/* Show actions for delivery_to_jp (admin can proceed after user confirms) */}
+      {currentStatus === "delivery_to_jp" && statusConfig && (
         <div>
           <p className="text-blue-600 mb-3 lg:mb-4 font-medium text-sm sm:text-base">
             Available Actions:

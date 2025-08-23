@@ -5,6 +5,13 @@ import type {
 } from "../types/submission";
 
 /**
+ * Safe string conversion for null/undefined values
+ */
+function safeString(value: string | null | undefined): string {
+	return (value || "").toString();
+}
+
+/**
  * Filter and sort submissions data based on the provided options
  */
 export function filterAndSortSubmissions(
@@ -17,12 +24,16 @@ export function filterAndSortSubmissions(
 	if (filters.searchTerm) {
 		const searchLower = filters.searchTerm.toLowerCase();
 		filtered = filtered.filter((submission) => {
-			const nameMatch = submission.name.toLowerCase().includes(searchLower);
-			const serialMatch = submission.serial_number
+			const nameMatch = safeString(submission.name)
 				.toLowerCase()
 				.includes(searchLower);
-			const brandMatch = submission.brand.toLowerCase().includes(searchLower);
-			const gradeMatch = submission.grade_target
+			const serialMatch = safeString(submission.serial_number)
+				.toLowerCase()
+				.includes(searchLower);
+			const brandMatch = safeString(submission.brand)
+				.toLowerCase()
+				.includes(searchLower);
+			const gradeMatch = safeString(submission.grade_target)
 				.toLowerCase()
 				.includes(searchLower);
 
@@ -37,16 +48,16 @@ export function filterAndSortSubmissions(
 
 		switch (filters.sortBy) {
 			case "name":
-				aValue = a.name.toLowerCase();
-				bValue = b.name.toLowerCase();
+				aValue = safeString(a.name).toLowerCase();
+				bValue = safeString(b.name).toLowerCase();
 				break;
 			case "serial_number":
-				aValue = a.serial_number.toLowerCase();
-				bValue = b.serial_number.toLowerCase();
+				aValue = safeString(a.serial_number).toLowerCase();
+				bValue = safeString(b.serial_number).toLowerCase();
 				break;
 			case "status":
-				aValue = a.latest_status.status.toLowerCase();
-				bValue = b.latest_status.status.toLowerCase();
+				aValue = safeString(a.latest_status?.status).toLowerCase();
+				bValue = safeString(b.latest_status?.status).toLowerCase();
 				break;
 			case "created_at":
 			default:
@@ -81,7 +92,7 @@ export function getSubmissionStats(submissions: CardType[]): SubmissionStats {
 	};
 
 	submissions.forEach((submission) => {
-		const status = submission.latest_status.status.toLowerCase();
+		const status = safeString(submission.latest_status?.status).toLowerCase();
 
 		switch (status) {
 			case "pending":
