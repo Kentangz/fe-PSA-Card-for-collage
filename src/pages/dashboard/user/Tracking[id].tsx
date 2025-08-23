@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import Sidebar from "../../../components/SideBar";
 import ProfileMenu from "../../../components/ProfileMenu";
+import UserUpdateCard from "../../../components/UserUpdateCard"; // NEW IMPORT
 // import UserNotification from "../../../components/UserNotifications";
 import axiosInstance from "../../../lib/axiosInstance";
 import formatDate from "../../../utils/FormatDate";
@@ -62,6 +63,7 @@ type CardDetailType = {
   latest_status: StatusType;
   grade_target: string;
   grade: string | null;
+  payment_url?: string | null; // NEW FIELD - Added for payment functionality
   created_at: string;
   updated_at: string;
   statuses: StatusType[];
@@ -236,28 +238,33 @@ export default function UserTrackingDetail() {
                 </div>
               </div>
 
+              {/* Mobile User Action Card - NEW */}
+              <div className="block lg:hidden">
+                <UserUpdateCard card={card} />
+              </div>
+
               {/* Desktop Layout */}
               <div className="hidden lg:flex lg:gap-8">
                 {/* Card Information */}
                 <div className="w-96 bg-white border border-gray-200 rounded-lg shadow-sm p-6 flex-shrink-0">
                   <div className="flex items-start gap-2 mb-4">
-                    <h3 className="text-2xl font-semibold text-gray-800">{card?.name}</h3>
-                    <span className="text-sm text-gray-500 mt-1">({card?.year})</span>
+                    <h3 className="text-2xl font-semibold text-gray-800">{card.name}</h3>
+                    <span className="text-sm text-gray-500 mt-1">({card.year})</span>
                   </div>
                   
                   <div className="space-y-3">
                     <div className="flex">
                       <span className="w-32 text-sm font-medium text-gray-600">Brand</span>
-                      <span className="text-sm text-gray-800">: {card?.brand}</span>
+                      <span className="text-sm text-gray-800">: {card.brand}</span>
                     </div>
                     <div className="flex">
                       <span className="w-32 text-sm font-medium text-gray-600">Serial Number</span>
-                      <span className="text-sm text-gray-800">: {card?.serial_number}</span>
+                      <span className="text-sm text-gray-800">: {card.serial_number}</span>
                     </div>
                     <div className="flex">
                       <span className="w-32 text-sm font-medium text-gray-600">Verified Grade</span>
                       <span className="text-sm">
-                        : {card?.grade ? (
+                        : {card.grade ? (
                           <span className="ml-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
                             {card.grade}
                           </span>
@@ -268,20 +275,18 @@ export default function UserTrackingDetail() {
                     </div>
                     <div className="flex">
                       <span className="w-32 text-sm font-medium text-gray-600">Target Grade</span>
-                      <span className="text-sm text-gray-800">: {card?.grade_target}</span>
+                      <span className="text-sm text-gray-800">: {card.grade_target}</span>
                     </div>
                     <div className="flex">
                       <span className="w-32 text-sm font-medium text-gray-600">Submitted At</span>
-                      <span className="text-sm text-gray-800">: {card?.created_at && formatDate(new Date(card.created_at))}</span>
+                      <span className="text-sm text-gray-800">: {formatDate(new Date(card.created_at))}</span>
                     </div>
                     <div className="flex">
                       <span className="w-32 text-sm font-medium text-gray-600">Status</span>
                       <span className="text-sm">
-                        : {card?.latest_status && (
-                          <span className={`ml-1 ${getStatusBadge(card.latest_status.status, true)}`}>
+                        : <span className={`ml-1 ${getStatusBadge(card.latest_status.status, true)}`}>
                             {card.latest_status.status}
                           </span>
-                        )}
                       </span>
                     </div>
                   </div>
@@ -291,7 +296,7 @@ export default function UserTrackingDetail() {
                 <div className="flex-grow">
                   <h4 className="text-lg font-medium text-gray-800 mb-4">Status History</h4>
                   <div className="relative">
-                    {card?.statuses?.map((status: StatusType, index: number) => (
+                    {card.statuses?.map((status: StatusType, index: number) => (
                       <div
                         key={status.id}
                         className="flex items-start pb-6 last:pb-0 relative"
@@ -339,6 +344,11 @@ export default function UserTrackingDetail() {
                     ))}
                   </div>
                 </div>
+
+                {/* Desktop User Action Card - NEW */}
+                <div className="w-80">
+                  <UserUpdateCard card={card} />
+                </div>
               </div>
 
               {/* Mobile Status Timeline */}
@@ -346,7 +356,7 @@ export default function UserTrackingDetail() {
                 <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
                   <h4 className="text-lg font-medium text-gray-800 mb-4">Status History</h4>
                   <div className="space-y-4">
-                    {card?.statuses?.map((status: StatusType, index: number) => (
+                    {card.statuses?.map((status: StatusType, index: number) => (
                       <div key={status.id} className="flex items-start">
                         <div className="flex flex-col items-center mr-4">
                           <div className={`h-3 w-3 rounded-full border-2 ${
@@ -392,7 +402,7 @@ export default function UserTrackingDetail() {
                   <BsImage className="h-5 w-5 text-gray-600" />
                   <h4 className="text-lg font-medium text-gray-800">Card Pictures</h4>
                 </div>
-                {card?.images && card.images.length > 0 ? (
+                {card.images && card.images.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {card.images.map((image: ImageType, index: number) => (
                       <div

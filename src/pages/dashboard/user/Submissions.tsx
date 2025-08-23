@@ -31,7 +31,6 @@ export type SubmissionData = {
   name: string;
   year: string;
   brand: string;
-  serial_number: string;
   grade_target: string;
   images: File[];
 };
@@ -48,7 +47,7 @@ export default function UserSubmissions() {
   const [error, setError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissions, setSubmissions] = useState<SubmissionData[]>([
-    { name: "", year: "", brand: "", serial_number: "", grade_target: "", images: [] },
+    { name: "", year: "", brand: "", grade_target: "", images: [] },
   ]);
   const navigate = useNavigate();
 
@@ -92,7 +91,7 @@ export default function UserSubmissions() {
   }, [navigate]);
 
   const addSubmission = () => {
-    setSubmissions(prev => [...prev, { name: "", year: "", brand: "", serial_number: "", grade_target: "", images: [] }]);
+    setSubmissions(prev => [...prev, { name: "", year: "", brand: "", grade_target: "", images: [] }]);
   };
 
   const removeSubmission = (index: number) => {
@@ -110,8 +109,7 @@ export default function UserSubmissions() {
   const validateSubmissions = () => {
     for (const submission of submissions) {
       if (!submission.name || !submission.year || !submission.brand || 
-          !submission.serial_number || !submission.grade_target || 
-          submission.images.length === 0) {
+          !submission.grade_target || submission.images.length === 0) {
         return false;
       }
     }
@@ -133,7 +131,6 @@ export default function UserSubmissions() {
         formData.append("name", submission.name);
         formData.append("year", submission.year);
         formData.append("brand", submission.brand);
-        formData.append("serial_number", submission.serial_number);
         formData.append("grade_target", submission.grade_target);
         
         submission.images.forEach((file: File) => {

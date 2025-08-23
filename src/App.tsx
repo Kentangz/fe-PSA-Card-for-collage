@@ -60,8 +60,17 @@ function App() {
             </AuthRoute>
           }
         />
-        <Route
+        {/* Production */}
+        {/* <Route
           path="/reset-password/:token"
+          element={
+            <AuthRoute>
+              <ResetPassword />
+            </AuthRoute>
+          }
+        /> */}
+        <Route
+          path="/reset-password"
           element={
             <AuthRoute>
               <ResetPassword />

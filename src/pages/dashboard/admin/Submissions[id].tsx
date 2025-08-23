@@ -29,6 +29,7 @@ export interface CardType {
   serial_number: string;
   grade: string | null;
   grade_target: string;
+  payment_url?: string | null; // NEW FIELD
   created_at: string;
   images: CardImage[];
   statuses: CardStatus[];

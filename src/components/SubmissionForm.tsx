@@ -6,7 +6,6 @@ type SubmissionData = {
   name: string;
   year: string;
   brand: string;
-  serial_number: string;
   grade_target: string;
   images: File[];
 };
@@ -98,8 +97,8 @@ export default function SubmissionForm({
           </div>
         </div>
         
-        <div className="sm:col-span-2 sm:grid sm:grid-cols-2 sm:gap-4 space-y-3 sm:space-y-0">
-          {/* Brand */}
+        <div className="sm:col-span-2">
+          {/* Brand - Now full width */}
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
               Brand
@@ -113,25 +112,6 @@ export default function SubmissionForm({
               disabled={disabled}
               onChange={(e: ChangeEvent<HTMLInputElement>) => 
                 updateField("brand", e.target.value)
-              }
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed text-sm sm:text-base"
-            />
-          </div>
-          
-          {/* Serial Number */}
-          <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-              Serial Number
-            </label>
-            <input
-              type="text"
-              placeholder="Enter serial number"
-              name="serial_number"
-              required
-              value={data.serial_number}
-              disabled={disabled}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => 
-                updateField("serial_number", e.target.value)
               }
               className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed text-sm sm:text-base"
             />

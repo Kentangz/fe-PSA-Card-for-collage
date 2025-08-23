@@ -10,9 +10,9 @@ interface ValidationErrors {
 }
 
 const ResetPassword: React.FC = () => {
-  const { token } = useParams(); // build
+  // const { token } = useParams(); // build
   const [searchParams] = useSearchParams();
-  // const token = searchParams.get("token"); // development
+  const token = searchParams.get("token"); // development
   const emailParam = searchParams.get("email");
 
   const [error, setError] = useState<ValidationErrors>({});
