@@ -365,7 +365,8 @@ export default function SubmissionDetail() {
                   <EnhancedTimeline 
                     statuses={card.statuses}
                     currentStatus={card.latest_status.status}
-                    grade={card.grade}
+                      grade={card.grade}
+                      cardId={card.id}
                   />
                 </div>
 
@@ -380,7 +381,8 @@ export default function SubmissionDetail() {
                 <EnhancedTimeline 
                   statuses={card.statuses}
                   currentStatus={card.latest_status.status}
-                  grade={card.grade}
+                    grade={card.grade}
+                    cardId={card.id}
                 />
               </div>
 

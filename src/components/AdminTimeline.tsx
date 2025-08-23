@@ -1,11 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { BsImage } from "react-icons/bs";
 import formatDate from "../utils/FormatDate";
+import axiosInstance from "../lib/axiosInstance";
+import { BE_URL } from "../lib/api";
 
 // Types
 interface StatusType {
   status: string;
   created_at: string;
+}
+
+interface DeliveryProof {
+  id: number;
+  card_id: string;
+  image_path: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface DeliveryProofResponse {
+  delivery_proofs: DeliveryProof[];
 }
 
 interface TimelinePhase {
@@ -26,6 +41,7 @@ interface EnhancedTimelineProps {
   statuses: StatusType[];
   currentStatus: string;
   grade?: string | null;
+  cardId: string | number; // Add cardId prop
 }
 
 const TIMELINE_PHASES: TimelinePhase[] = [
@@ -106,14 +122,14 @@ const TIMELINE_PHASES: TimelinePhase[] = [
   {
     id: "completion",
     title: "Completion",
-    description: "Process completed or rejected",
-    statuses: ["done", "rejected"],
+    description: "Process completed successfully",
+    statuses: ["done"],
     icon: "✅",
     color: {
-      bg: "bg-gray-50",
-      text: "text-gray-800",
-      border: "border-gray-200",
-      icon: "text-gray-600"
+      bg: "bg-green-50",
+      text: "text-green-800",
+      border: "border-green-200",
+      icon: "text-green-600"
     }
   }
 ];
@@ -144,10 +160,36 @@ const STATUS_LABELS: Record<string, string> = {
   "rejected": "Rejected"
 };
 
-export default function EnhancedTimeline({ statuses, currentStatus, grade }: EnhancedTimelineProps) {
+export default function EnhancedTimeline({ statuses, currentStatus, grade, cardId }: EnhancedTimelineProps) {
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
+  const [deliveryProofs, setDeliveryProofs] = useState<DeliveryProof[]>([]);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [loadingProofs, setLoadingProofs] = useState(false);
 
   const currentStatusObj = statuses.find(s => s.status === currentStatus);
+  const isCompleted = currentStatus === "done" || currentStatus === "completed";
+
+  const fetchDeliveryProofs = useCallback(async () => {
+    try {
+      setLoadingProofs(true);
+      const response = await axiosInstance.get(`/card/${cardId}/delivery-proof`);
+      const data = response.data as DeliveryProofResponse;
+      if (data && data.delivery_proofs) {
+        setDeliveryProofs(data.delivery_proofs);
+      }
+    } catch (error) {
+      console.error('Failed to fetch delivery proofs:', error);
+    } finally {
+      setLoadingProofs(false);
+    }
+  }, [cardId]);
+
+  // Fetch delivery proofs when status is completed
+  useEffect(() => {
+    if (isCompleted && cardId) {
+      fetchDeliveryProofs();
+    }
+  }, [isCompleted, cardId, fetchDeliveryProofs]);
 
   // Get phase status (completed, current, pending)
   const getPhaseStatus = (phase: TimelinePhase) => {
@@ -389,6 +431,76 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade }: Enh
           <div className="text-center p-4 sm:p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="text-3xl sm:text-4xl font-bold text-yellow-600 mb-2">{grade}</div>
             <div className="text-sm sm:text-base text-yellow-700">Final Grade Result</div>
+          </div>
+        </div>
+      )}
+
+      {/* Delivery Proof Images - Only show when status is done/completed */}
+      {isCompleted && (
+        <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 lg:p-6">
+          <div className="flex items-center gap-2 mb-3">
+            <BsImage className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
+            <h4 className="font-semibold text-gray-900 text-base sm:text-lg">Delivery Confirmation</h4>
+          </div>
+          
+          {loadingProofs ? (
+            <div className="text-center py-8">
+              <div className="animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-1/4 mx-auto mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/6 mx-auto"></div>
+              </div>
+            </div>
+          ) : deliveryProofs && deliveryProofs.length > 0 ? (
+            <div>
+              <p className="text-xs sm:text-sm text-gray-600 mb-4">
+                Customer delivery confirmation images ({deliveryProofs.length} image{deliveryProofs.length > 1 ? 's' : ''})
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {deliveryProofs.map((proof, index) => (
+                  <div
+                    key={proof.id}
+                    className="aspect-w-16 aspect-h-9 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden group"
+                  >
+                    <img
+                      src={`${BE_URL}/storage/${proof.image_path}`}
+                      alt={`Delivery proof ${index + 1}`}
+                      className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200 group-hover:opacity-90"
+                      onClick={() => setSelectedImage(`${BE_URL}/storage/${proof.image_path}`)}
+                    />
+                    <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                      {formatDate(new Date(proof.created_at))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <BsImage className="mx-auto h-8 w-8 sm:h-12 sm:w-12 text-gray-300 mb-2 sm:mb-4" />
+              <p className="text-xs sm:text-sm">No delivery confirmation images available</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Image Modal for Delivery Proofs */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="max-w-4xl max-h-full relative">
+            <img 
+              src={selectedImage} 
+              alt="Delivery proof full size"
+              className="max-w-full max-h-full object-contain"
+            />
+            <button
+              className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full w-8 h-8 flex items-center justify-center hover:bg-opacity-70 transition-colors"
+              onClick={() => setSelectedImage(null)}
+            >
+              ×
+            </button>
           </div>
         </div>
       )}

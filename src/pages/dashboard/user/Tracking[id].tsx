@@ -302,6 +302,7 @@ export default function UserTrackingDetail() {
                     statuses={card.statuses}
                     currentStatus={card.latest_status.status}
                     grade={card.grade}
+                    cardId={card.id}
                   />
                 </div>
 
@@ -317,6 +318,7 @@ export default function UserTrackingDetail() {
                   statuses={card.statuses}
                   currentStatus={card.latest_status.status}
                   grade={card.grade}
+                  cardId={card.id}
                 />
               </div>
 

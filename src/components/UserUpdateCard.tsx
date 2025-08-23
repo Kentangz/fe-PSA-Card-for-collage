@@ -132,10 +132,6 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
   const handleDeleteDeliveryProof = async (proofId: number) => {
     if (!card?.id) return;
 
-    if (!window.confirm('Are you sure you want to delete this image?')) {
-      return;
-    }
-
     setDeletingProofId(proofId);
     
     try {
@@ -201,11 +197,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
           </div>
           
           <button 
-            onClick={() => {
-              if (window.confirm("Are you sure you have sent the card to Japan?")) {
-                handleUpdateSubmission("received_by_jp_wh");
-              }
-            }}
+            onClick={() => handleUpdateSubmission("received_by_jp_wh")}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors text-sm sm:text-base flex items-center justify-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -261,11 +253,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
 
             {/* Confirm Payment Button */}
             <button 
-              onClick={() => {
-                if (window.confirm("Are you sure you have completed the payment?")) {
-                  handleUpdateSubmission("delivery_to_customer");
-                }
-              }}
+              onClick={() => handleUpdateSubmission("delivery_to_customer")}
               className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors text-sm sm:text-base flex items-center justify-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -412,11 +400,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
             {/* MODIFIED: Complete Submission Button - now goes directly to "done" */}
             {deliveryProofs.length > 0 && (
               <button 
-                onClick={() => {
-                  if (window.confirm("Are you sure you have received your card and uploaded proof? This will complete your submission.")) {
-                    handleUpdateSubmission("done");
-                  }
-                }}
+                onClick={() => handleUpdateSubmission("done")}
                 className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors text-sm sm:text-base flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

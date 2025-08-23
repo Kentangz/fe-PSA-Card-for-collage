@@ -560,7 +560,7 @@ export default function UpdateCard({ card }: { card?: CardType }) {
           <p className="text-xs text-gray-600 mb-2">Jump to any status:</p>
           <select 
             onChange={(e) => {
-              if (e.target.value && window.confirm(`Change status to "${e.target.value.replace(/_/g, ' ')}"?`)) {
+              if (e.target.value) {
                 handleUpdateSubmission(e.target.value);
               }
             }}
