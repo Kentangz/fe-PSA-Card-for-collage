@@ -37,25 +37,40 @@ interface CardDetail {
 }
 
 const ProductDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { serialNumber } = useParams<{ serialNumber: string }>();
   const [card, setCard] = useState<CardDetail | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
     
-    if (id) {
-      fetchCardDetail(id);
+    if (serialNumber) {
+      fetchCardDetail(serialNumber);
     }
-  }, [id]);
+  }, [serialNumber]);
 
-  const fetchCardDetail = async (cardId: string) => {
+  const fetchCardDetail = async (serial: string) => {
     setIsLoading(true);
+    setError(null);
+    
     try {
-      const response = await axiosInstance.get<CardDetail>(`/public-card-search?q=${cardId}`);
+      // Search by serial number
+      const response = await axiosInstance.get<CardDetail>(`/public-card-search-serial?q=${encodeURIComponent(serial)}`);
       setCard(response.data);
     } catch (err: unknown) {
-      console.error('Error fetching card detail:', err);
+      console.error('Error fetching card detail by serial number:', err);
+      
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { status: number } };
+        if (axiosError.response?.status === 404) {
+          setError('Card with this serial number not found. Please check and try again.');
+        } else {
+          setError('Failed to load card details. Please try again later.');
+        }
+      } else {
+        setError('Network error. Please check your connection and try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -149,12 +164,39 @@ const ProductDetail: React.FC = () => {
     </div>
   );
 
+  // Error Component
+  const ErrorComponent = () => (
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="text-center py-16">
+        <div className="mb-6">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Card Not Found</h2>
+          <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            {error || 'The card you are looking for could not be found. Please check the ID or serial number and try again.'}
+          </p>
+          <button
+            onClick={() => window.history.back()}
+            className="bg-[#462895] text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-900 transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
       <Navbar />
       
       {isLoading ? (
         <SkeletonLoader />
+      ) : error ? (
+        <ErrorComponent />
       ) : (
         card && (
         <div className="max-w-7xl mx-auto px-4 py-8">
@@ -173,7 +215,7 @@ const ProductDetail: React.FC = () => {
               </div>
 
               <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-semibold mb-0 px-2" style={{ fontFamily: 'Inter Tight, sans-serif' }}>
-                {card.year} {card.brand.toUpperCase()} {card.name.toUpperCase()}
+                {card.name.toUpperCase()}
               </h1>
               
             </div>
@@ -308,9 +350,9 @@ const ProductDetail: React.FC = () => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] lg:grid-cols-[400px_1fr] items-start gap-2 sm:gap-3">
                       <div className="flex items-center gap-3">
-                        <dt className="text-xs sm:text-sm font-sembold" style={{ fontFamily: 'Inter Tight, sans-serif' }}>Card Number</dt>
+                        <dt className="text-xs sm:text-sm font-sembold" style={{ fontFamily: 'Inter Tight, sans-serif' }}>Serial Number</dt>
                       </div>
-                      <dd className="text-base sm:text-lg text-gray-900 font-semibold ml-7 sm:ml-0" style={{ fontFamily: 'Inter Tight, sans-serif' }}>{card.serial_number}</dd>
+                      <dd className="text-base sm:text-lg text-gray-900 font-semibold ml-7 sm:ml-0" style={{ fontFamily: 'Inter Tight, sans-serif' }}>{card.serial_number || 'N/A'}</dd>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] lg:grid-cols-[400px_1fr] items-start gap-2 sm:gap-3">

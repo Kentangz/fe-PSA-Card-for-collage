@@ -35,7 +35,7 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Home />} />
-        <Route path="/product/:id" element={<ProductDetail />} />
+        <Route path="/product/:serialNumber" element={<ProductDetail />} />
 
         {/* Auth routes */}
         <Route

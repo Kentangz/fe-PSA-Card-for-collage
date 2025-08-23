@@ -11,6 +11,7 @@ interface CardImage {
 
 interface LatestCard {
   id: string;
+  serial_number: string;
   path: string;
 }
 
@@ -69,7 +70,7 @@ const Product: React.FC = () => {
     e.preventDefault();
     
     if (!searchValue.trim()) {
-      setSearchError('Please enter a valid certificate number');
+      setSearchError('Please enter a valid serial number');
       return;
     }
 
@@ -77,9 +78,11 @@ const Product: React.FC = () => {
     setSearchError(null);
 
     try {
-      const response = await axiosInstance.get<SearchResult>(`/public-card-search?q=${encodeURIComponent(searchValue.trim())}`);
+      // Updated API endpoint for serial number search
+      const response = await axiosInstance.get<SearchResult>(`/public-card-search-serial?q=${encodeURIComponent(searchValue.trim())}`);
 
-      navigate(`/product/${response.data.id}`);
+      // Navigate using serial number instead of ID
+      navigate(`/product/${encodeURIComponent(response.data.serial_number)}`);
       
     } catch (err: unknown) {
       console.error('Search error:', err);
@@ -89,7 +92,7 @@ const Product: React.FC = () => {
         if (axiosError.response?.status === 429) {
           setSearchError('Search limit exceeded. Please try again in a minute.');
         } else if (axiosError.response?.status === 404) {
-          setSearchError('Certificate number not found. Please check and try again.');
+          setSearchError('Serial number not found. Please check and try again.');
         } else {
           setSearchError('Search failed. Please try again.');
         }
@@ -101,8 +104,10 @@ const Product: React.FC = () => {
     }
   };
 
-  const handleCardClick = (cardId: string) => {
-    navigate(`/product/${cardId}`);
+  const handleCardClick = (card: LatestCard) => {
+    // Navigate using serial number if available, otherwise use ID
+    const identifier = card.serial_number || card.id;
+    navigate(`/product/${encodeURIComponent(identifier)}`);
   };
 
   return (
@@ -139,7 +144,7 @@ const Product: React.FC = () => {
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Enter a Cert Number"
+                  placeholder="Enter a Serial Number"
                   value={searchValue}
                   onChange={(e) => {
                     setSearchValue(e.target.value);
@@ -219,7 +224,7 @@ const Product: React.FC = () => {
                 <div 
                   key={card.id} 
                   className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-1 sm:hover:-translate-y-2"
-                  onClick={() => handleCardClick(card.id)}
+                  onClick={() => handleCardClick(card)}
                   style={{
                     animationDelay: `${index * 100}ms`
                   }}
@@ -256,7 +261,7 @@ const Product: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <div className="text-white">
                           <h3 className="font-semibold text-xs sm:text-sm md:text-base lg:text-lg transition-all duration-300">
-                            Card #{card.id.slice(-8).toUpperCase()}
+                            {card.serial_number ? `Serial: ${card.serial_number}` : `Card #${card.id.slice(-8).toUpperCase()}`}
                           </h3>
                           <p className="text-white/80 text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-500 delay-100">
                             Latest Graded Card
@@ -292,7 +297,7 @@ const Product: React.FC = () => {
         {/* Additional Info */}
         <div className="text-center mt-12 sm:mt-16">
           <p className="text-xs sm:text-sm text-gray-500 px-4 sm:px-0">
-            Search by certificate number to view detailed card information and grading status.
+            Search by serial number to view detailed card information and grading status.
           </p>
         </div>
       </div>
