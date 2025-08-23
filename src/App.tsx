@@ -16,6 +16,8 @@ import DashboardAdmin from "./pages/dashboard/admin/Dasboard";
 import Users from "./pages/dashboard/admin/Users"
 import UserDetail from "./pages/dashboard/admin/Users[id]";
 import Submissions from "./pages/dashboard/admin/Submissions";
+import DoneSubmissions from "./pages/dashboard/admin/DoneSubmissions"; // ← ADD THIS IMPORT
+import RejectedSubmissions from "./pages/dashboard/admin/RejectedSubmissions";
 import SubmissionDetail from "./pages/dashboard/admin/Submissions[id]";
 
 import DashboardUser from "./pages/dashboard/user/Dashboard";
@@ -115,6 +117,22 @@ function App() {
           element={
             <ProtectedRoute>
               <Submissions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/admin/submissions/done"
+          element={
+            <ProtectedRoute>
+              <DoneSubmissions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/admin/submissions/rejected"
+          element={
+            <ProtectedRoute>
+              <RejectedSubmissions />
             </ProtectedRoute>
           }
         />

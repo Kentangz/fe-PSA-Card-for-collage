@@ -121,7 +121,7 @@ const getStatusStyle = (status: string) => {
   }
 };
 
-export default function Submission() {
+export default function RejectedSubmissions() {
   const [currentUser, setCurrentUser] = useState<UserType | undefined>(undefined);
   const [cards, setCards] = useState<CardsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -158,12 +158,14 @@ export default function Submission() {
   }, [navigate]);
 
   useEffect(() => {
-    const fetchCards = async () => {
+    const fetchRejectedCards = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        const response = await axiosInstance.get<ApiResponse | CardType[] | CardsResponse>("/card");
+        const response = await axiosInstance.get<ApiResponse | CardType[] | CardsResponse>("/card", {
+          params: { status: "rejected" }
+        });
         if (Array.isArray(response.data)) {
           setCards({ data: response.data as CardType[] });
         } else if (response.data && typeof response.data === 'object') {
@@ -189,7 +191,7 @@ export default function Submission() {
     };
 
     if (currentUser) {
-      fetchCards();
+      fetchRejectedCards();
     }
   }, [currentUser]);
 
@@ -213,8 +215,8 @@ export default function Submission() {
             <div className="flex items-center">
               <div className="w-10 lg:w-0"></div>
               <p className="text-lg lg:text-xl font-medium text-gray-800 truncate">
-                <span className="hidden sm:inline">Submissions</span>
-                <span className="sm:hidden">Submissions</span>
+                <span className="hidden sm:inline">Rejected Submissions</span>
+                <span className="sm:hidden">Rejected</span>
               </p>
             </div>
             <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
@@ -229,7 +231,7 @@ export default function Submission() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="text-red-500 text-center">
                 <MdAssignment className="h-12 w-12 mx-auto mb-4 text-red-300" />
-                <p className="text-lg font-medium mb-2">Error Loading Submissions</p>
+                <p className="text-lg font-medium mb-2">Error Loading Rejected Submissions</p>
                 <p className="text-sm text-gray-600">{error}</p>
               </div>
             </div>
@@ -249,8 +251,8 @@ export default function Submission() {
           <div className="flex items-center">
             <div className="w-10 lg:w-0"></div>
             <p className="text-lg lg:text-xl font-medium text-gray-800 truncate">
-              <span className="hidden sm:inline">Submissions</span>
-              <span className="sm:hidden">Submissions</span>
+              <span className="hidden sm:inline">Rejected Submissions</span>
+              <span className="sm:hidden">Rejected</span>
             </p>
           </div>
           
@@ -264,7 +266,7 @@ export default function Submission() {
       <div className="lg:pl-64 pl-4 pr-4 pb-4">
         <div className="mt-4">
           <h4 className="mb-4 lg:mb-6 text-base lg:text-lg font-medium text-gray-800">
-            All Submissions
+            Rejected Submissions
           </h4>
           
           <div className="mb-4 lg:mb-6">
@@ -280,19 +282,21 @@ export default function Submission() {
             <div className="block lg:hidden">
               {loading ? (
                 <div className="py-12 text-center text-gray-500">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p className="text-sm">Loading submissions...</p>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4"></div>
+                  <p className="text-sm">Loading rejected submissions...</p>
                 </div>
               ) : filteredSubmissions.length === 0 ? (
                 <div className="py-12 text-center text-gray-500">
-                  <MdAssignment className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <div className="mx-auto h-12 w-12 text-red-300 mb-4 flex items-center justify-center">
+                    ✕
+                  </div>
                   {filters.searchTerm ? (
                     <div className="px-4">
-                      <p className="text-lg font-medium mb-2">No submissions found</p>
-                      <p className="text-sm">Try adjusting your search criteria</p>
+                      <p className="text-lg font-medium mb-2">No rejected submissions found</p>
+                      <p className="text-sm">Try adjusting your search or filter criteria</p>
                     </div>
                   ) : (
-                    <p className="text-base px-4">No submissions found</p>
+                    <p className="text-base px-4">No rejected submissions found</p>
                   )}
                 </div>
               ) : (
@@ -404,21 +408,23 @@ export default function Submission() {
             <div className="hidden lg:block">
               {loading && (
                 <div className="py-12 text-center text-gray-500">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p className="text-base">Loading submissions...</p>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4"></div>
+                  <p className="text-base">Loading rejected submissions...</p>
                 </div>
               )}
               
               {filteredSubmissions.length === 0 && !loading && (
                 <div className="py-12 text-center text-gray-500">
-                  <MdAssignment className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <div className="mx-auto h-12 w-12 text-red-300 mb-4 flex items-center justify-center text-2xl">
+                    ✕
+                  </div>
                   {filters.searchTerm ? (
                     <div className="px-4">
-                      <p className="text-lg font-medium mb-2">No submissions found</p>
-                      <p className="text-sm">Try adjusting your search criteria</p>
+                      <p className="text-lg font-medium mb-2">No rejected submissions found</p>
+                      <p className="text-sm">Try adjusting your search or filter criteria</p>
                     </div>
                   ) : (
-                    <p className="text-base px-4">No submissions found</p>
+                    <p className="text-base px-4">No rejected submissions found</p>
                   )}
                 </div>
               )}

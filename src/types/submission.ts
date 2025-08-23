@@ -22,7 +22,6 @@ export interface ApiResponse {
 
 export interface FilterOptions {
 	searchTerm: string;
-	statusFilter: string;
 	sortBy: string;
 	sortOrder: "asc" | "desc";
 }

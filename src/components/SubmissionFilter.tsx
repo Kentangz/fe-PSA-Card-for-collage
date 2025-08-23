@@ -8,16 +8,6 @@ interface SubmissionFilterProps {
   isLoading?: boolean;
 }
 
-const statusOptions = [
-  { value: '', label: 'All Status' },
-  { value: 'submitted', label: 'Pending' },
-  { value: 'accepted', label: 'In Process' },
-  { value: 'on process', label: 'Processing' },
-  { value: 'done', label: 'Done' },
-  { value: 'rejected', label: 'Rejected' },
-  { value: 'failed', label: 'Failed' },
-];
-
 const sortOptions = [
   { value: 'created_at', label: 'Date Submitted' },
   { value: 'name', label: 'Customer Name' },
@@ -31,7 +21,6 @@ export default function SubmissionFilter({
   isLoading = false 
 }: SubmissionFilterProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -41,23 +30,21 @@ export default function SubmissionFilter({
     const timeoutId = setTimeout(() => {
       onFilterChange({
         searchTerm,
-        statusFilter,
         sortBy,
         sortOrder
       });
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, statusFilter, sortBy, sortOrder, onFilterChange]);
+  }, [searchTerm, sortBy, sortOrder, onFilterChange]);
 
   const handleClearFilters = () => {
     setSearchTerm('');
-    setStatusFilter('');
     setSortBy('created_at');
     setSortOrder('desc');
   };
 
-  const hasActiveFilters = searchTerm || statusFilter || sortBy !== 'created_at' || sortOrder !== 'desc';
+  const hasActiveFilters = searchTerm || sortBy !== 'created_at' || sortOrder !== 'desc';
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
@@ -176,25 +163,6 @@ export default function SubmissionFilter({
           <div className="p-3 sm:p-4">
             {/* Mobile Filter Layout */}
             <div className="block lg:hidden space-y-4">
-              {/* Status Filter - Mobile */}
-              <div>
-                <label htmlFor="status-filter-mobile" className="block text-sm font-medium text-gray-700 mb-2">
-                  Filter by Status
-                </label>
-                <select
-                  id="status-filter-mobile"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                >
-                  {statusOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               {/* Sort Controls - Mobile */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -233,26 +201,7 @@ export default function SubmissionFilter({
             </div>
 
             {/* Desktop Filter Layout */}
-            <div className="hidden lg:grid lg:grid-cols-3 lg:gap-6">
-              {/* Status Filter - Desktop */}
-              <div>
-                <label htmlFor="status-filter-desktop" className="block text-sm font-medium text-gray-700 mb-2">
-                  Status
-                </label>
-                <select
-                  id="status-filter-desktop"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                >
-                  {statusOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
+            <div className="hidden lg:grid lg:grid-cols-2 lg:gap-6">
               {/* Sort By - Desktop */}
               <div>
                 <label htmlFor="sort-by-desktop" className="block text-sm font-medium text-gray-700 mb-2">

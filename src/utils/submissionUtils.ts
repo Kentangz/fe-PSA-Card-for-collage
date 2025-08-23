@@ -30,15 +30,6 @@ export function filterAndSortSubmissions(
 		});
 	}
 
-	// Apply status filter
-	if (filters.statusFilter) {
-		filtered = filtered.filter((submission) => {
-			const status = submission.latest_status.status.toLowerCase();
-			const filterStatus = filters.statusFilter.toLowerCase();
-			return status === filterStatus;
-		});
-	}
-
 	// Apply sorting
 	filtered.sort((a, b) => {
 		let aValue: string | number;
