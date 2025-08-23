@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import Sidebar from "../../../components/SideBar";
 import ProfileMenu from "../../../components/ProfileMenu";
-import UserUpdateCard from "../../../components/UserUpdateCard"; // NEW IMPORT
-// import UserNotification from "../../../components/UserNotifications";
+import UserUpdateCard from "../../../components/UserUpdateCard";
+import MobileTimeline from "../../../components/UserTimeline"; // NEW IMPORT
 import axiosInstance from "../../../lib/axiosInstance";
 import formatDate from "../../../utils/FormatDate";
 import { ImHome } from "react-icons/im";
@@ -63,7 +63,7 @@ type CardDetailType = {
   latest_status: StatusType;
   grade_target: string;
   grade: string | null;
-  payment_url?: string | null; // NEW FIELD - Added for payment functionality
+  payment_url?: string | null;
   created_at: string;
   updated_at: string;
   statuses: StatusType[];
@@ -110,7 +110,6 @@ export default function UserTrackingDetail() {
         setCurrentUser(userResponse.data);
 
         const cardResponse = await axiosInstance.get<CardDetailType>(`/user-cards/${id}`);
-        // console.log(cardResponse.data)
         setCard(cardResponse.data);
         
       } catch (error) {
@@ -176,7 +175,6 @@ export default function UserTrackingDetail() {
             </p>
           </div>
           <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
-            {/* <UserNotification /> */}
             <ProfileMenu currentUser={currentUser} />
           </div>
         </div>
@@ -238,7 +236,7 @@ export default function UserTrackingDetail() {
                 </div>
               </div>
 
-              {/* Mobile User Action Card - NEW */}
+              {/* Mobile User Action Card */}
               <div className="block lg:hidden">
                 <UserUpdateCard card={card} />
               </div>
@@ -252,31 +250,7 @@ export default function UserTrackingDetail() {
                     <span className="text-sm text-gray-500 mt-1">({card.year})</span>
                   </div>
                   
-                  <div className="space-y-3">
-                    <div className="flex">
-                      <span className="w-32 text-sm font-medium text-gray-600">Brand</span>
-                      <span className="text-sm text-gray-800">: {card.brand}</span>
-                    </div>
-                    <div className="flex">
-                      <span className="w-32 text-sm font-medium text-gray-600">Serial Number</span>
-                      <span className="text-sm text-gray-800">: {card.serial_number}</span>
-                    </div>
-                    <div className="flex">
-                      <span className="w-32 text-sm font-medium text-gray-600">Verified Grade</span>
-                      <span className="text-sm">
-                        : {card.grade ? (
-                          <span className="ml-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                            {card.grade}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 ml-1">-</span>
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex">
-                      <span className="w-32 text-sm font-medium text-gray-600">Target Grade</span>
-                      <span className="text-sm text-gray-800">: {card.grade_target}</span>
-                    </div>
+                  <div className="space-y-3 mb-6">
                     <div className="flex">
                       <span className="w-32 text-sm font-medium text-gray-600">Submitted At</span>
                       <span className="text-sm text-gray-800">: {formatDate(new Date(card.created_at))}</span>
@@ -290,120 +264,70 @@ export default function UserTrackingDetail() {
                       </span>
                     </div>
                   </div>
-                </div>
 
-                {/* Status Timeline */}
-                <div className="flex-grow">
-                  <h4 className="text-lg font-medium text-gray-800 mb-4">Status History</h4>
-                  <div className="relative">
-                    {card.statuses?.map((status: StatusType, index: number) => (
-                      <div
-                        key={status.id}
-                        className="flex items-start pb-6 last:pb-0 relative"
-                      >
-                        {/* Timeline line */}
-                        {index < (card.statuses?.length || 0) - 1 && (
-                          <div className="absolute left-4 top-8 w-0.5 h-full bg-gray-200"></div>
-                        )}
-                        
-                        {/* Timeline dot */}
-                        <div className="w-8 h-8 bg-white border-2 border-gray-300 rounded-full flex items-center justify-center flex-shrink-0 z-10">
-                          <div className={`w-3 h-3 rounded-full ${index === 0 ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
-                        </div>
-                        
-                        {/* Status content */}
-                        <div className="ml-4 flex-grow">
-                          <div className="flex items-center gap-3 mb-1">
-                            <span className={getStatusBadge(status.status)}>
-                              {status.status}
-                            </span>
+                  {/* Card Images inside Card Information */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <BsImage className="h-4 w-4 text-gray-600" />
+                      <h5 className="text-sm font-medium text-gray-800">Card Pictures</h5>
+                    </div>
+                    {card.images && card.images.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-3">
+                        {card.images.map((image: ImageType, index: number) => (
+                          <div
+                            key={image.id}
+                            className="aspect-w-16 aspect-h-9 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden"
+                          >
+                            <img
+                              src={`${BE_URL}/storage/${image.path}`}
+                              alt={`Card image ${index + 1}`}
+                              className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200"
+                              onClick={() => setSelectedImage(`${BE_URL}/storage/${image.path}`)}
+                            />
                           </div>
-                          {status.status.toLowerCase() === "done" && card.grade && (
-                            <div className="mb-1">
-                              <p className="text-sm text-green-600 mb-2">
-                                Card is verified (grade: {card.grade})
-                              </p>
-                              <a
-                                href="https://theospro.com"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                              >
-                                Proceed to Payment
-                                <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                </svg>
-                              </a>
-                            </div>
-                          )}
-                          <p className="text-sm text-gray-500">
-                            {formatDate(new Date(status.created_at))}
-                          </p>
-                        </div>
+                        ))}
                       </div>
-                    ))}
+                    ) : (
+                      <div className="text-center py-8 text-gray-400">
+                        <BsImage className="mx-auto h-8 w-8 text-gray-300 mb-2" />
+                        <p className="text-xs">No images available</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Desktop User Action Card - NEW */}
+                {/* REPLACED: Mobile Timeline for Desktop */}
+                <div className="flex-grow">
+                  <MobileTimeline 
+                    statuses={card.statuses}
+                    currentStatus={card.latest_status.status}
+                    grade={card.grade}
+                  />
+                </div>
+
+                {/* Desktop User Action Card */}
                 <div className="w-80">
                   <UserUpdateCard card={card} />
                 </div>
               </div>
 
-              {/* Mobile Status Timeline */}
+              {/* REPLACED: Mobile Timeline */}
               <div className="block lg:hidden">
-                <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-                  <h4 className="text-lg font-medium text-gray-800 mb-4">Status History</h4>
-                  <div className="space-y-4">
-                    {card.statuses?.map((status: StatusType, index: number) => (
-                      <div key={status.id} className="flex items-start">
-                        <div className="flex flex-col items-center mr-4">
-                          <div className={`h-3 w-3 rounded-full border-2 ${
-                            index === 0 ? 'bg-blue-500 border-blue-500' : 'bg-gray-300 border-gray-300'
-                          }`}></div>
-                          {index < (card.statuses?.length || 0) - 1 && (
-                            <div className="w-px h-8 bg-gray-300 mt-2"></div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-gray-900 font-medium capitalize">{status.status}</p>
-                          {status.status.toLowerCase() === "done" && card.grade && (
-                            <div className="mt-1">
-                              <p className="text-sm text-green-600 mb-2">
-                                Card is verified (grade: {card.grade})
-                              </p>
-                              <a
-                                href="https://theospro.com"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                              >
-                                Proceed to Payment
-                                <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                </svg>
-                              </a>
-                            </div>
-                          )}
-                          <p className="text-sm text-gray-500 mt-1">
-                            {formatDate(new Date(status.created_at))}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <MobileTimeline 
+                  statuses={card.statuses}
+                  currentStatus={card.latest_status.status}
+                  grade={card.grade}
+                />
               </div>
 
-              {/* Card Images */}
-              <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 lg:p-6">
+              {/* Card Images - Mobile Only */}
+              <div className="block lg:hidden bg-white border border-gray-200 rounded-lg shadow-sm p-4">
                 <div className="flex items-center gap-2 mb-4">
                   <BsImage className="h-5 w-5 text-gray-600" />
                   <h4 className="text-lg font-medium text-gray-800">Card Pictures</h4>
                 </div>
                 {card.images && card.images.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {card.images.map((image: ImageType, index: number) => (
                       <div
                         key={image.id}

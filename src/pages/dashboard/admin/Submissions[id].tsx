@@ -6,12 +6,13 @@ import { MdAssignment } from "react-icons/md";
 import Sidebar from "../../../components/SideBar";
 import ProfileMenu from "../../../components/ProfileMenu";
 import UpdateCard from "../../../components/UpdateCard";
+import EnhancedTimeline from "../../../components/AdminTimeline"; // NEW IMPORT
 import axiosInstance from "../../../lib/axiosInstance";
 import { BE_URL} from "../../../lib/api";
 import formatDate from "../../../utils/FormatDate";
 import Cookies from "js-cookie";
 
-// Type definitions
+// Type definitions (same as before)
 interface CardStatus {
   status: string;
   created_at: string;
@@ -29,7 +30,7 @@ export interface CardType {
   serial_number: string;
   grade: string | null;
   grade_target: string;
-  payment_url?: string | null; // NEW FIELD
+  payment_url?: string | null;
   created_at: string;
   images: CardImage[];
   statuses: CardStatus[];
@@ -40,7 +41,6 @@ interface CardResponse {
   data: CardType;
 }
 
-// Alternative response structures
 interface ApiResponse {
   card?: CardType;
   data?: CardType | CardResponse;
@@ -52,7 +52,7 @@ type CurrentUserType = {
   role: string;
 };
 
-// Menu configuration 
+// Menu configuration (same as before)
 const menu = [
   {
     title: "home",
@@ -104,6 +104,7 @@ export default function SubmissionDetail() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // Auth and fetch logic (same as before)
   useEffect(() => {
     const getCurrentUser = async () => {
       try {
@@ -140,7 +141,6 @@ export default function SubmissionDetail() {
         
         if (response.data && typeof response.data === 'object') {
           const data = response.data as ApiResponse;
-          // console.log(data)
           if (data.data && typeof data.data === 'object') {
             if ('data' in data.data) {
               setCard((data.data as CardResponse).data);
@@ -287,6 +287,11 @@ export default function SubmissionDetail() {
                 </div>
               </div>
 
+              {/* Mobile Update Card */}
+              <div className="block lg:hidden">
+                <UpdateCard card={card} />
+              </div>
+
               {/* Desktop Layout */}
               <div className="hidden lg:flex lg:gap-8">
                 {/* Card Information */}
@@ -295,7 +300,7 @@ export default function SubmissionDetail() {
                     <h1 className="text-2xl font-semibold text-gray-900">{card.name}</h1>
                     <span className="text-sm text-gray-600">({card.year})</span>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-3 mb-6">
                     <div className="flex justify-between">
                       <span className="text-gray-600 font-medium">Brand:</span>
                       <span className="text-gray-900">{card.brand}</span>
@@ -323,40 +328,45 @@ export default function SubmissionDetail() {
                       </span>
                     </div>
                   </div>
+
+                  {/* Card Images inside Card Information */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <BsImage className="h-4 w-4 text-gray-600" />
+                      <h5 className="text-sm font-medium text-gray-800">Card Pictures</h5>
+                    </div>
+                    {card.images && card.images.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-3">
+                        {card.images.map((image: CardImage, index: number) => (
+                          <div
+                            key={index}
+                            className="aspect-w-16 aspect-h-9 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden"
+                          >
+                            <img
+                              src={`${BE_URL}/storage/${image.path}`}
+                              alt={`Card image ${index + 1}`}
+                              className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200"
+                              onClick={() => setSelectedImage(`${BE_URL}/storage/${image.path}`)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-400">
+                        <BsImage className="mx-auto h-8 w-8 text-gray-300 mb-2" />
+                        <p className="text-xs">No images available</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Status Timeline */}
+                {/* REPLACED: Enhanced Timeline instead of old timeline */}
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Timeline</h3>
-                  <div className="space-y-4">
-                    {card.statuses.map((status: CardStatus, i: number) => (
-                      <div key={i} className="flex items-start">
-                        <div className="flex flex-col items-center mr-4">
-                          <div className={`h-3 w-3 rounded-full border-2 ${
-                            i === 0 ? 'bg-blue-500 border-blue-500' : 'bg-gray-300 border-gray-300'
-                          }`}></div>
-                          {i < card.statuses.length - 1 && (
-                            <div className="w-px h-8 bg-gray-300 mt-2"></div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-                            <div>
-                              <p className="text-gray-900 font-medium capitalize">{status.status}</p>
-                              {status.status === "done" && (
-                                <p className="text-sm text-blue-600 mt-1">
-                                  Card verified (Grade: {card.grade})
-                                </p>
-                              )}
-                            </div>
-                            <p className="text-sm text-gray-500 mt-1 sm:mt-0">
-                              {formatDate(new Date(status.created_at))}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <EnhancedTimeline 
+                    statuses={card.statuses}
+                    currentStatus={card.latest_status.status}
+                    grade={card.grade}
+                  />
                 </div>
 
                 {/* Update Card Component */}
@@ -365,57 +375,31 @@ export default function SubmissionDetail() {
                 </div>
               </div>
 
-              {/* Mobile Status Timeline */}
+              {/* REPLACED: Mobile Enhanced Timeline */}
               <div className="block lg:hidden">
-                <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Timeline</h3>
-                  <div className="space-y-4">
-                    {card.statuses.map((status: CardStatus, i: number) => (
-                      <div key={i} className="flex items-start">
-                        <div className="flex flex-col items-center mr-4">
-                          <div className={`h-3 w-3 rounded-full border-2 ${
-                            i === 0 ? 'bg-blue-500 border-blue-500' : 'bg-gray-300 border-gray-300'
-                          }`}></div>
-                          {i < card.statuses.length - 1 && (
-                            <div className="w-px h-8 bg-gray-300 mt-2"></div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-gray-900 font-medium capitalize">{status.status}</p>
-                          {status.status === "done" && (
-                            <p className="text-sm text-blue-600 mt-1">
-                              Card verified (Grade: {card.grade})
-                            </p>
-                          )}
-                          <p className="text-sm text-gray-500 mt-1">
-                            {formatDate(new Date(status.created_at))}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <EnhancedTimeline 
+                  statuses={card.statuses}
+                  currentStatus={card.latest_status.status}
+                  grade={card.grade}
+                />
               </div>
 
-              {/* Mobile Update Card */}
-              <div className="block lg:hidden">
-                <UpdateCard card={card} />
-              </div>
-
-              {/* Card Images */}
-              <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 lg:p-6">
+              {/* Card Images - Mobile Only */}
+              <div className="block lg:hidden bg-white border border-gray-200 rounded-lg shadow-sm p-4">
                 <div className="flex items-center gap-2 mb-4">
                   <BsImage className="h-5 w-5 text-gray-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">Card Pictures</h3>
+                  <h4 className="text-lg font-medium text-gray-800">Card Pictures</h4>
                 </div>
-                
                 {card.images && card.images.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {card.images.map((image: CardImage, i: number) => (
-                      <div key={i} className="aspect-w-16 aspect-h-9 bg-gray-100 rounded-lg overflow-hidden">
-                        <img 
-                          src={`${BE_URL}/storage/${image.path}`} 
-                          alt={`Card image ${i + 1}`}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {card.images.map((image: CardImage, index: number) => (
+                      <div
+                        key={index}
+                        className="aspect-w-16 aspect-h-9 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden"
+                      >
+                        <img
+                          src={`${BE_URL}/storage/${image.path}`}
+                          alt={`Card image ${index + 1}`}
                           className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200"
                           onClick={() => setSelectedImage(`${BE_URL}/storage/${image.path}`)}
                         />
@@ -425,7 +409,7 @@ export default function SubmissionDetail() {
                 ) : (
                   <div className="text-center py-12 text-gray-500">
                     <BsImage className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                    <p>No images available</p>
+                    <p>No images available for this card</p>
                   </div>
                 )}
               </div>
