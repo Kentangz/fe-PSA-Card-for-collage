@@ -68,8 +68,8 @@ const fields = [
     shortLabel: "Serial"
   },
   {
-    label: "Grade Target",
-    name: "grade_target",
+    label: "Grade",
+    name: "grade",
     shortLabel: "Grade"
   },
   {
@@ -322,7 +322,7 @@ export default function RejectedSubmissions() {
                           <span className="font-medium">Serial:</span> {item.serial_number}
                         </div>
                         <div>
-                          <span className="font-medium">Grade:</span> {item.grade_target}
+                          <span className="font-medium">Grade:</span> {item.grade}
                         </div>
                         <div className="col-span-2">
                           <span className="font-medium">Submitted:</span> {formatDate(new Date(item.created_at))}
@@ -381,7 +381,7 @@ export default function RejectedSubmissions() {
                           {item.serial_number}
                         </div>
                       </td>
-                      <td className="py-3 px-6 whitespace-nowrap text-gray-600">{item.grade_target}</td>
+                      <td className="py-3 px-6 whitespace-nowrap text-gray-600">{item.grade}</td>
                       <td className="py-3 px-6 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusStyle(item.latest_status.status)}`}>
                           {item.latest_status.status}

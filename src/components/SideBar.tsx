@@ -148,7 +148,23 @@ export default function Sidebar({ menu }: SidebarType) {
   };
 
   const isActiveSubMenu = (subItem: SidebarSubMenuType) => {
-    return location.pathname === subItem.link || location.pathname.startsWith(subItem.link);
+    const currentPath = location.pathname;
+    const subItemLink = subItem.link;
+    
+    // Exact match first
+    if (currentPath === subItemLink) return true;
+    
+    // Special handling for submissions root path
+    if (subItemLink === "/dashboard/admin/submissions") {
+      // Only active if exactly that path or detail page (not done/rejected)
+      return currentPath === subItemLink || 
+            (currentPath.startsWith(subItemLink + "/") && 
+              !currentPath.includes('/done') && 
+              !currentPath.includes('/rejected'));
+    }
+    
+    // For other submenu items, strict match only
+    return false;
   };
 
   return (

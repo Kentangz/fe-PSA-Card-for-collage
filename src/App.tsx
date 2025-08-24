@@ -63,22 +63,23 @@ function App() {
           }
         />
         {/* Production */}
-        {/* <Route
+        <Route
           path="/reset-password/:token"
           element={
             <AuthRoute>
               <ResetPassword />
             </AuthRoute>
           }
-        /> */}
-        <Route
+        />
+        {/*Development */}
+        {/* <Route
           path="/reset-password"
           element={
             <AuthRoute>
               <ResetPassword />
             </AuthRoute>
           }
-        />
+        /> */}
         {/* Protected dashboard routes */}
         <Route
           path="/dashboard"

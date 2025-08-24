@@ -73,6 +73,11 @@ const fields = [
     shortLabel: "Grade"
   },
   {
+    label: "Grade",
+    name: "grade",
+    shortLabel: "Grade"
+  },
+  {
     label: "Status",
     name: "status",
     shortLabel: "Status"
@@ -320,6 +325,9 @@ export default function Submission() {
                         <div>
                           <span className="font-medium">Grade:</span> {item.grade_target}
                         </div>
+                        <div>
+                          <span className="font-medium">Grade:</span> {item.grade}
+                        </div>
                         <div className="col-span-2">
                           <span className="font-medium">Submitted:</span> {formatDate(new Date(item.created_at))}
                         </div>
@@ -378,6 +386,7 @@ export default function Submission() {
                         </div>
                       </td>
                       <td className="py-3 px-6 whitespace-nowrap text-gray-600">{item.grade_target}</td>
+                      <td className="py-3 px-6 whitespace-nowrap text-gray-600">{item.grade}</td>
                       <td className="py-3 px-6 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusStyle(item.latest_status.status)}`}>
                           {item.latest_status.status}

@@ -5,6 +5,7 @@ export interface CardType {
 	brand: string;
 	serial_number: string;
 	grade_target: string;
+	grade: string;
 	created_at: string;
 	latest_status: {
 		status: string;

@@ -51,6 +51,10 @@ const fields = [
     name: "grade_target"
   },
   {
+    label: "Grade",
+    name: "grade"
+  },
+  {
     label: "Status",
     name: "status"
   },
@@ -236,6 +240,7 @@ export default function DashboardUser() {
                             <td className="py-3 px-4 text-gray-600">{card.brand}</td>
                             <td className="py-3 px-4 text-gray-600 font-mono text-xs">{card.serial_number}</td>
                             <td className="py-3 px-4 text-gray-600 font-medium">{card.grade_target}</td>
+                            <td className="py-3 px-4 text-gray-600 font-medium">{card.grade}</td>
                             <td className="py-3 px-4">
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyling(card.latest_status?.status || '')}`}>
                                 {card.latest_status?.status || 'Unknown'}
