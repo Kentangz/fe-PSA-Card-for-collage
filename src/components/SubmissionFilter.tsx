@@ -49,7 +49,7 @@ export default function SubmissionFilter({
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
       {/* Main Filter Bar */}
-      <div className="p-3 sm:p-4">
+      <div className="p-2">
         {/* Mobile Layout */}
         <div className="block lg:hidden space-y-3">
           {/* Search Input - Mobile */}
