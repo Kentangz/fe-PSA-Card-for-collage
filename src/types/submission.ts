@@ -1,15 +1,32 @@
 export interface CardType {
-	id: string | number;
+	id: string;
+	user_id: number;
+	batch_id?: number;
 	name: string;
-	year: string | number;
+	year: number;
 	brand: string;
 	serial_number: string;
 	grade_target: string;
 	grade: string;
-	created_at: string;
+	payment_url?: string;
+	batch?: BatchType;
 	latest_status: {
 		status: string;
 	};
+	created_at: string;
+	updated_at: string;
+}
+
+export interface BatchType {
+	id: number;
+	batch_number: string;
+	register_number: string;
+	services: string;
+	category: "PSA-Japan" | "PSA-USA" | "CGC";
+	is_active: boolean;
+	cards_count?: number;
+	created_at: string;
+	updated_at: string;
 }
 
 export interface CardsResponse {

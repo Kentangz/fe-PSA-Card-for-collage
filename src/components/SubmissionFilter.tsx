@@ -6,6 +6,8 @@ interface SubmissionFilterProps {
   onFilterChange: (filters: FilterOptions) => void;
   totalResults?: number;
   isLoading?: boolean;
+  showAddBatch?: boolean;
+  onAddBatch?: () => void;
 }
 
 const sortOptions = [
@@ -18,14 +20,14 @@ const sortOptions = [
 export default function SubmissionFilter({ 
   onFilterChange, 
   totalResults = 0, 
-  isLoading = false 
+  showAddBatch = false,
+  onAddBatch
 }: SubmissionFilterProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  // Debounce search input
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       onFilterChange({
@@ -52,24 +54,36 @@ export default function SubmissionFilter({
       <div className="p-2">
         {/* Mobile Layout */}
         <div className="block lg:hidden space-y-3">
-          {/* Search Input - Mobile */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <BsSearch className="h-4 w-4 text-gray-400" />
+          {/* Search Input with Add Batch - Mobile */}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <BsSearch className="h-4 w-4 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search submissions..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <BsX className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                </button>
+              )}
             </div>
-            <input
-              type="text"
-              placeholder="Search submissions..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-            {searchTerm && (
+            {/* Add Batch Button - Mobile (beside search) */}
+            {showAddBatch && (
               <button
-                onClick={() => setSearchTerm('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                onClick={onAddBatch}
+                className="inline-flex items-center px-3 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors flex-shrink-0"
               >
-                <BsX className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                <span className="hidden sm:inline">Add Batch</span>
+                <span className="sm:hidden">+</span>
               </button>
             )}
           </div>
@@ -78,55 +92,65 @@ export default function SubmissionFilter({
           <div className="flex items-center justify-between gap-3">
             {/* Results Count - Mobile */}
             <div className="flex-1">
-              {!isLoading && (
-                <span className="text-xs sm:text-sm text-gray-500">
-                  {totalResults} result{totalResults !== 1 ? 's' : ''}
-                </span>
-              )}
+              <span className="text-xs sm:text-sm text-gray-500">
+                {totalResults} result{totalResults !== 1 ? 's' : ''}
+              </span>
             </div>
-            
             {/* Filter Button - Mobile */}
-            <button
-              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-            >
-              <BsFilter className="h-4 w-4 mr-1.5" />
-              <span className="hidden sm:inline">Filters</span>
-              {showAdvancedFilters ? (
-                <BsChevronUp className="h-3 w-3 ml-1.5" />
-              ) : (
-                <BsChevronDown className="h-3 w-3 ml-1.5" />
-              )}
-              {hasActiveFilters && (
-                <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  <span className="hidden sm:inline">Active</span>
-                  <span className="sm:hidden">•</span>
-                </span>
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              >
+                <BsFilter className="h-4 w-4 mr-1.5" />
+                <span className="hidden sm:inline">Filters</span>
+                {showAdvancedFilters ? (
+                  <BsChevronUp className="h-3 w-3 ml-1.5" />
+                ) : (
+                  <BsChevronDown className="h-3 w-3 ml-1.5" />
+                )}
+                {hasActiveFilters && (
+                  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <span className="hidden sm:inline">Active</span>
+                    <span className="sm:hidden">•</span>
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Desktop Layout */}
         <div className="hidden lg:flex lg:items-center lg:justify-between lg:gap-6">
-          {/* Search Input - Desktop */}
-          <div className="relative flex-1 max-w-md">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <BsSearch className="h-4 w-4 text-gray-400" />
+          {/* Search Input with Add Batch - Desktop */}
+          <div className="flex items-center gap-3 flex-1">
+            <div className="relative flex-1 max-w-md">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <BsSearch className="h-4 w-4 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search by name, serial number..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="block w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <BsX className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                </button>
+              )}
             </div>
-            <input
-              type="text"
-              placeholder="Search by name, serial number..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-            {searchTerm && (
+            {/* Add Batch Button - Desktop (beside search) */}
+            {showAddBatch && (
               <button
-                onClick={() => setSearchTerm('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                onClick={onAddBatch}
+                className="inline-flex items-center px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors flex-shrink-0"
               >
-                <BsX className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                + Add Batch
               </button>
             )}
           </div>
@@ -134,11 +158,9 @@ export default function SubmissionFilter({
           {/* Desktop Controls */}
           <div className="flex items-center gap-4 flex-shrink-0">
             {/* Results Count - Desktop */}
-            {!isLoading && (
-              <span className="text-sm text-gray-500 whitespace-nowrap">
-                {totalResults} result{totalResults !== 1 ? 's' : ''} found
-              </span>
-            )}
+            <span className="text-sm text-gray-500 whitespace-nowrap">
+              {totalResults} result{totalResults !== 1 ? 's' : ''} found
+            </span>
             
             {/* Filter Toggle - Desktop */}
             <button
@@ -250,19 +272,6 @@ export default function SubmissionFilter({
                 </button>
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* Loading Indicator */}
-      {isLoading && (
-        <div className="border-t border-gray-200 p-4 text-center">
-          <div className="inline-flex items-center text-sm text-gray-500">
-            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Searching...
           </div>
         </div>
       )}

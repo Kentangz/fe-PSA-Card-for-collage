@@ -9,8 +9,9 @@ import SubmissionFilter from "../../../components/SubmissionFilter";
 import axiosInstance from "../../../lib/axiosInstance";
 import formatDate from "../../../utils/FormatDate";
 import { filterAndSortSubmissions } from "../../../utils/submissionUtils";
-import type { CardType, CardsResponse, ApiResponse, FilterOptions, UserType } from "../../../types/submission";
+import type { CardType, CardsResponse, ApiResponse, FilterOptions, UserType, BatchType } from "../../../types/submission";
 import Cookies from "js-cookie";
+import { batchService } from "../../../services/batchService";
 
 // Menu configuration with submenu
 const menu = [
@@ -73,6 +74,11 @@ const fields = [
     shortLabel: "Grade"
   },
   {
+    label: "Batch",
+    name: "batch",
+    shortLabel: "Batch"
+  },
+  {
     label: "Status",
     name: "status",
     shortLabel: "Status"
@@ -126,12 +132,34 @@ export default function RejectedSubmissions() {
   const [cards, setCards] = useState<CardsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [batches, setBatches] = useState<BatchType[]>([]);
   const [filters, setFilters] = useState<FilterOptions>({
     searchTerm: '',
     sortBy: 'created_at',
     sortOrder: 'desc'
   });
   const navigate = useNavigate();
+
+  const getBatchInfo = (batchId: number | null | undefined): string => {
+    if (!batchId) return 'No Batch';
+    const batch = batches.find(b => b.id === batchId);
+    return batch ? `${batch.batch_number} (${batch.category})` : `Batch #${batchId}`;
+  };
+
+  useEffect(() => {
+    const fetchBatches = async () => {
+      try {
+        const batchData = await batchService.getAllBatches();
+        setBatches(batchData);
+      } catch (error) {
+        console.error('Failed to fetch batches:', error);
+      }
+    };
+
+    if (currentUser?.role === 'admin') {
+      fetchBatches();
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -324,7 +352,10 @@ export default function RejectedSubmissions() {
                         <div>
                           <span className="font-medium">Grade:</span> {item.grade}
                         </div>
-                        <div className="col-span-2">
+                        <div>
+                          <span className="font-medium">Batch:</span> {getBatchInfo(item.batch_id)}
+                        </div>
+                        <div className="col-span-1">
                           <span className="font-medium">Submitted:</span> {formatDate(new Date(item.created_at))}
                         </div>
                       </div>
@@ -382,6 +413,11 @@ export default function RejectedSubmissions() {
                         </div>
                       </td>
                       <td className="py-3 px-6 whitespace-nowrap text-gray-600">{item.grade}</td>
+                      <td className="py-3 px-6 text-gray-600">
+                        <div className="truncate max-w-[150px]" title={getBatchInfo(item.batch_id)}>
+                          {getBatchInfo(item.batch_id)}
+                        </div>
+                      </td>
                       <td className="py-3 px-6 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusStyle(item.latest_status.status)}`}>
                           {item.latest_status.status}

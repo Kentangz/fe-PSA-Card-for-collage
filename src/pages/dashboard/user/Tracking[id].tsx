@@ -53,6 +53,17 @@ type ImageType = {
   updated_at: string;
 };
 
+type Batch = {
+  id: string | number;
+  batch_number: string;
+  register_number: string;
+  services: string;
+  category: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
+
 type CardDetailType = {
   id: string;
   user_id: number;
@@ -68,6 +79,7 @@ type CardDetailType = {
   updated_at: string;
   statuses: StatusType[];
   images: ImageType[];
+  batch?: Batch;
 };
 
 export default function UserTrackingDetail() {
@@ -121,37 +133,41 @@ export default function UserTrackingDetail() {
     initializeTrackingDetail();
   }, [id, navigate]);
 
-  const getStatusBadge = (status: string, isCurrentStatus = false) => {
-    const statusLower = status.toLowerCase();
-    let badgeClass = "px-3 py-1 rounded-full text-sm font-medium ";
+  const getStatusStyle = (status: string) => {
+    const normalizedStatus = status.toLowerCase().trim();
     
-    switch (statusLower) {
+    switch (normalizedStatus) {
       case 'submitted':
-        badgeClass += isCurrentStatus ? "bg-orange-100 text-orange-800 border-orange-200" : "bg-orange-50 text-orange-600";
-        break;
+        return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'accepted':
-        badgeClass += isCurrentStatus ? "bg-yellow-100 text-yellow-800 border-yellow-200" : "bg-yellow-50 text-yellow-600";
-        break;
-      case 'in process':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'rejected':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'on process':
       case 'processing':
-        badgeClass += isCurrentStatus ? "bg-blue-100 text-blue-800 border-blue-200" : "bg-blue-50 text-blue-600";
-        break;
+      case 'in_process':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'done':
       case 'completed':
-        badgeClass += isCurrentStatus ? "bg-green-100 text-green-800 border-green-200" : "bg-green-50 text-green-600";
-        break;
-      case 'rejected':
-        badgeClass += isCurrentStatus ? "bg-red-100 text-red-800 border-red-200" : "bg-red-50 text-red-600";
-        break;
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'pending':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
-        badgeClass += isCurrentStatus ? "bg-gray-100 text-gray-800 border-gray-200" : "bg-gray-50 text-gray-600";
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
-    
-    if (isCurrentStatus) {
-      badgeClass += " border";
+  };
+
+  const getBatchCategoryStyle = (category: string) => {
+    switch (category) {
+      case 'PSA-Japan':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'PSA-USA':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'CGC':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
-    
-    return badgeClass;
   };
 
   return (
@@ -202,12 +218,16 @@ export default function UserTrackingDetail() {
                       <h1 className="text-xl font-semibold text-gray-900">{card.name}</h1>
                       <p className="text-sm text-gray-600">{card.brand} • {card.year}</p>
                     </div>
-                    <span className={getStatusBadge(card.latest_status.status, true)}>
+                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusStyle(card.latest_status.status)}`}>
                       {card.latest_status.status}
                     </span>
                   </div>
                   
                   <div className="grid grid-cols-1 gap-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Brand:</span>
+                      <span className="text-gray-900 font-medium">{card.brand}</span>
+                    </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Serial Number:</span>
                       <span className="text-gray-900 font-medium">{card.serial_number}</span>
@@ -218,20 +238,37 @@ export default function UserTrackingDetail() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Verified Grade:</span>
-                      <span className="text-gray-900 font-medium">
-                        {card.grade ? (
-                          <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                            {card.grade}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </span>
+                      <span className="text-gray-900 font-medium">{card.grade ?? "Pending"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Submitted:</span>
                       <span className="text-gray-900 font-medium">{formatDate(new Date(card.created_at))}</span>
                     </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Status:</span>
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusStyle(card.latest_status.status)}`}>
+                        {card.latest_status.status}
+                      </span>
+                    </div>
+                    {/* Batch Information - Mobile */}
+                    {card.batch && (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Batch:</span>
+                          <span className="text-gray-900 font-medium">{card.batch.batch_number}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Register Number:</span>
+                          <span className="text-gray-900 font-medium">{card.batch.register_number}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Category:</span>
+                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getBatchCategoryStyle(card.batch.category)}`}>
+                            {card.batch.category}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -244,25 +281,58 @@ export default function UserTrackingDetail() {
               {/* Desktop Layout */}
               <div className="hidden lg:flex lg:gap-8">
                 {/* Card Information */}
-                <div className="w-96 bg-white border border-gray-200 rounded-lg shadow-sm p-6 flex-shrink-0">
-                  <div className="flex items-start gap-2 mb-4">
-                    <h3 className="text-2xl font-semibold text-gray-800">{card.name}</h3>
-                    <span className="text-sm text-gray-500 mt-1">({card.year})</span>
+                <div className="w-96 bg-white border border-gray-200 p-6 rounded-lg shadow-sm h-fit">
+                  <div className="flex items-center gap-2 mb-4">
+                    <h1 className="text-2xl font-semibold text-gray-900">{card.name}</h1>
+                    <span className="text-sm text-gray-600">({card.year})</span>
                   </div>
-                  
+
                   <div className="space-y-3 mb-6">
-                    <div className="flex">
-                      <span className="w-32 text-sm font-medium text-gray-600">Submitted At</span>
-                      <span className="text-sm text-gray-800">: {formatDate(new Date(card.created_at))}</span>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 font-medium">Brand:</span>
+                      <span className="text-gray-900">{card.brand}</span>
                     </div>
-                    <div className="flex">
-                      <span className="w-32 text-sm font-medium text-gray-600">Status</span>
-                      <span className="text-sm">
-                        : <span className={`ml-1 ${getStatusBadge(card.latest_status.status, true)}`}>
-                            {card.latest_status.status}
-                          </span>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 font-medium">Serial Number:</span>
+                      <span className="text-gray-900">{card.serial_number}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 font-medium">Verified Grade:</span>
+                      <span className="text-gray-900">{card.grade ?? "Pending"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 font-medium">Target Grade:</span>
+                      <span className="text-gray-900">{card.grade_target}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 font-medium">Submitted:</span>
+                      <span className="text-gray-900">{formatDate(new Date(card.created_at))}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 font-medium">Status:</span>
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusStyle(card.latest_status.status)}`}>
+                        {card.latest_status.status}
                       </span>
                     </div>
+                    {/* Batch Information - Desktop */}
+                    {card.batch && (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 font-medium">Batch:</span>
+                          <span className="text-gray-900">{card.batch.batch_number}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 font-medium">Register Number:</span>
+                          <span className="text-gray-900">{card.batch.register_number}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600 font-medium">Category:</span>
+                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getBatchCategoryStyle(card.batch.category)}`}>
+                            {card.batch.category}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Card Images inside Card Information */}
@@ -297,7 +367,7 @@ export default function UserTrackingDetail() {
                 </div>
 
                 {/* REPLACED: Mobile Timeline for Desktop */}
-                <div className="flex-grow">
+                <div className="flex-1">
                   <MobileTimeline 
                     statuses={card.statuses}
                     currentStatus={card.latest_status.status}

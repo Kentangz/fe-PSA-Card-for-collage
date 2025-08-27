@@ -6,13 +6,13 @@ import { MdAssignment } from "react-icons/md";
 import Sidebar from "../../../components/SideBar";
 import ProfileMenu from "../../../components/ProfileMenu";
 import UpdateCard from "../../../components/UpdateCard";
-import EnhancedTimeline from "../../../components/AdminTimeline"; // NEW IMPORT
+import EnhancedTimeline from "../../../components/AdminTimeline";
 import axiosInstance from "../../../lib/axiosInstance";
 import { BE_URL} from "../../../lib/api";
 import formatDate from "../../../utils/FormatDate";
 import Cookies from "js-cookie";
 
-// Type definitions (same as before)
+// Type definitions
 interface CardStatus {
   status: string;
   created_at: string;
@@ -20,6 +20,17 @@ interface CardStatus {
 
 interface CardImage {
   path: string;
+}
+
+interface Batch {
+  id: string | number;
+  batch_number: string;
+  register_number: string;
+  services: string;
+  category: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CardType {
@@ -35,6 +46,7 @@ export interface CardType {
   images: CardImage[];
   statuses: CardStatus[];
   latest_status: CardStatus;
+  batch?: Batch;
 }
 
 interface CardResponse {
@@ -52,7 +64,7 @@ type CurrentUserType = {
   role: string;
 };
 
-// Menu configuration (same as before)
+// Menu configuration
 const menu = [
   {
     title: "home",
@@ -95,6 +107,19 @@ const getStatusStyle = (status: string) => {
   }
 };
 
+const getBatchCategoryStyle = (category: string) => {
+  switch (category) {
+    case 'PSA-Japan':
+      return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'PSA-USA':
+      return 'bg-green-100 text-green-800 border-green-200';
+    case 'CGC':
+      return 'bg-purple-100 text-purple-800 border-purple-200';
+    default:
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+  }
+};
+
 export default function SubmissionDetail() {
   const { id } = useParams<{ id: string }>();
   const [currentUser, setCurrentUser] = useState<CurrentUserType | undefined>(undefined);
@@ -104,7 +129,7 @@ export default function SubmissionDetail() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // Auth and fetch logic (same as before)
+  // Auth and fetch logic
   useEffect(() => {
     const getCurrentUser = async () => {
       try {
@@ -265,8 +290,12 @@ export default function SubmissionDetail() {
                       {card.latest_status.status}
                     </span>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 gap-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Brand:</span>
+                      <span className="text-gray-900 font-medium">{card.brand}</span>
+                    </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Serial Number:</span>
                       <span className="text-gray-900 font-medium">{card.serial_number}</span>
@@ -283,6 +312,31 @@ export default function SubmissionDetail() {
                       <span className="text-gray-600">Submitted:</span>
                       <span className="text-gray-900 font-medium">{formatDate(new Date(card.created_at))}</span>
                     </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Status:</span>
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusStyle(card.latest_status.status)}`}>
+                        {card.latest_status.status}
+                      </span>
+                    </div>
+                    {/* Batch Information - Mobile */}
+                    {card.batch && (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Batch:</span>
+                          <span className="text-gray-900 font-medium">{card.batch.batch_number}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Register Number:</span>
+                          <span className="text-gray-900 font-medium">{card.batch.register_number}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Category:</span>
+                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getBatchCategoryStyle(card.batch.category)}`}>
+                            {card.batch.category}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -300,6 +354,7 @@ export default function SubmissionDetail() {
                     <h1 className="text-2xl font-semibold text-gray-900">{card.name}</h1>
                     <span className="text-sm text-gray-600">({card.year})</span>
                   </div>
+
                   <div className="space-y-3 mb-6">
                     <div className="flex justify-between">
                       <span className="text-gray-600 font-medium">Brand:</span>
@@ -327,6 +382,25 @@ export default function SubmissionDetail() {
                         {card.latest_status.status}
                       </span>
                     </div>
+                    {/* Batch Information - Desktop */}
+                    {card.batch && (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 font-medium">Batch:</span>
+                          <span className="text-gray-900">{card.batch.batch_number}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 font-medium">Register Number:</span>
+                          <span className="text-gray-900">{card.batch.register_number}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600 font-medium">Category:</span>
+                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getBatchCategoryStyle(card.batch.category)}`}>
+                            {card.batch.category}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Card Images inside Card Information */}
@@ -360,13 +434,13 @@ export default function SubmissionDetail() {
                   </div>
                 </div>
 
-                {/* REPLACED: Enhanced Timeline instead of old timeline */}
+                {/* Enhanced Timeline */}
                 <div className="flex-1">
                   <EnhancedTimeline 
                     statuses={card.statuses}
                     currentStatus={card.latest_status.status}
-                      grade={card.grade}
-                      cardId={card.id}
+                    grade={card.grade}
+                    cardId={card.id}
                   />
                 </div>
 
@@ -376,13 +450,13 @@ export default function SubmissionDetail() {
                 </div>
               </div>
 
-              {/* REPLACED: Mobile Enhanced Timeline */}
+              {/* Mobile Enhanced Timeline */}
               <div className="block lg:hidden">
                 <EnhancedTimeline 
                   statuses={card.statuses}
                   currentStatus={card.latest_status.status}
-                    grade={card.grade}
-                    cardId={card.id}
+                  grade={card.grade}
+                  cardId={card.id}
                 />
               </div>
 

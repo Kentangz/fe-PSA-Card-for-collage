@@ -1,16 +1,18 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { BsEye, BsPeopleFill } from "react-icons/bs";
+import { useNavigate } from "react-router-dom";
+import { BsPeopleFill } from "react-icons/bs";
 import { ImHome } from "react-icons/im";
 import { MdAssignment } from "react-icons/md";
 import Sidebar from "../../../components/SideBar";
 import ProfileMenu from "../../../components/ProfileMenu";
 import SubmissionFilter from "../../../components/SubmissionFilter";
+import AddBatchModal from "../../../components/AddBatchModal";
+import BatchAccordion from "../../../components/BatchAccordion";
 import axiosInstance from "../../../lib/axiosInstance";
-import formatDate from "../../../utils/FormatDate";
 import { filterAndSortSubmissions } from "../../../utils/submissionUtils";
-import type { CardType, CardsResponse, ApiResponse, FilterOptions, UserType } from "../../../types/submission";
+import type { CardType, CardsResponse, ApiResponse, FilterOptions, UserType, BatchType } from "../../../types/submission";
 import Cookies from "js-cookie";
+import { batchService } from "../../../services/batchService";
 
 // Menu configuration with submenu
 const menu = [
@@ -45,87 +47,6 @@ const menu = [
   }
 ];
 
-// Field configuration
-const fields = [
-  {
-    label: "Name",
-    name: "name",
-    shortLabel: "Name"
-  },
-  {
-    label: "Year",
-    name: "year",
-    shortLabel: "Year"
-  },
-  {
-    label: "Brand",
-    name: "brand",
-    shortLabel: "Brand"
-  },
-  {
-    label: "Serial Number",
-    name: "serial_number",
-    shortLabel: "Serial"
-  },
-  {
-    label: "Grade Target",
-    name: "grade_target",
-    shortLabel: "Grade"
-  },
-  {
-    label: "Grade",
-    name: "grade",
-    shortLabel: "Grade"
-  },
-  {
-    label: "Status",
-    name: "status",
-    shortLabel: "Status"
-  },
-  {
-    label: "Submitted at",
-    name: "submitted_at",
-    shortLabel: "Date"
-  },
-];
-
-const getStatusStyle = (status: string) => {
-  const normalizedStatus = status.toLowerCase().trim();
-  
-  switch (normalizedStatus) {
-    case 'submitted':
-      return 'bg-orange-100 text-orange-800';
-    case 'accepted':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'rejected':
-      return 'bg-red-100 text-red-800';
-    case 'on process':
-    case 'processing':
-    case 'in_process':
-      return 'bg-blue-100 text-blue-800';
-    case 'done':
-    case 'completed':
-      return 'bg-green-100 text-green-800';
-    case 'pending':
-      return 'bg-gray-100 text-gray-800';
-    default:
-      // Handle variations in status names
-      if (normalizedStatus.includes('submit')) {
-        return 'bg-orange-100 text-orange-800';
-      } else if (normalizedStatus.includes('accept')) {
-        return 'bg-yellow-100 text-yellow-800';
-      } else if (normalizedStatus.includes('reject')) {
-        return 'bg-red-100 text-red-800';
-      } else if (normalizedStatus.includes('process')) {
-        return 'bg-blue-100 text-blue-800';
-      } else if (normalizedStatus.includes('done') || normalizedStatus.includes('complete')) {
-        return 'bg-green-100 text-green-800';
-      } else {
-        return 'bg-gray-100 text-gray-800';
-      }
-  }
-};
-
 export default function Submission() {
   const [currentUser, setCurrentUser] = useState<UserType | undefined>(undefined);
   const [cards, setCards] = useState<CardsResponse | null>(null);
@@ -137,6 +58,132 @@ export default function Submission() {
     sortOrder: 'desc'
   });
   const navigate = useNavigate();
+  const [showAddBatchModal, setShowAddBatchModal] = useState(false);
+  const [batches, setBatches] = useState<BatchType[]>([]);
+  const [expandedBatches, setExpandedBatches] = useState<Set<number>>(new Set());
+  const [batchUpdateError, setBatchUpdateError] = useState<string | null>(null);
+
+  // Group submissions by batch
+  const groupedSubmissions = useMemo(() => {
+    if (!cards?.data || !batches.length) return [];
+
+    const submissionsMap = new Map<number | null, CardType[]>();
+    
+    // Initialize with empty arrays for all batches
+    batches.forEach(batch => {
+      submissionsMap.set(batch.id, []);
+    });
+
+    // Group submissions by batch_id
+    cards.data.forEach(submission => {
+      const batchId = submission.batch_id || null;
+      if (submissionsMap.has(batchId)) {
+        submissionsMap.get(batchId)!.push(submission);
+      } else {
+        submissionsMap.set(batchId, [submission]);
+      }
+    });
+
+    // Convert to array and sort batches by created_at desc
+    return batches.map(batch => ({
+      batch,
+      submissions: submissionsMap.get(batch.id) || []
+    }));
+  }, [cards?.data, batches]);
+
+  const toggleBatch = (batchId: number) => {
+    const newExpanded = new Set(expandedBatches);
+    if (newExpanded.has(batchId)) {
+      newExpanded.delete(batchId);
+    } else {
+      newExpanded.add(batchId);
+    }
+    setExpandedBatches(newExpanded);
+  };
+
+  const handleToggleBatchStatus = async (batchId: number, currentStatus: boolean) => {
+    try {
+      setBatchUpdateError(null);
+      
+      const response = await axiosInstance.put(`/batches/${batchId}`, {
+        is_active: !currentStatus
+      });
+
+      if (response.status === 200) {
+        // Update the batch in local state
+        setBatches(prevBatches => 
+          prevBatches.map(batch => 
+            batch.id === batchId 
+              ? { ...batch, is_active: !currentStatus }
+              : batch
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Failed to update batch status:', error);
+      setBatchUpdateError('Failed to update batch status. Please try again.');
+    }
+  };
+
+  useEffect(() => {
+    const fetchBatches = async () => {
+      try {
+        const batchData = await batchService.getAllBatches();
+        setBatches(batchData);
+      } catch (error) {
+        console.error('Failed to fetch batches:', error);
+      }
+    };
+
+    if (currentUser?.role === 'admin') {
+      fetchBatches();
+    }
+  }, [currentUser]);
+
+  const fetchCards = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await axiosInstance.get<ApiResponse | CardType[] | CardsResponse>("/card");
+      if (Array.isArray(response.data)) {
+        setCards({ data: response.data as CardType[] });
+      } else if (response.data && typeof response.data === 'object') {
+        const data = response.data as ApiResponse;
+        if (data.data && Array.isArray(data.data)) {
+          setCards({ data: data.data as CardType[] });
+        } else if (data.cards && Array.isArray(data.cards)) {
+          setCards({ data: data.cards });
+        } else if ('data' in data && data.data && typeof data.data === 'object' && 'data' in data.data) {
+          setCards(data.data as CardsResponse);
+        } else {
+          setCards({ data: [] });
+        }
+      } else {
+        setCards({ data: [] });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddBatchSuccess = async () => {
+    try {
+      // Refresh both cards and batches data
+      if (currentUser) {
+        await fetchCards();
+      }
+      
+      const batchesData = await batchService.getAllBatches();
+      setBatches(batchesData);
+      
+      console.log('Data refreshed successfully');
+    } catch (error) {
+      console.error('Failed to refresh data:', error);
+    }
+  };
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -163,40 +210,15 @@ export default function Submission() {
   }, [navigate]);
 
   useEffect(() => {
-    const fetchCards = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await axiosInstance.get<ApiResponse | CardType[] | CardsResponse>("/card");
-        if (Array.isArray(response.data)) {
-          setCards({ data: response.data as CardType[] });
-        } else if (response.data && typeof response.data === 'object') {
-          const data = response.data as ApiResponse;
-          if (data.data && Array.isArray(data.data)) {
-            setCards({ data: data.data as CardType[] });
-          } else if (data.cards && Array.isArray(data.cards)) {
-            setCards({ data: data.cards });
-          } else if ('data' in data && data.data && typeof data.data === 'object' && 'data' in data.data) {
-            setCards(data.data as CardsResponse);
-          } else {
-            setCards({ data: [] });
-          }
-        } else {
-          setCards({ data: [] });
-        }
-        
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (currentUser) {
       fetchCards();
     }
   }, [currentUser]);
+
+  // Update handleAddBatch
+  const handleAddBatch = () => {
+    setShowAddBatchModal(true);
+  };
 
   // filtered and sorted data
   const filteredSubmissions = useMemo(() => {
@@ -269,7 +291,7 @@ export default function Submission() {
       <div className="lg:pl-64 pl-4 pr-4 pb-4">
         <div className="mt-4">
           <h4 className="mb-4 lg:mb-6 text-base lg:text-lg font-medium text-gray-800">
-            All Submissions
+            Submissions by Batch
           </h4>
           
           <div className="mb-4 lg:mb-6">
@@ -277,164 +299,63 @@ export default function Submission() {
               onFilterChange={handleFilterChange}
               totalResults={filteredSubmissions.length}
               isLoading={loading}
+              showAddBatch={true}
+              onAddBatch={handleAddBatch}
             />
           </div>
-          
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-            {/* Mobile Card View */}
-            <div className="block lg:hidden">
-              {loading ? (
-                <div className="py-12 text-center text-gray-500">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p className="text-sm">Loading submissions...</p>
-                </div>
-              ) : filteredSubmissions.length === 0 ? (
-                <div className="py-12 text-center text-gray-500">
-                  <MdAssignment className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  {filters.searchTerm ? (
-                    <div className="px-4">
-                      <p className="text-lg font-medium mb-2">No submissions found</p>
-                      <p className="text-sm">Try adjusting your search criteria</p>
-                    </div>
-                  ) : (
-                    <p className="text-base px-4">No submissions found</p>
-                  )}
-                </div>
-              ) : (
-                <div className="divide-y divide-gray-200">
-                  {filteredSubmissions.map((item: CardType, index: number) => (
-                    <div key={item.id || index} className="p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-medium text-gray-900 truncate" title={item.name}>
-                            {item.name}
-                          </h3>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {item.brand} • {item.year}
-                          </p>
-                        </div>
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ml-2 flex-shrink-0 ${getStatusStyle(item.latest_status.status)}`}>
-                          {item.latest_status.status}
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-gray-600 mb-3">
-                        <div>
-                          <span className="font-medium">Serial:</span> {item.serial_number}
-                        </div>
-                        <div>
-                          <span className="font-medium">Grade:</span> {item.grade_target}
-                        </div>
-                        <div>
-                          <span className="font-medium">Grade:</span> {item.grade}
-                        </div>
-                        <div className="col-span-2">
-                          <span className="font-medium">Submitted:</span> {formatDate(new Date(item.created_at))}
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-end">
-                        <Link 
-                          to={`/dashboard/admin/submissions/${item.id}`}
-                          className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                        >
-                          <BsEye className="mr-1 h-3 w-3" />
-                          View Details
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            {/* Desktop Table View */}
-            <div className="hidden lg:block overflow-x-auto">
-              <table className="w-full text-sm text-left min-w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    {fields.map(field => (
-                      <th 
-                        className="py-3 px-6 font-medium text-gray-700 whitespace-nowrap" 
-                        key={field.name}
-                      >
-                        {field.label}
-                      </th>
-                    ))}
-                    <th className="py-3 px-6 font-medium text-gray-700 whitespace-nowrap">
-                      Detail
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {filteredSubmissions.map((item: CardType, index: number) => (
-                    <tr key={item.id || index} className="hover:bg-gray-50">
-                      <td className="py-3 px-6 text-gray-800">
-                        <div className="truncate max-w-[200px]" title={item.name}>
-                          {item.name}
-                        </div>
-                      </td>
-                      <td className="py-3 px-6 whitespace-nowrap text-gray-600">{item.year}</td>
-                      <td className="py-3 px-6 text-gray-600">
-                        <div className="truncate max-w-[120px]" title={item.brand}>
-                          {item.brand}
-                        </div>
-                      </td>
-                      <td className="py-3 px-6 text-gray-600">
-                        <div className="truncate max-w-[150px]" title={item.serial_number}>
-                          {item.serial_number}
-                        </div>
-                      </td>
-                      <td className="py-3 px-6 whitespace-nowrap text-gray-600">{item.grade_target}</td>
-                      <td className="py-3 px-6 whitespace-nowrap text-gray-600">{item.grade}</td>
-                      <td className="py-3 px-6 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusStyle(item.latest_status.status)}`}>
-                          {item.latest_status.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-6 whitespace-nowrap text-gray-600">
-                        {formatDate(new Date(item.created_at))}
-                      </td>
-                      <td className="py-3 px-6 whitespace-nowrap">
-                        <Link 
-                          to={`/dashboard/admin/submissions/${item.id}`}
-                          className="text-blue-600 hover:text-blue-800 transition-colors duration-200 inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-blue-50"
-                        >
-                          <BsEye className="text-lg" />
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Error Message */}
+          {batchUpdateError && (
+            <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-sm text-red-700">{batchUpdateError}</p>
+              <button 
+                onClick={() => setBatchUpdateError(null)}
+                className="text-red-500 hover:text-red-700 text-sm underline mt-1"
+              >
+                Dismiss
+              </button>
             </div>
-            
-            {/* Desktop Loading and Empty States */}
-            <div className="hidden lg:block">
-              {loading && (
-                <div className="py-12 text-center text-gray-500">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p className="text-base">Loading submissions...</p>
-                </div>
-              )}
-              
-              {filteredSubmissions.length === 0 && !loading && (
-                <div className="py-12 text-center text-gray-500">
-                  <MdAssignment className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  {filters.searchTerm ? (
-                    <div className="px-4">
-                      <p className="text-lg font-medium mb-2">No submissions found</p>
-                      <p className="text-sm">Try adjusting your search criteria</p>
-                    </div>
-                  ) : (
-                    <p className="text-base px-4">No submissions found</p>
-                  )}
-                </div>
-              )}
+          )}
+
+          {/* Batch Accordions */}
+          {loading ? (
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8 sm:p-12">
+              <div className="text-center text-gray-500">
+                <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-600 mx-auto mb-3 sm:mb-4"></div>
+                <p className="text-sm sm:text-base">Loading batches and submissions...</p>
+              </div>
             </div>
-          </div>
+          ) : batches.length === 0 ? (
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8 sm:p-12">
+              <div className="text-center text-gray-500">
+                <MdAssignment className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-300 mb-3 sm:mb-4" />
+                <p className="text-base sm:text-lg font-medium mb-1 sm:mb-2">No batches found</p>
+                <p className="text-xs sm:text-sm">Create a new batch to get started</p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-0">
+              {groupedSubmissions.map(({ batch, submissions }) => (
+                <BatchAccordion
+                  key={batch.id}
+                  batch={batch}
+                  submissions={submissions}
+                  isOpen={expandedBatches.has(batch.id)}
+                  onToggle={() => toggleBatch(batch.id)}
+                  onToggleBatchStatus={handleToggleBatchStatus}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
+      
+      {/* Add Batch Modal */}
+      <AddBatchModal
+        isOpen={showAddBatchModal}
+        onClose={() => setShowAddBatchModal(false)}
+        onSuccess={handleAddBatchSuccess}
+      />
     </div>
   );
 }
