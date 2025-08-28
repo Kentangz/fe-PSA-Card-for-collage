@@ -6,7 +6,7 @@ import axiosInstance from "../../../lib/axiosInstance";
 import formatDate from "../../../utils/FormatDate";
 import { Link } from "react-router-dom";
 import { ImHome } from "react-icons/im";
-import { MdAssignmentAdd, MdTrackChanges } from "react-icons/md";
+import {MdTrackChanges } from "react-icons/md";
 import { BsEye } from "react-icons/bs";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
@@ -16,11 +16,6 @@ const menu = [
     title: "home",
     link: "/dashboard/user",
     icon: ImHome
-  },
-  {
-    title: "create submission",
-    link: "/dashboard/user/submissions",
-    icon: MdAssignmentAdd
   },
   {
     title: "track submission",

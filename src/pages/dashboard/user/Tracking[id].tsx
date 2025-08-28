@@ -7,7 +7,7 @@ import MobileTimeline from "../../../components/UserTimeline"; // NEW IMPORT
 import axiosInstance from "../../../lib/axiosInstance";
 import formatDate from "../../../utils/FormatDate";
 import { ImHome } from "react-icons/im";
-import { MdAssignmentAdd, MdTrackChanges } from "react-icons/md";
+import { MdTrackChanges } from "react-icons/md";
 import { BsArrowLeft, BsImage } from "react-icons/bs";
 import Cookies from "js-cookie";
 import { BE_URL } from "../../../lib/api";
@@ -17,11 +17,6 @@ const menu = [
     title: "home",
     link: "/dashboard/user",
     icon: ImHome
-  },
-  {
-    title: "create submission",
-    link: "/dashboard/user/submissions",
-    icon: MdAssignmentAdd
   },
   {
     title: "track submission",

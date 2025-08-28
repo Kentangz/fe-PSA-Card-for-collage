@@ -1,4 +1,3 @@
-// src/routes/ProtectedRoute.tsx
 import { Navigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import type { JSX } from "react";
