@@ -35,6 +35,7 @@ interface Batch {
 
 export interface CardType {
   id: string | number;
+  user_id: number;
   name: string;
   year: string;
   brand: string;
