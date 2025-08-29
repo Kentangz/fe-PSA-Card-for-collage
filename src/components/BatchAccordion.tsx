@@ -1,91 +1,16 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { BsEye } from "react-icons/bs";
-import { MdAssignment } from "react-icons/md";
+import { useState, useEffect } from "react";
 import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
-import formatDate from "../utils/FormatDate";
-import type { CardType, BatchType } from "../types/submission";
-
-// Field configuration for table headers
-const fields = [
-  {
-    label: "Name",
-    name: "name",
-    shortLabel: "Name"
-  },
-  {
-    label: "Year",
-    name: "year",
-    shortLabel: "Year"
-  },
-  {
-    label: "Brand",
-    name: "brand",
-    shortLabel: "Brand"
-  },
-  {
-    label: "Serial Number",
-    name: "serial_number",
-    shortLabel: "Serial"
-  },
-  {
-    label: "Grade Target",
-    name: "grade_target",
-    shortLabel: "Grade"
-  },
-  {
-    label: "Grade",
-    name: "grade",
-    shortLabel: "Grade"
-  },
-  {
-    label: "Status",
-    name: "status",
-    shortLabel: "Status"
-  },
-  {
-    label: "Submitted at",
-    name: "submitted_at",
-    shortLabel: "Date"
-  },
-];
-
-const getStatusStyle = (status: string) => {
-  const normalizedStatus = status.toLowerCase().trim();
-  
-  switch (normalizedStatus) {
-    case 'submitted':
-      return 'bg-orange-100 text-orange-800';
-    case 'accepted':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'rejected':
-      return 'bg-red-100 text-red-800';
-    case 'on process':
-    case 'processing':
-    case 'in_process':
-      return 'bg-blue-100 text-blue-800';
-    case 'done':
-    case 'completed':
-      return 'bg-green-100 text-green-800';
-    case 'pending':
-      return 'bg-gray-100 text-gray-800';
-    default:
-      // Handle variations in status names
-      if (normalizedStatus.includes('submit')) {
-        return 'bg-orange-100 text-orange-800';
-      } else if (normalizedStatus.includes('accept')) {
-        return 'bg-yellow-100 text-yellow-800';
-      } else if (normalizedStatus.includes('reject')) {
-        return 'bg-red-100 text-red-800';
-      } else if (normalizedStatus.includes('process')) {
-        return 'bg-blue-100 text-blue-800';
-      } else if (normalizedStatus.includes('done') || normalizedStatus.includes('complete')) {
-        return 'bg-green-100 text-green-800';
-      } else {
-        return 'bg-gray-100 text-gray-800';
-      }
-  }
-};
+import { MdAssignment } from "react-icons/md";
+import UserPaymentGroup from "./UserPaymentGroup";
+import PaymentModal from "./PaymentModal";
+import { batchPaymentService } from "../services/batchPaymentService";
+import { transformToUserPaymentGroups } from "../utils/batchPaymentUtils";
+import type { 
+  CardType, 
+  BatchType, 
+  UserPaymentGroup as UserPaymentGroupType,
+  BatchPaymentsResponse 
+} from "../types/submission";
 
 interface BatchAccordionProps {
   batch: BatchType;
@@ -103,14 +28,42 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
   onToggleBatchStatus 
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [batchPaymentsData, setBatchPaymentsData] = useState<BatchPaymentsResponse | null>(null);
+  const [paymentDataLoaded, setPaymentDataLoaded] = useState(false);
+  const [expandedUsers, setExpandedUsers] = useState<Set<number>>(new Set());
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedUserGroup, setSelectedUserGroup] = useState<UserPaymentGroupType | null>(null);
   
   const statusText = batch.is_active ? "Open" : "Closed";
   const statusStyle = batch.is_active 
     ? "bg-green-100 text-green-800" 
     : "bg-red-100 text-red-800";
 
+  // Fetch payment data when batch is expanded
+  useEffect(() => {
+    const fetchPaymentData = async () => {
+      if (isOpen && !paymentDataLoaded && submissions.length > 0) {
+        try {
+          const data = await batchPaymentService.getByBatch(batch.id);
+          setBatchPaymentsData(data);
+        } catch (error) {
+          console.error('Failed to fetch batch payment data:', error);
+          // Continue without payment data - graceful fallback
+          setBatchPaymentsData(null);
+        } finally {
+          setPaymentDataLoaded(true);
+        }
+      }
+    };
+
+    fetchPaymentData();
+  }, [isOpen, batch.id, paymentDataLoaded, submissions.length]);
+
+  // Transform submissions to user groups
+  const userPaymentGroups = transformToUserPaymentGroups(submissions, batchPaymentsData || undefined);
+
   const handleToggleBatchStatus = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent accordion toggle
+    e.stopPropagation();
     setIsUpdating(true);
     try {
       await onToggleBatchStatus(batch.id, batch.is_active);
@@ -119,100 +72,169 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
     }
   };
 
+  const toggleUserGroup = (userId: number) => {
+    const newExpanded = new Set(expandedUsers);
+    if (newExpanded.has(userId)) {
+      newExpanded.delete(userId);
+    } else {
+      newExpanded.add(userId);
+    }
+    setExpandedUsers(newExpanded);
+  };
+
+  const handlePaymentAction = async (userGroup: UserPaymentGroupType, action: string) => {
+    try {
+      switch (action) {
+        case 'create':
+        case 'update':
+          // Open modal for create/update
+          setSelectedUserGroup(userGroup);
+          setShowPaymentModal(true);
+          break;
+        case 'send':
+          if (userGroup.paymentInfo?.id) {
+            await batchPaymentService.sendPaymentLink(userGroup.paymentInfo.id);
+            // Refresh payment data
+            await refreshPaymentData();
+          }
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      console.error('Payment action failed:', error);
+      // TODO: Show error message to user
+    }
+  };
+
+  const refreshPaymentData = async () => {
+    try {
+      const data = await batchPaymentService.getByBatch(batch.id);
+      setBatchPaymentsData(data);
+    } catch (error) {
+      console.error('Failed to refresh payment data:', error);
+    }
+  };
+
+  const handlePaymentModalSuccess = async () => {
+    await refreshPaymentData();
+    setShowPaymentModal(false);
+    setSelectedUserGroup(null);
+  };
+
+  const handlePaymentModalClose = () => {
+    setShowPaymentModal(false);
+    setSelectedUserGroup(null);
+  };
+
   return (
     <div className="border border-gray-200 rounded-lg shadow-sm mb-4 bg-white overflow-hidden">
-      {/* Accordion Header */}
-      <button
-        onClick={onToggle}
-        className="w-full px-3 sm:px-4 lg:px-6 py-3 sm:py-4 flex items-center justify-between hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
-        aria-expanded={isOpen}
-        aria-controls={`batch-content-${batch.id}`}
-      >
-        <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-          {isOpen ? (
-            <ChevronDownIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 flex-shrink-0" />
-          ) : (
-            <ChevronRightIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 flex-shrink-0" />
-          )}
-          
-          {/* Desktop Header (lg and above) */}
-          <div className="hidden lg:flex items-center space-x-4 xl:space-x-6 text-left flex-1 min-w-0">
-            <div className="min-w-0">
-              <h3 className="text-lg xl:text-xl font-semibold text-gray-900 truncate">
-                {batch.batch_number}
-              </h3>
-              <p className="text-sm text-gray-600 truncate">{batch.register_number}</p>
-            </div>
+      {/* Accordion Header - Fixed: Separated buttons */}
+      <div className="flex items-center hover:bg-gray-50 transition-colors duration-200">
+        {/* Accordion Toggle Button */}
+        <button
+          onClick={onToggle}
+          className="flex-1 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset min-w-0"
+          aria-expanded={isOpen}
+          aria-controls={`batch-content-${batch.id}`}
+        >
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+            {isOpen ? (
+              <ChevronDownIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 flex-shrink-0" />
+            ) : (
+              <ChevronRightIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 flex-shrink-0" />
+            )}
             
-            <div className="flex items-center space-x-3 xl:space-x-4 flex-shrink-0">
-              <span className="inline-flex px-2.5 py-1 text-xs xl:text-sm font-medium rounded-full bg-blue-100 text-blue-800 whitespace-nowrap">
-                {batch.category}
-              </span>
+            {/* Desktop Header (lg and above) */}
+            <div className="hidden lg:flex items-center space-x-4 xl:space-x-6 text-left flex-1 min-w-0">
+              <div className="min-w-0">
+                <h3 className="text-lg xl:text-xl font-semibold text-gray-900 truncate">
+                  {batch.batch_number}
+                </h3>
+                <p className="text-sm text-gray-600 truncate">{batch.register_number}</p>
+              </div>
               
-              <span className={`inline-flex px-2.5 py-1 text-xs xl:text-sm font-medium rounded-full whitespace-nowrap ${statusStyle}`}>
-                {statusText}
-              </span>
-              
-              <span className="text-xs xl:text-sm text-gray-600 whitespace-nowrap">
-                {submissions.length > 0 
-                  ? `${submissions.length} submission${submissions.length > 1 ? 's' : ''}` 
-                  : 'No submissions'
-                }
-              </span>
-            </div>
-          </div>
-
-          {/* Tablet Header (md to lg) */}
-          <div className="hidden md:flex lg:hidden items-center justify-between text-left flex-1 min-w-0">
-            <div className="min-w-0 flex-1 mr-4">
-              <h3 className="text-base font-semibold text-gray-900 truncate">
-                {batch.batch_number}
-              </h3>
-              <p className="text-sm text-gray-600 truncate">{batch.register_number}</p>
-              <div className="flex items-center space-x-2 mt-1">
-                <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+              <div className="flex items-center space-x-3 xl:space-x-4 flex-shrink-0">
+                <span className="inline-flex px-2.5 py-1 text-xs xl:text-sm font-medium rounded-full bg-blue-100 text-blue-800 whitespace-nowrap">
                   {batch.category}
                 </span>
-                <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${statusStyle}`}>
+                
+                <span className={`inline-flex px-2.5 py-1 text-xs xl:text-sm font-medium rounded-full whitespace-nowrap ${statusStyle}`}>
+                  {statusText}
+                </span>
+                
+                <span className="text-xs xl:text-sm text-gray-600 whitespace-nowrap">
+                  {submissions.length > 0 
+                    ? `${submissions.length} submission${submissions.length > 1 ? 's' : ''}` 
+                    : 'No submissions'
+                  }
+                </span>
+                
+                {userPaymentGroups.length > 0 && (
+                  <span className="text-xs xl:text-sm text-gray-600 whitespace-nowrap">
+                    {userPaymentGroups.length} user{userPaymentGroups.length > 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Tablet Header (md to lg) */}
+            <div className="hidden md:flex lg:hidden items-center justify-between text-left flex-1 min-w-0">
+              <div className="min-w-0 flex-1 mr-4">
+                <h3 className="text-base font-semibold text-gray-900 truncate">
+                  {batch.batch_number}
+                </h3>
+                <p className="text-sm text-gray-600 truncate">{batch.register_number}</p>
+                <div className="flex items-center space-x-2 mt-1">
+                  <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                    {batch.category}
+                  </span>
+                  <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${statusStyle}`}>
+                    {statusText}
+                  </span>
+                </div>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <p className="text-xs text-gray-500">
+                  {submissions.length > 0 
+                    ? `${submissions.length} submission${submissions.length > 1 ? 's' : ''}` 
+                    : 'No submissions'
+                  }
+                </p>
+                {userPaymentGroups.length > 0 && (
+                  <p className="text-xs text-gray-500">
+                    {userPaymentGroups.length} user{userPaymentGroups.length > 1 ? 's' : ''}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Mobile Header (sm and below) */}
+            <div className="md:hidden text-left flex-1 min-w-0">
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900 truncate">
+                {batch.batch_number}
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-600 truncate">{batch.register_number}</p>
+              <div className="flex items-center space-x-1.5 mt-1">
+                <span className="inline-flex px-1.5 py-0.5 text-xs font-medium rounded bg-blue-100 text-blue-800 truncate max-w-20">
+                  {batch.category}
+                </span>
+                <span className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${statusStyle}`}>
                   {statusText}
                 </span>
               </div>
-            </div>
-            <div className="text-right flex-shrink-0">
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 mt-0.5">
                 {submissions.length > 0 
-                  ? `${submissions.length} submission${submissions.length > 1 ? 's' : ''}` 
-                  : 'No submissions'
+                  ? `${submissions.length} item${submissions.length > 1 ? 's' : ''} • ${userPaymentGroups.length} user${userPaymentGroups.length > 1 ? 's' : ''}` 
+                  : 'Empty'
                 }
               </p>
             </div>
           </div>
+        </button>
 
-          {/* Mobile Header (sm and below) */}
-          <div className="md:hidden text-left flex-1 min-w-0">
-            <h3 className="text-sm sm:text-base font-semibold text-gray-900 truncate">
-              {batch.batch_number}
-            </h3>
-            <p className="text-xs sm:text-sm text-gray-600 truncate">{batch.register_number}</p>
-            <div className="flex items-center space-x-1.5 mt-1">
-              <span className="inline-flex px-1.5 py-0.5 text-xs font-medium rounded bg-blue-100 text-blue-800 truncate max-w-20">
-                {batch.category}
-              </span>
-              <span className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${statusStyle}`}>
-                {statusText}
-              </span>
-            </div>
-            <p className="text-xs text-gray-500 mt-0.5">
-              {submissions.length > 0 
-                ? `${submissions.length} item${submissions.length > 1 ? 's' : ''}` 
-                : 'Empty'
-              }
-            </p>
-          </div>
-        </div>
-
-        {/* Toggle Batch Status Button */}
-        <div className="flex items-center ml-2 sm:ml-4 flex-shrink-0">
+        {/* Separate Toggle Batch Status Button - Now outside the accordion button */}
+        <div className="flex items-center px-2 sm:px-3 lg:px-4 py-3 sm:py-4 flex-shrink-0 border-l border-gray-200">
           <button
             onClick={handleToggleBatchStatus}
             disabled={isUpdating}
@@ -240,7 +262,7 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
             )}
           </button>
         </div>
-      </button>
+      </div>
 
       {/* Accordion Content */}
       {isOpen && (
@@ -251,145 +273,37 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
           {submissions.length === 0 ? (
             <div className="py-8 sm:py-12 text-center text-gray-500">
               <MdAssignment className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-300 mb-3 sm:mb-4" />
-              <p className="text-sm sm:text-base">Belum ada submission</p>
+              <p className="text-sm sm:text-base">There is no submission yet</p>
+            </div>
+          ) : userPaymentGroups.length === 0 ? (
+            <div className="py-8 sm:py-12 text-center text-gray-500">
+              <MdAssignment className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-300 mb-3 sm:mb-4" />
+              <p className="text-sm sm:text-base">Loading user payment data...</p>
             </div>
           ) : (
-            <>
-              {/* Mobile Card View (sm and below) */}
-              <div className="block md:hidden">
-                <div className="divide-y divide-gray-200">
-                  {submissions.map((item: CardType, index: number) => (
-                    <div key={item.id || index} className="p-3 sm:p-4">
-                      <div className="flex justify-between items-start mb-2 sm:mb-3">
-                        <div className="flex-1 min-w-0 mr-3">
-                          <h3 className="text-sm font-medium text-gray-900 truncate" title={item.name}>
-                            {item.name}
-                          </h3>
-                          <p className="text-xs text-gray-500 mt-0.5 sm:mt-1 truncate">
-                            {item.brand} • {item.year}
-                          </p>
-                        </div>
-                        <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ${getStatusStyle(item.latest_status.status)}`}>
-                          <span className="truncate max-w-16">
-                            {item.latest_status.status}
-                          </span>
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-gray-600 mb-2 sm:mb-3">
-                        <div className="truncate">
-                          <span className="font-medium">Serial:</span> 
-                          <span className="ml-1" title={item.serial_number}>
-                            {item.serial_number}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="font-medium">Target:</span> {item.grade_target}
-                        </div>
-                        <div>
-                          <span className="font-medium">Grade:</span> {item.grade}
-                        </div>
-                        <div>
-                          <span className="font-medium">Date:</span> 
-                          <span className="ml-1">
-                            {formatDate(new Date(item.created_at))}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-end">
-                        <Link 
-                          to={`/dashboard/admin/submissions/${item.id}`}
-                          className="inline-flex items-center px-2.5 sm:px-3 py-1 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
-                        >
-                          <BsEye className="mr-1 h-3 w-3" />
-                          <span className="hidden xs:inline">View Details</span>
-                          <span className="xs:hidden">View</span>
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Tablet and Desktop Table View (md and above) */}
-              <div className="hidden md:block">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left min-w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        {fields.map(field => (
-                          <th 
-                            className="py-2.5 md:py-3 px-3 md:px-4 lg:px-6 font-medium text-gray-700 whitespace-nowrap text-xs md:text-sm" 
-                            key={field.name}
-                          >
-                            <span className="hidden lg:inline">{field.label}</span>
-                            <span className="lg:hidden">{field.shortLabel}</span>
-                          </th>
-                        ))}
-                        <th className="py-2.5 md:py-3 px-3 md:px-4 lg:px-6 font-medium text-gray-700 whitespace-nowrap text-xs md:text-sm">
-                          Detail
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {submissions.map((item: CardType, index: number) => (
-                        <tr key={item.id || index} className="hover:bg-gray-50 transition-colors duration-150">
-                          <td className="py-2.5 md:py-3 px-3 md:px-4 lg:px-6 text-gray-800">
-                            <div className="truncate max-w-32 md:max-w-40 lg:max-w-48 xl:max-w-none" title={item.name}>
-                              {item.name}
-                            </div>
-                          </td>
-                          <td className="py-2.5 md:py-3 px-3 md:px-4 lg:px-6 whitespace-nowrap text-gray-600 text-xs md:text-sm">
-                            {item.year}
-                          </td>
-                          <td className="py-2.5 md:py-3 px-3 md:px-4 lg:px-6 text-gray-600">
-                            <div className="truncate max-w-20 md:max-w-28 lg:max-w-32 xl:max-w-none" title={item.brand}>
-                              {item.brand}
-                            </div>
-                          </td>
-                          <td className="py-2.5 md:py-3 px-3 md:px-4 lg:px-6 text-gray-600">
-                            <div className="truncate max-w-20 md:max-w-32 lg:max-w-40 xl:max-w-none" title={item.serial_number}>
-                              {item.serial_number}
-                            </div>
-                          </td>
-                          <td className="py-2.5 md:py-3 px-3 md:px-4 lg:px-6 whitespace-nowrap text-gray-600 text-xs md:text-sm">
-                            {item.grade_target}
-                          </td>
-                          <td className="py-2.5 md:py-3 px-3 md:px-4 lg:px-6 whitespace-nowrap text-gray-600 text-xs md:text-sm">
-                            {item.grade}
-                          </td>
-                          <td className="py-2.5 md:py-3 px-3 md:px-4 lg:px-6 whitespace-nowrap">
-                            <span className={`inline-flex px-1.5 md:px-2 py-0.5 md:py-1 text-xs font-medium rounded-full ${getStatusStyle(item.latest_status.status)}`}>
-                              <span className="truncate max-w-20 md:max-w-none">
-                                {item.latest_status.status}
-                              </span>
-                            </span>
-                          </td>
-                          <td className="py-2.5 md:py-3 px-3 md:px-4 lg:px-6 whitespace-nowrap text-gray-600 text-xs md:text-sm">
-                            <div className="truncate max-w-20 md:max-w-24 lg:max-w-none">
-                              {formatDate(new Date(item.created_at))}
-                            </div>
-                          </td>
-                          <td className="py-2.5 md:py-3 px-3 md:px-4 lg:px-6 whitespace-nowrap">
-                            <Link 
-                              to={`/dashboard/admin/submissions/${item.id}`}
-                              className="text-blue-600 hover:text-blue-800 transition-colors duration-200 inline-flex items-center justify-center w-7 h-7 md:w-8 md:h-8 rounded-full hover:bg-blue-50"
-                              title="View Details"
-                            >
-                              <BsEye className="text-sm md:text-base" />
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </>
+            <div className="divide-y divide-gray-100">
+              {userPaymentGroups.map((userGroup) => (
+                <UserPaymentGroup
+                  key={userGroup.user.id}
+                  userGroup={userGroup}
+                  isOpen={expandedUsers.has(userGroup.user.id)}
+                  onToggle={() => toggleUserGroup(userGroup.user.id)}
+                  onPaymentAction={handlePaymentAction}
+                />
+              ))}
+            </div>
           )}
         </div>
       )}
+      
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={handlePaymentModalClose}
+        userGroup={selectedUserGroup}
+        batchId={batch.id}
+        onSuccess={handlePaymentModalSuccess}
+      />
     </div>
   );
 };

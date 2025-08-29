@@ -25,7 +25,6 @@ export interface UpdateBatchData {
 }
 
 export const batchService = {
-	// Get all batches (admin)
 	getAllBatches: async (
 		status?: "active" | "inactive"
 	): Promise<BatchType[]> => {
@@ -36,19 +35,16 @@ export const batchService = {
 		return response.data;
 	},
 
-	// Get active batches (user)
 	getActiveBatches: async (): Promise<BatchType[]> => {
 		const response = await axiosInstance.get<BatchType[]>("/active-batches");
 		return response.data;
 	},
 
-	// Get specific batch with submissions (admin)
 	getBatch: async (id: number): Promise<BatchType> => {
 		const response = await axiosInstance.get<BatchType>(`/batches/${id}`);
 		return response.data;
 	},
 
-	// Create new batch (admin)
 	createBatch: async (
 		data: CreateBatchData
 	): Promise<{ message: string; batch: BatchType }> => {
@@ -59,7 +55,6 @@ export const batchService = {
 		return response.data;
 	},
 
-	// Update batch (admin)
 	updateBatch: async (
 		id: number,
 		data: UpdateBatchData

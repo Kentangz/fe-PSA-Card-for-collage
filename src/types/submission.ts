@@ -29,6 +29,42 @@ export interface BatchType {
 	updated_at: string;
 }
 
+// New BatchPayment related types
+export interface UserType {
+	id: number;
+	name: string;
+	email: string;
+	role: string;
+	is_active: boolean;
+}
+
+export interface BatchPaymentType {
+	id: number;
+	batch_id: number;
+	user_id: number;
+	payment_url: string | null;
+	is_sent: boolean;
+	sent_at: string | null;
+	total_submissions: number;
+	created_at: string;
+	updated_at: string;
+	user: UserType;
+	batch: BatchType;
+	submissions_detail: CardType[];
+}
+
+export interface BatchPaymentsResponse {
+	batch: BatchType;
+	payments: BatchPaymentType[];
+}
+
+export interface UserPaymentGroup {
+	user: UserType;
+	submissions: CardType[];
+	paymentInfo: BatchPaymentType | null;
+}
+
+// Existing types
 export interface CardsResponse {
 	data: CardType[];
 }
@@ -43,13 +79,6 @@ export interface FilterOptions {
 	sortBy: string;
 	sortOrder: "asc" | "desc";
 }
-
-export type UserType = {
-	name: string;
-	email: string;
-	role: string;
-	is_active: boolean;
-};
 
 export interface SubmissionStats {
 	total: number;
