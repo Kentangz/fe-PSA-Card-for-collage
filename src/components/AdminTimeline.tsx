@@ -41,7 +41,7 @@ interface EnhancedTimelineProps {
   statuses: StatusType[];
   currentStatus: string;
   grade?: string | null;
-  cardId: string | number; // Add cardId prop
+  cardId: string | number; 
 }
 
 const TIMELINE_PHASES: TimelinePhase[] = [
@@ -60,8 +60,8 @@ const TIMELINE_PHASES: TimelinePhase[] = [
   },
   {
     id: "japan_wh",
-    title: "Japan Warehouse",
-    description: "Processing at Japan warehouse",
+    title: "Grading Facility Warehouse",
+    description: "Processing at grading facility warehouse",
     statuses: ["received_by_jp_wh", "delivery_to_psa"],
     icon: "🏢",
     color: {
@@ -73,8 +73,8 @@ const TIMELINE_PHASES: TimelinePhase[] = [
   },
   {
     id: "psa_grading",
-    title: "PSA Grading Process",
-    description: "Professional card grading by PSA",
+    title: "Professional Grading Process",
+    description: "Professional card grading service",
     statuses: [
       "psa_arrival_of_submission",
       "psa_order_processed",
@@ -134,29 +134,30 @@ const TIMELINE_PHASES: TimelinePhase[] = [
   }
 ];
 
+// Updated STATUS_LABELS to match STATUS_DISPLAY_MAPPING from UpdateCard.tsx
 const STATUS_LABELS: Record<string, string> = {
-  "submit": "Submitted",
+  "submit": "Submit",
   "received_by_us": "Received by Us",
   "data_input": "Data Input",
-  "delivery_to_jp": "Delivery to Japan",
-  "received_by_jp_wh": "Received by JP Warehouse",
-  "delivery_to_psa": "Delivery to PSA",
-  "psa_arrival_of_submission": "PSA Arrival",
-  "psa_order_processed": "PSA Order Processed",
-  "psa_research": "PSA Research",
-  "psa_grading": "PSA Grading",
-  "psa_holder_sealed": "PSA Holder Sealed",
-  "psa_qc": "PSA Quality Check",
-  "psa_grading_completed": "PSA Grading Completed",
-  "psa_completion": "PSA Completion",
-  "delivery_to_jp_wh": "Delivery to JP Warehouse",
+  "delivery_to_jp": "Delivery to Grading Facility",
+  "received_by_jp_wh": "Received by Grading Facility",
+  "delivery_to_psa": "Delivery to Grading Service",
+  "psa_arrival_of_submission": "Grading Service Arrival",
+  "psa_order_processed": "Grading Order Processed",
+  "psa_research": "Grading Research",
+  "psa_grading": "Grading in Progress",
+  "psa_holder_sealed": "Grading Holder Sealed",
+  "psa_qc": "Grading Quality Check",
+  "psa_grading_completed": "Grading Completed",
+  "psa_completion": "Grading Service Completion",
+  "delivery_to_jp_wh": "Delivery to Facility Warehouse",
   "waiting_to_delivery_to_id": "Waiting Delivery to Indonesia",
   "delivery_process_to_id": "Delivery Process to Indonesia",
   "received_by_wh_id": "Received by Indonesia Warehouse",
   "payment_request": "Payment Request",
   "delivery_to_customer": "Delivery to Customer",
   "received_by_customer": "Received by Customer",
-  "done": "Completed",
+  "done": "Done",
   "rejected": "Rejected"
 };
 
@@ -184,30 +185,27 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade, cardI
     }
   }, [cardId]);
 
-  // Fetch delivery proofs when status is completed
   useEffect(() => {
     if (isCompleted && cardId) {
       fetchDeliveryProofs();
     }
   }, [isCompleted, cardId, fetchDeliveryProofs]);
 
-  // Get phase status (completed, current, pending)
   const getPhaseStatus = (phase: TimelinePhase) => {
     const phaseStatuses = statuses.filter(s => phase.statuses.includes(s.status));
     const hasCurrentStatus = phase.statuses.includes(currentStatus);
-    
+
     if (phase.statuses.includes("done") || phase.statuses.includes("rejected")) {
       const finalStatus = statuses.find(s => s.status === "done" || s.status === "rejected");
       if (finalStatus) return "completed";
     }
-    
+
     if (phaseStatuses.length === 0) return "pending";
     if (hasCurrentStatus) return "current";
     if (phaseStatuses.length > 0) return "completed";
     return "pending";
   };
 
-  // Toggle phase expansion
   const togglePhase = (phaseId: string) => {
     const newExpanded = new Set(expandedPhases);
     if (newExpanded.has(phaseId)) {
@@ -218,7 +216,6 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade, cardI
     setExpandedPhases(newExpanded);
   };
 
-  // Get status icon
   const getStatusIcon = (status: string, isActive: boolean) => {
     if (status === currentStatus && isActive) {
       return (
@@ -227,7 +224,7 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade, cardI
         </div>
       );
     }
-    
+
     const statusObj = statuses.find(s => s.status === status);
     if (statusObj) {
       return (
@@ -236,7 +233,7 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade, cardI
         </div>
       );
     }
-    
+
     return (
       <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-gray-300 flex items-center justify-center">
         <div className="w-1 h-1 sm:w-2 sm:h-2 rounded-full bg-gray-500"></div>
@@ -244,7 +241,6 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade, cardI
     );
   };
 
-  // Get phase progress
   const getPhaseProgress = (phase: TimelinePhase) => {
     const completed = statuses.filter(s => phase.statuses.includes(s.status)).length;
     const total = phase.statuses.length;
@@ -262,7 +258,7 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade, cardI
             <span className="text-xs sm:text-sm text-blue-600 font-medium">Active</span>
           </div>
         </div>
-        
+
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
@@ -285,7 +281,7 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade, cardI
       {/* Timeline Phases - Responsive */}
       <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 lg:p-6">
         <h4 className="font-semibold text-gray-900 mb-3 text-base sm:text-lg">Phase Progress</h4>
-        
+
         <div className="space-y-3">
           {TIMELINE_PHASES.map((phase) => {
             const phaseStatus = getPhaseStatus(phase);
@@ -296,8 +292,8 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade, cardI
               <div
                 key={phase.id}
                 className={`border rounded-lg transition-all duration-200 ${
-                  phaseStatus === "current" 
-                    ? `${phase.color.border} ${phase.color.bg} shadow-md` 
+                  phaseStatus === "current"
+                    ? `${phase.color.border} ${phase.color.bg} shadow-md`
                     : phaseStatus === "completed"
                     ? "border-green-200 bg-green-50"
                     : "border-gray-200 bg-gray-50"
@@ -314,7 +310,7 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade, cardI
                       <div className={`text-lg sm:text-2xl ${phase.color.icon} flex-shrink-0`}>
                         {phase.icon}
                       </div>
-                      
+
                       {/* Phase Info */}
                       <div className="min-w-0 flex-1">
                         <h4 className={`font-medium text-sm sm:text-base ${phase.color.text} truncate`}>
@@ -340,14 +336,14 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade, cardI
 
                       {/* Status Badge */}
                       <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        phaseStatus === "completed" 
+                        phaseStatus === "completed"
                           ? "bg-green-100 text-green-800"
                           : phaseStatus === "current"
                           ? "bg-blue-100 text-blue-800"
                           : "bg-gray-100 text-gray-600"
                       }`}>
                         {phaseStatus === "completed" ? "✓" :
-                         phaseStatus === "current" ? "⏳" : "⏸"}
+                          phaseStatus === "current" ? "⏳" : "⏸"}
                       </div>
 
                       {/* Expand Icon */}
@@ -367,7 +363,7 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade, cardI
                       {phase.statuses.map((statusKey, index) => {
                         const statusObj = statuses.find(s => s.status === statusKey);
                         const isCurrentStep = statusKey === currentStatus;
-                        
+
                         return (
                           <div key={statusKey} className="flex items-start gap-2 sm:gap-3">
                             {/* Timeline Line */}
@@ -383,19 +379,19 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade, cardI
                               <div className="flex items-center justify-between">
                                 <div className="min-w-0 flex-1">
                                   <p className={`font-medium text-xs sm:text-sm truncate ${
-                                    isCurrentStep ? "text-blue-600" : 
+                                    isCurrentStep ? "text-blue-600" :
                                     statusObj ? "text-green-600" : "text-gray-500"
                                   }`}>
                                     {STATUS_LABELS[statusKey] || statusKey}
                                   </p>
-                                  
+
                                   {/* Special messages */}
                                   {statusKey === "done" && grade && (
                                     <p className="text-xs text-green-600 mt-1 truncate">
                                       Grade: {grade}
                                     </p>
                                   )}
-                                  
+
                                   {isCurrentStep && (
                                     <p className="text-xs text-blue-600 mt-1">
                                       Processing...
@@ -423,11 +419,11 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade, cardI
         </div>
       </div>
 
-      {/* PSA Grade - Only show if grade exists */}
+      {/* PSA Grade*/}
       {grade && (
         <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 lg:p-6">
           <h4 className="font-semibold text-gray-900 mb-3 text-base sm:text-lg">PSA Grade</h4>
-          
+
           <div className="text-center p-4 sm:p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="text-3xl sm:text-4xl font-bold text-yellow-600 mb-2">{grade}</div>
             <div className="text-sm sm:text-base text-yellow-700">Final Grade Result</div>
@@ -442,7 +438,7 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade, cardI
             <BsImage className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
             <h4 className="font-semibold text-gray-900 text-base sm:text-lg">Delivery Confirmation</h4>
           </div>
-          
+
           {loadingProofs ? (
             <div className="text-center py-8">
               <div className="animate-pulse">
@@ -485,13 +481,13 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade, cardI
 
       {/* Image Modal for Delivery Proofs */}
       {selectedImage && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
           onClick={() => setSelectedImage(null)}
         >
           <div className="max-w-4xl max-h-full relative">
-            <img 
-              src={selectedImage} 
+            <img
+              src={selectedImage}
               alt="Delivery proof full size"
               className="max-w-full max-h-full object-contain"
             />

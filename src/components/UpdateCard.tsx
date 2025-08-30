@@ -2,6 +2,8 @@ import axiosInstance from "../lib/axiosInstance";
 import type { FormEvent } from "react";
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { batchPaymentService } from "../services/batchPaymentService";
+import type { BatchPaymentType } from "../types/submission";
 
 // Type definition
 type LatestStatus = {
@@ -32,10 +34,74 @@ type DeliveryProofResponse = {
 
 type ButtonColor = 'green' | 'blue' | 'orange' | 'red' | 'gray';
 
+const STATUS_DISPLAY_MAPPING: Record<string, string> = {
+  'submit': 'Submit',
+  'rejected': 'Rejected', 
+  'received_by_us': 'Received by Us',
+  'data_input': 'Data Input',
+  'delivery_to_jp': 'Delivery to Grading Facility',
+  'received_by_jp_wh': 'Received by Grading Facility',
+  'delivery_to_psa': 'Delivery to Grading Service',
+  'psa_arrival_of_submission': 'Grading Service Arrival',
+  'psa_order_processed': 'Grading Order Processed',
+  'psa_research': 'Grading Research',
+  'psa_grading': 'Grading in Progress',
+  'psa_holder_sealed': 'Grading Holder Sealed',
+  'psa_qc': 'Grading Quality Check',
+  'psa_grading_completed': 'Grading Completed',
+  'psa_completion': 'Grading Service Completion',
+  'delivery_to_jp_wh': 'Delivery to Facility Warehouse',
+  'waiting_to_delivery_to_id': 'Waiting Delivery to Indonesia',
+  'delivery_process_to_id': 'Delivery Process to Indonesia',
+  'received_by_wh_id': 'Received by Indonesia Warehouse',
+  'payment_request': 'Payment Request',
+  'delivery_to_customer': 'Delivery to Customer',
+  'received_by_customer': 'Received by Customer',
+  'done': 'Done'
+};
+
 export default function UpdateCard({ card }: { card?: CardType }) {
   const [deliveryProofs, setDeliveryProofs] = useState<DeliveryProof[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [batchPayment, setBatchPayment] = useState<BatchPaymentType | null>(null);
+  const [isFetchingBatchPayment, setIsFetchingBatchPayment] = useState(false);
+  const [batchPaymentError, setBatchPaymentError] = useState<string | null>(null);
 
+    const fetchBatchPayment = useCallback(async () => {
+    // Hanya fetch jika card ada batch_id dan user_id
+    if (!card?.batch_id || !card?.user_id) return;
+    
+    setIsFetchingBatchPayment(true);
+    setBatchPaymentError(null);
+    
+    try {
+      const response = await batchPaymentService.getByBatch(card.batch_id);
+      
+      // Filter untuk user yang sesuai dengan card
+      const userBatchPayment = response.payments.find(
+        payment => payment.user_id === card.user_id
+      );
+      
+      setBatchPayment(userBatchPayment || null);
+    } catch (error) {
+      console.error("Error fetching batch payment:", error);
+      setBatchPaymentError("Failed to fetch batch payment data");
+      setBatchPayment(null);
+    } finally {
+      setIsFetchingBatchPayment(false);
+    }
+    }, [card?.batch_id, card?.user_id]);
+  
+    useEffect(() => {
+    if (card?.latest_status.status === "received_by_wh_id") {
+      fetchBatchPayment();
+    }
+    }, [card?.latest_status.status, fetchBatchPayment]);
+  
+  const getStatusDisplayText = (status: string): string => {
+  return STATUS_DISPLAY_MAPPING[status] || status.replace(/_/g, ' ');
+};
+  
   const handleGradeSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
@@ -68,7 +134,20 @@ export default function UpdateCard({ card }: { card?: CardType }) {
       console.error(error);
     }
   };
-
+    const handleSendPaymentLink = async () => {
+    if (!batchPayment?.id) return;
+    
+    try {
+      await batchPaymentService.sendPaymentLink(batchPayment.id);
+      
+      // Re-fetch data untuk update status
+      await fetchBatchPayment();
+      
+      console.log("Payment link sent successfully");
+    } catch (error) {
+      console.error("Error sending payment link:", error);
+    }
+  };
   // Fetch delivery proofs for admin review
   const fetchDeliveryProofs = useCallback(async () => {
     if (!card?.id) return;
@@ -89,149 +168,149 @@ export default function UpdateCard({ card }: { card?: CardType }) {
   }, [card?.latest_status.status, fetchDeliveryProofs]);
 
   // Define workflow mapping - linear flow with next status
-  const getStatusConfig = (currentStatus: string) => {
-    const configs: Record<string, {
-      nextStatus: string;
-      nextLabel: string;
-      hasReject: boolean;
-      hasSpecialForm: boolean;
-      isWaitingUser?: boolean;
-      isBatchPaymentStatus?: boolean;
-    }> = {
-      'submit': {
-        nextStatus: 'received_by_us',
-        nextLabel: 'Accept Submission',
-        hasReject: true,
-        hasSpecialForm: false
-      },
-      'received_by_us': {
-        nextStatus: 'data_input',
-        nextLabel: 'Start Data Input',
-        hasReject: true,
-        hasSpecialForm: false
-      },
-      'data_input': {
-        nextStatus: 'delivery_to_jp',
-        nextLabel: 'Send to Japan',
-        hasReject: true,
-        hasSpecialForm: false,
-        isWaitingUser: true
-      },
-      'delivery_to_jp': {
-        nextStatus: 'received_by_jp_wh',
-        nextLabel: 'Mark as Received',
-        hasReject: true,
-        hasSpecialForm: false
-      },
-      'received_by_jp_wh': {
-        nextStatus: 'delivery_to_psa',
-        nextLabel: 'Send to PSA',
-        hasReject: true,
-        hasSpecialForm: false
-      },
-      'delivery_to_psa': {
-        nextStatus: 'psa_arrival_of_submission',
-        nextLabel: 'Mark PSA Arrival',
-        hasReject: true,
-        hasSpecialForm: false
-      },
-      'psa_arrival_of_submission': {
-        nextStatus: 'psa_order_processed',
-        nextLabel: 'Mark Order Processed',
-        hasReject: true,
-        hasSpecialForm: false
-      },
-      'psa_order_processed': {
-        nextStatus: 'psa_research',
-        nextLabel: 'Start Research',
-        hasReject: true,
-        hasSpecialForm: false
-      },
-      'psa_research': {
-        nextStatus: 'psa_grading',
-        nextLabel: 'Start Grading',
-        hasReject: true,
-        hasSpecialForm: false
-      },
-      'psa_grading': {
-        nextStatus: 'psa_holder_sealed',
-        nextLabel: 'Mark Holder Sealed',
-        hasReject: true,
-        hasSpecialForm: false
-      },
-      'psa_holder_sealed': {
-        nextStatus: 'psa_qc',
-        nextLabel: 'Start Quality Check',
-        hasReject: true,
-        hasSpecialForm: false
-      },
-      'psa_qc': {
-        nextStatus: 'psa_grading_completed',
-        nextLabel: 'Mark QC Complete',
-        hasReject: true,
-        hasSpecialForm: false
-      },
-      'psa_grading_completed': {
-        nextStatus: 'psa_completion',
-        nextLabel: 'Mark PSA Complete',
-        hasReject: true,
-        hasSpecialForm: false
-      },
-      'psa_completion': {
-        nextStatus: 'delivery_to_jp_wh',
-        nextLabel: 'Send to Japan Warehouse',
-        hasReject: true,
-        hasSpecialForm: false
-      },
-      'delivery_to_jp_wh': {
-        nextStatus: 'waiting_to_delivery_to_id',
-        nextLabel: 'Ready for Indonesia Delivery',
-        hasReject: true,
-        hasSpecialForm: false
-      },
-      'waiting_to_delivery_to_id': {
-        nextStatus: 'delivery_process_to_id',
-        nextLabel: 'Start Delivery to Indonesia',
-        hasReject: true,
-        hasSpecialForm: false
-      },
-      'delivery_process_to_id': {
-        nextStatus: 'received_by_wh_id',
-        nextLabel: 'Update Grade & Serial',
-        hasReject: true,
-        hasSpecialForm: true
-      },
-      'received_by_wh_id': {
-        nextStatus: 'payment_request',
-        nextLabel: 'Process via Batch Payment',
-        hasReject: true,
-        hasSpecialForm: false,
-        isBatchPaymentStatus: true
-      },
-      'payment_request': {
-        nextStatus: 'delivery_to_customer',
-        nextLabel: 'Start Customer Delivery',
-        hasReject: true,
-        hasSpecialForm: false,
-        isWaitingUser: true
-      },
-      'delivery_to_customer': {
-        nextStatus: 'received_by_customer',
-        nextLabel: 'Mark as Delivered',
-        hasReject: true,
-        hasSpecialForm: false
-      },
-      'received_by_customer': {
-        nextStatus: 'done',
-        nextLabel: 'Complete Process',
-        hasReject: false,
-        hasSpecialForm: false,
-        isWaitingUser: true
-      }
-    };
-
-    return configs[currentStatus] || null;
+const getStatusConfig = (currentStatus: string) => {
+  const configs: Record<string, {
+    nextStatus: string;
+    nextLabel: string;
+    hasReject: boolean;
+    hasSpecialForm: boolean;
+    isWaitingUser?: boolean;
+    isBatchPaymentStatus?: boolean;
+  }> = {
+    'submit': {
+      nextStatus: 'received_by_us',
+      nextLabel: 'Accept Submission',
+      hasReject: true,
+      hasSpecialForm: false
+    },
+    'received_by_us': {
+      nextStatus: 'data_input',
+      nextLabel: 'Start Data Input',
+      hasReject: true,
+      hasSpecialForm: false
+    },
+    'data_input': {
+      nextStatus: 'delivery_to_jp',
+      nextLabel: 'Send to Grading Facility',
+      hasReject: true,
+      hasSpecialForm: false,
+      isWaitingUser: true
+    },
+    'delivery_to_jp': {
+      nextStatus: 'received_by_jp_wh',
+      nextLabel: 'Mark Facility Receipt',
+      hasReject: true,
+      hasSpecialForm: false
+    },
+    'received_by_jp_wh': {
+      nextStatus: 'delivery_to_psa',
+      nextLabel: 'Send to Grading Service',
+      hasReject: true,
+      hasSpecialForm: false
+    },
+    'delivery_to_psa': {
+      nextStatus: 'psa_arrival_of_submission',
+      nextLabel: 'Mark Service Arrival',
+      hasReject: true,
+      hasSpecialForm: false
+    },
+    'psa_arrival_of_submission': {
+      nextStatus: 'psa_order_processed',
+      nextLabel: 'Mark Order Processed',
+      hasReject: true,
+      hasSpecialForm: false
+    },
+    'psa_order_processed': {
+      nextStatus: 'psa_research',
+      nextLabel: 'Start Research',
+      hasReject: true,
+      hasSpecialForm: false
+    },
+    'psa_research': {
+      nextStatus: 'psa_grading',
+      nextLabel: 'Start Grading',
+      hasReject: true,
+      hasSpecialForm: false
+    },
+    'psa_grading': {
+      nextStatus: 'psa_holder_sealed',
+      nextLabel: 'Mark Holder Sealed',
+      hasReject: true,
+      hasSpecialForm: false
+    },
+    'psa_holder_sealed': {
+      nextStatus: 'psa_qc',
+      nextLabel: 'Start Quality Check',
+      hasReject: true,
+      hasSpecialForm: false
+    },
+    'psa_qc': {
+      nextStatus: 'psa_grading_completed',
+      nextLabel: 'Mark QC Complete',
+      hasReject: true,
+      hasSpecialForm: false
+    },
+    'psa_grading_completed': {
+      nextStatus: 'psa_completion',
+      nextLabel: 'Mark Service Complete',
+      hasReject: true,
+      hasSpecialForm: false
+    },
+    'psa_completion': {
+      nextStatus: 'delivery_to_jp_wh',
+      nextLabel: 'Send to Facility Warehouse',
+      hasReject: true,
+      hasSpecialForm: false
+    },
+    'delivery_to_jp_wh': {
+      nextStatus: 'waiting_to_delivery_to_id',
+      nextLabel: 'Ready for Indonesia Delivery',
+      hasReject: true,
+      hasSpecialForm: false
+    },
+    'waiting_to_delivery_to_id': {
+      nextStatus: 'delivery_process_to_id',
+      nextLabel: 'Start Delivery to Indonesia',
+      hasReject: true,
+      hasSpecialForm: false
+    },
+    'delivery_process_to_id': {
+      nextStatus: 'received_by_wh_id',
+      nextLabel: 'Update Grade & Serial',
+      hasReject: true,
+      hasSpecialForm: true
+    },
+    'received_by_wh_id': {
+      nextStatus: 'payment_request',
+      nextLabel: 'Process via Batch Payment',
+      hasReject: true,
+      hasSpecialForm: false,
+      isBatchPaymentStatus: true
+    },
+    'payment_request': {
+      nextStatus: 'delivery_to_customer',
+      nextLabel: 'Start Customer Delivery',
+      hasReject: true,
+      hasSpecialForm: false,
+      isWaitingUser: true
+    },
+    'delivery_to_customer': {
+      nextStatus: 'received_by_customer',
+      nextLabel: 'Mark as Delivered',
+      hasReject: true,
+      hasSpecialForm: false
+    },
+    'received_by_customer': {
+      nextStatus: 'done',
+      nextLabel: 'Complete Process',
+      hasReject: false,
+      hasSpecialForm: false,
+      isWaitingUser: true
+    }
   };
+
+  return configs[currentStatus] || null;
+};
 
   // Get button styling
   const getButtonStyle = (color: ButtonColor) => {
@@ -255,7 +334,7 @@ export default function UpdateCard({ card }: { card?: CardType }) {
         <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 mb-3">
           <span className="text-sm font-medium text-gray-600">Current Status:</span>
           <span className="text-sm font-medium text-gray-900 capitalize bg-gray-50 px-3 py-1 rounded-full">
-            {currentStatus?.replace(/_/g, ' ')}
+            {getStatusDisplayText(currentStatus || '')}
           </span>
         </div>
       </div>
@@ -271,7 +350,7 @@ export default function UpdateCard({ card }: { card?: CardType }) {
               </h5>
             </div>
             <p className="text-sm text-yellow-700 leading-relaxed">
-              User needs to confirm that the card has been sent to Japan before you can proceed to the next step.
+              User needs to confirm that the card has been sent to grading facility before you can proceed to the next step.
             </p>
           </div>
         </div>
@@ -288,7 +367,7 @@ export default function UpdateCard({ card }: { card?: CardType }) {
               </h5>
             </div>
             <p className="text-sm text-yellow-700 leading-relaxed">
-              User needs to confirm that the card has been sent to Japan before you can proceed to the next step.
+              User needs to confirm that the card has been sent to grading facility before you can proceed to the next step.
             </p>
           </div>
         </div>
@@ -345,7 +424,7 @@ export default function UpdateCard({ card }: { card?: CardType }) {
       {currentStatus === "delivery_process_to_id" && statusConfig?.hasSpecialForm && (
         <div className="mb-6">
           <h5 className="text-lg font-medium mb-4 text-gray-800">
-            Update PSA Grade & Serial Number
+             Update Grading Result & Serial Number
           </h5>
           <form onSubmit={handleGradeSubmit}>
             <div className="space-y-4 mb-6">
@@ -356,19 +435,19 @@ export default function UpdateCard({ card }: { card?: CardType }) {
                 <input 
                   type="text"
                   name="grade"
-                  placeholder="Enter PSA grade"
+                  placeholder="Enter grade result"
                   className="w-full h-12 px-4 border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base"
                   required
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  PSA Serial Number
+                  Grading Serial Number
                 </label>
                 <input 
                   type="text"
                   name="serial_number"
-                  placeholder="Enter PSA serial number"
+                  placeholder="Enter grading serial number"
                   className="w-full h-12 px-4 border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base"
                   required
                 />
@@ -395,43 +474,137 @@ export default function UpdateCard({ card }: { card?: CardType }) {
         </div>
       )}
 
-      {/* Batch Payment Redirect - Removed Skip Option */}
-      {currentStatus === "received_by_wh_id" && statusConfig?.isBatchPaymentStatus && (
+      {/* UPDATED: Batch Payment*/}
+      {currentStatus === "received_by_wh_id" && (
         <div className="mb-6">
-          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0">
-                <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
+          {/* Loading state */}
+          {isFetchingBatchPayment && (
+            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <span className="text-sm text-gray-600">Loading batch payment status...</span>
               </div>
-              <div className="flex-1 min-w-0">
-                <h5 className="text-sm font-medium text-blue-800 mb-2">
-                  Use Batch Payment System
-                </h5>
-                <p className="text-sm text-blue-700 mb-4 leading-relaxed">
-                  Payment requests are now handled per-user for all submissions in a batch. 
-                  This allows users to pay once for all their submissions instead of paying individually.
-                </p>
-                <div className="mb-4">
-                  <Link 
-                    to="/dashboard/admin/submissions"
-                    className={`${getButtonStyle('blue')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base no-underline inline-block text-center w-full sm:w-auto`}
-                  >
-                    Go to Batch Payment Management
-                  </Link>
+            </div>
+          )}
+
+          {/* Error state */}
+          {batchPaymentError && (
+            <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+              <p className="text-sm text-red-700">{batchPaymentError}</p>
+              <button 
+                onClick={fetchBatchPayment}
+                className="mt-2 text-xs text-red-600 hover:text-red-800 underline"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* Case 1: No batch payment found*/}
+          {!isFetchingBatchPayment && !batchPaymentError && !batchPayment && (
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
                 </div>
-                <div className="text-xs text-blue-600">
-                  <p className="font-medium mb-2">Benefits of Batch Payment:</p>
-                  <ul className="space-y-1 ml-4 list-disc">
-                    <li>Users pay once for multiple submissions</li>
-                    <li>Better user experience and lower transaction fees</li>
-                    <li>Centralized payment management</li>
-                  </ul>
+                <div className="flex-1 min-w-0">
+                  <h5 className="text-sm font-medium text-blue-800 mb-2">
+                    Use Batch Payment System
+                  </h5>
+                  <p className="text-sm text-blue-700 mb-4 leading-relaxed">
+                    Payment requests are now handled per-user for all submissions in a batch. 
+                    This allows users to pay once for all their submissions instead of paying individually.
+                  </p>
+                  <div className="mb-4">
+                    <Link 
+                      to="/dashboard/admin/submissions"
+                      className={`${getButtonStyle('blue')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base no-underline inline-block text-center w-full sm:w-auto`}
+                    >
+                      Go to Batch Payment Management
+                    </Link>
+                  </div>
+                  <div className="text-xs text-blue-600">
+                    <p className="font-medium mb-2">Benefits of Batch Payment:</p>
+                    <ul className="space-y-1 ml-4 list-disc">
+                      <li>Users pay once for multiple submissions</li>
+                      <li>Better user experience and lower transaction fees</li>
+                      <li>Centralized payment management</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
+
+          {/* Case 2*/}
+          {!isFetchingBatchPayment && batchPayment && !batchPayment.is_sent && (
+            <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h5 className="text-sm font-medium text-yellow-800 mb-2">
+                    Payment Link Ready to Send
+                  </h5>
+                  <p className="text-sm text-yellow-700 mb-4 leading-relaxed">
+                    Payment URL has been created for this user but hasn't been sent yet. 
+                    Click the button below to send the payment link to the user.
+                  </p>
+                  <div className="mb-3">
+                    <p className="text-xs text-yellow-600 mb-1">Payment URL:</p>
+                    <div className="p-2 bg-white rounded border text-xs text-gray-800 break-all">
+                      {batchPayment.payment_url}
+                    </div>
+                  </div>
+                  <button 
+                    onClick={handleSendPaymentLink}
+                    className={`${getButtonStyle('green')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base w-full sm:w-auto`}
+                  >
+                    Send Payment Link to User
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Case 3: Batch payment exists and sent - Show "Proceed to Payment Request" */}
+          {!isFetchingBatchPayment && batchPayment && batchPayment.is_sent && (
+            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <svg className="w-5 h-5 text-green-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h5 className="text-sm font-medium text-green-800 mb-2">
+                    Payment Link Sent Successfully
+                  </h5>
+                  <p className="text-sm text-green-700 mb-4 leading-relaxed">
+                    Payment link has been sent to the user on {new Date(batchPayment.sent_at!).toLocaleDateString()}. 
+                    You can now proceed to update the status to "Payment Request".
+                  </p>
+                  <div className="mb-3">
+                    <p className="text-xs text-green-600 mb-1">Payment URL sent:</p>
+                    <div className="p-2 bg-white rounded border text-xs text-gray-800 break-all">
+                      {batchPayment.payment_url}
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => handleUpdateSubmission("payment_request")}
+                    className={`${getButtonStyle('green')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base w-full sm:w-auto`}
+                  >
+                    Proceed to Payment Request Status
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -555,39 +728,39 @@ export default function UpdateCard({ card }: { card?: CardType }) {
         </summary>
         <div className="p-4 bg-gray-50 rounded-lg border">
           <p className="text-sm text-gray-600 mb-3">Jump to any status:</p>
-          <select 
-            onChange={(e) => {
-              if (e.target.value) {
-                handleUpdateSubmission(e.target.value);
-              }
-            }}
-            className="text-sm px-3 py-2 border border-gray-300 rounded-lg bg-white w-full h-10 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">Select status...</option>
-            <option value="submit">Submit</option>
-            <option value="received_by_us">Received by Us</option>
-            <option value="data_input">Data Input</option>
-            <option value="delivery_to_jp">Delivery to JP</option>
-            <option value="received_by_jp_wh">Received by JP WH</option>
-            <option value="delivery_to_psa">Delivery to PSA</option>
-            <option value="psa_arrival_of_submission">PSA Arrival</option>
-            <option value="psa_order_processed">PSA Order Processed</option>
-            <option value="psa_research">PSA Research</option>
-            <option value="psa_grading">PSA Grading</option>
-            <option value="psa_holder_sealed">PSA Holder Sealed</option>
-            <option value="psa_qc">PSA QC</option>
-            <option value="psa_grading_completed">PSA Grading Completed</option>
-            <option value="psa_completion">PSA Completion</option>
-            <option value="delivery_to_jp_wh">Delivery to JP WH</option>
-            <option value="waiting_to_delivery_to_id">Waiting to Delivery ID</option>
-            <option value="delivery_process_to_id">Delivery Process to ID</option>
-            <option value="received_by_wh_id">Received by WH ID</option>
-            <option value="payment_request">Payment Request</option>
-            <option value="delivery_to_customer">Delivery to Customer</option>
-            <option value="received_by_customer">Received by Customer</option>
-            <option value="done">Done</option>
-            <option value="rejected">Rejected</option>
-          </select>
+        <select 
+          onChange={(e) => {
+            if (e.target.value) {
+              handleUpdateSubmission(e.target.value);
+            }
+          }}
+          className="text-sm px-3 py-2 border border-gray-300 rounded-lg bg-white w-full h-10 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="">Select status...</option>
+          <option value="submit">Submit</option>
+          <option value="received_by_us">Received by Us</option>
+          <option value="data_input">Data Input</option>
+          <option value="delivery_to_jp">Delivery to Grading Facility</option>
+          <option value="received_by_jp_wh">Received by Grading Facility</option>
+          <option value="delivery_to_psa">Delivery to Grading Service</option>
+          <option value="psa_arrival_of_submission">Grading Service Arrival</option>
+          <option value="psa_order_processed">Grading Order Processed</option>
+          <option value="psa_research">Grading Research</option>
+          <option value="psa_grading">Grading in Progress</option>
+          <option value="psa_holder_sealed">Grading Holder Sealed</option>
+          <option value="psa_qc">Grading Quality Check</option>
+          <option value="psa_grading_completed">Grading Completed</option>
+          <option value="psa_completion">Grading Service Completion</option>
+          <option value="delivery_to_jp_wh">Delivery to Facility Warehouse</option>
+          <option value="waiting_to_delivery_to_id">Waiting Delivery to Indonesia</option>
+          <option value="delivery_process_to_id">Delivery Process to Indonesia</option>
+          <option value="received_by_wh_id">Received by Indonesia Warehouse</option>
+          <option value="payment_request">Payment Request</option>
+          <option value="delivery_to_customer">Delivery to Customer</option>
+          <option value="received_by_customer">Received by Customer</option>
+          <option value="done">Done</option>
+          <option value="rejected">Rejected</option>
+        </select>
         </div>
       </details>
 

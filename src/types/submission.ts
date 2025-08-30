@@ -54,7 +54,10 @@ export interface BatchPaymentType {
 }
 
 export interface BatchPaymentsResponse {
-	batch: BatchType;
+	batch: {
+		id: number;
+		batch_number: string;
+	};
 	payments: BatchPaymentType[];
 }
 
