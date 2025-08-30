@@ -4,6 +4,7 @@ import { BsEye } from "react-icons/bs";
 import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import formatDate from "../utils/FormatDate";
 import { getPaymentButtonState, formatSentAt } from "../utils/batchPaymentUtils";
+import { getStatusDisplayText, getStatusStyling } from "../utils/statusUtils";
 import type { UserPaymentGroup as UserPaymentGroupType, CardType } from "../types/submission";
 
 const fields = [
@@ -11,47 +12,11 @@ const fields = [
   { label: "Year", name: "year", shortLabel: "Year" },
   { label: "Brand", name: "brand", shortLabel: "Brand" },
   { label: "Serial Number", name: "serial_number", shortLabel: "Serial" },
-  { label: "Grade Target", name: "grade_target", shortLabel: "Grade" },
+  // { label: "Grade Target", name: "grade_target", shortLabel: "Grade" },
   { label: "Grade", name: "grade", shortLabel: "Grade" },
   { label: "Status", name: "status", shortLabel: "Status" },
   { label: "Submitted at", name: "submitted_at", shortLabel: "Date" },
 ];
-
-const getStatusStyle = (status: string) => {
-  const normalizedStatus = status.toLowerCase().trim();
-  
-  switch (normalizedStatus) {
-    case 'submitted':
-      return 'bg-orange-100 text-orange-800';
-    case 'accepted':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'rejected':
-      return 'bg-red-100 text-red-800';
-    case 'on process':
-    case 'processing':
-    case 'in_process':
-      return 'bg-blue-100 text-blue-800';
-    case 'done':
-    case 'completed':
-      return 'bg-green-100 text-green-800';
-    case 'pending':
-      return 'bg-gray-100 text-gray-800';
-    default:
-      if (normalizedStatus.includes('submit')) {
-        return 'bg-orange-100 text-orange-800';
-      } else if (normalizedStatus.includes('accept')) {
-        return 'bg-yellow-100 text-yellow-800';
-      } else if (normalizedStatus.includes('reject')) {
-        return 'bg-red-100 text-red-800';
-      } else if (normalizedStatus.includes('process')) {
-        return 'bg-blue-100 text-blue-800';
-      } else if (normalizedStatus.includes('done') || normalizedStatus.includes('complete')) {
-        return 'bg-green-100 text-green-800';
-      } else {
-        return 'bg-gray-100 text-gray-800';
-      }
-  }
-};
 
 interface UserPaymentGroupProps {
   userGroup: UserPaymentGroupType;
@@ -94,36 +59,39 @@ const UserPaymentGroup: React.FC<UserPaymentGroupProps> = ({
   return (
     <div className="border-l-2 border-gray-100 ml-4">
       {/* User Header */}
-      <button
-        onClick={onToggle}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset bg-gray-50/50"
-        aria-expanded={isOpen}
-      >
-        <div className="flex items-center space-x-3 min-w-0 flex-1">
-          {isOpen ? (
-            <ChevronDownIcon className="h-4 w-4 text-gray-500 flex-shrink-0" />
-          ) : (
-            <ChevronRightIcon className="h-4 w-4 text-gray-500 flex-shrink-0" />
-          )}
-          
-          <div className="flex items-center space-x-3 text-left flex-1 min-w-0">
-            <div className="min-w-0 flex-1">
-              <h4 className="text-sm font-medium text-gray-900 truncate">
-                {user.name}
-              </h4>
-              <p className="text-xs text-gray-600 truncate">{user.email}</p>
-            </div>
+      <div className="flex items-center hover:bg-gray-50 transition-colors duration-200 bg-gray-50/50">
+        {/* Toggle Button */}
+        <button
+          onClick={onToggle}
+          className="flex-1 px-4 py-3 flex items-center focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-inset min-w-0"
+          aria-expanded={isOpen}
+        >
+          <div className="flex items-center space-x-3 min-w-0 flex-1">
+            {isOpen ? (
+              <ChevronDownIcon className="h-4 w-4 text-gray-500 flex-shrink-0" />
+            ) : (
+              <ChevronRightIcon className="h-4 w-4 text-gray-500 flex-shrink-0" />
+            )}
             
-            <div className="flex items-center space-x-2 flex-shrink-0">
-              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
-                {submissions.length} submission{submissions.length > 1 ? 's' : ''}
-              </span>
+            <div className="flex items-center space-x-3 text-left flex-1 min-w-0">
+              <div className="min-w-0 flex-1">
+                <h4 className="text-sm font-medium text-gray-900 truncate">
+                  {user.name}
+                </h4>
+                <p className="text-xs text-gray-600 truncate">{user.email}</p>
+              </div>
+              
+              <div className="flex items-center space-x-2 flex-shrink-0">
+                <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
+                  {submissions.length} submission{submissions.length > 1 ? 's' : ''}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
+        </button>
 
-        {/* Payment Button */}
-        <div className="flex items-center ml-4 flex-shrink-0">
+        {/* Payment Button - Separated from toggle button */}
+        <div className="flex items-center px-4 py-3 flex-shrink-0 border-l border-gray-200">
           <button
             onClick={handlePaymentAction}
             disabled={buttonState.disabled || isProcessing}
@@ -146,7 +114,7 @@ const UserPaymentGroup: React.FC<UserPaymentGroupProps> = ({
             )}
           </button>
         </div>
-      </button>
+      </div>
 
       {/* User Submissions */}
       {isOpen && (
@@ -165,9 +133,9 @@ const UserPaymentGroup: React.FC<UserPaymentGroupProps> = ({
                         {item.brand} • {item.year}
                       </p>
                     </div>
-                    <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ${getStatusStyle(item.latest_status.status)}`}>
-                      <span className="truncate max-w-16">
-                        {item.latest_status.status}
+                    <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ${getStatusStyling(item.latest_status.status)}`}>
+                      <span className="truncate max-w-16" title={getStatusDisplayText(item.latest_status.status)}>
+                        {getStatusDisplayText(item.latest_status.status)}
                       </span>
                     </span>
                   </div>
@@ -179,9 +147,9 @@ const UserPaymentGroup: React.FC<UserPaymentGroupProps> = ({
                         {item.serial_number}
                       </span>
                     </div>
-                    <div>
+                    {/* <div>
                       <span className="font-medium">Target:</span> {item.grade_target}
-                    </div>
+                    </div> */}
                     <div>
                       <span className="font-medium">Grade:</span> {item.grade}
                     </div>
@@ -248,16 +216,16 @@ const UserPaymentGroup: React.FC<UserPaymentGroupProps> = ({
                           {item.serial_number}
                         </div>
                       </td>
-                      <td className="py-2 px-4 whitespace-nowrap text-gray-600 text-xs">
+                      {/* <td className="py-2 px-4 whitespace-nowrap text-gray-600 text-xs">
                         {item.grade_target}
-                      </td>
+                      </td> */}
                       <td className="py-2 px-4 whitespace-nowrap text-gray-600 text-xs">
                         {item.grade}
                       </td>
                       <td className="py-2 px-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${getStatusStyle(item.latest_status.status)}`}>
-                          <span className="truncate max-w-20 md:max-w-none">
-                            {item.latest_status.status}
+                        <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${getStatusStyling(item.latest_status.status)}`}>
+                          <span className="truncate max-w-20 md:max-w-none" title={getStatusDisplayText(item.latest_status.status)}>
+                            {getStatusDisplayText(item.latest_status.status)}
                           </span>
                         </span>
                       </td>

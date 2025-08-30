@@ -1,6 +1,8 @@
 import axiosInstance from "../lib/axiosInstance";
 import { useState, useEffect, useCallback } from "react";
 import { BE_URL } from "../lib/api";
+// Import from statusUtils
+import { getStatusDisplayText } from "../utils/statusUtils";
 
 // Type definition
 type LatestStatus = {
@@ -173,7 +175,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
 
   const currentStatus = card?.latest_status.status;
 
-  // ADDED: Show for data_input status (NEW functionality)
+  // Show for data_input status
   if (currentStatus === "data_input") {
     return (
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-3 sm:p-4 lg:p-6">
@@ -182,7 +184,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-gray-600">Current Status:</span>
             <span className="text-sm font-medium text-gray-900 capitalize">
-              Data Input
+              {getStatusDisplayText(currentStatus)}
             </span>
           </div>
         </div>
@@ -190,9 +192,9 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
         {/* Action Section */}
         <div>
           <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <h4 className="text-sm font-medium text-blue-900 mb-2">📦 Action Required</h4>
+            <h4 className="text-sm font-medium text-blue-900 mb-2">Action Required</h4>
             <p className="text-sm text-blue-700">
-              Please confirm when you have sent your card to Japan for grading.
+              Please confirm when you have sent your card to Grading Facility for grading.
             </p>
           </div>
           
@@ -203,14 +205,14 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            Confirm Sent to Japan
+            Confirm Sent to Grading Facility
           </button>
         </div>
       </div>
     );
   }
 
-  // Show for payment_request status (existing functionality)
+  // Show for payment_request status
   if (currentStatus === "payment_request") {
     return (
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-3 sm:p-4 lg:p-6">
@@ -219,7 +221,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-gray-600">Current Status:</span>
             <span className="text-sm font-medium text-gray-900 capitalize">
-              Payment Request
+              {getStatusDisplayText(currentStatus)}
             </span>
           </div>
         </div>
@@ -227,7 +229,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
         {/* Payment Section */}
         <div>
           <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
-            <h4 className="text-sm font-medium text-green-900 mb-2">💳 Payment Required</h4>
+            <h4 className="text-sm font-medium text-green-900 mb-2">Payment Required</h4>
             <p className="text-sm text-green-700">
               Your card grading is complete! Please proceed with payment to continue with delivery.
             </p>
@@ -264,7 +266,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
 
             {/* Payment Instructions */}
             <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <h5 className="text-xs font-medium text-gray-700 mb-2">📋 Instructions:</h5>
+              <h5 className="text-xs font-medium text-gray-700 mb-2">Instructions:</h5>
               <ol className="text-xs text-gray-600 space-y-1">
                 <li>1. Click "Proceed to Payment" to complete your payment</li>
                 <li>2. After successful payment, click "Confirm Payment"</li>
@@ -286,7 +288,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-gray-600">Current Status:</span>
             <span className="text-sm font-medium text-gray-900 capitalize">
-              Received by Customer
+              {getStatusDisplayText(currentStatus)}
             </span>
           </div>
         </div>
@@ -294,7 +296,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
         {/* Delivery Proof Section */}
         <div>
           <div className="mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
-            <h4 className="text-sm font-medium text-orange-900 mb-2">📸 Proof Required</h4>
+            <h4 className="text-sm font-medium text-orange-900 mb-2">Proof Required</h4>
             <p className="text-sm text-orange-700">
               Please upload photos as proof that you have received your graded card.
             </p>
@@ -412,7 +414,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
 
             {/* Instructions */}
             <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <h5 className="text-xs font-medium text-gray-700 mb-2">📋 Instructions:</h5>
+              <h5 className="text-xs font-medium text-gray-700 mb-2">Instructions:</h5>
               <ol className="text-xs text-gray-600 space-y-1">
                 <li>1. Take clear photos of your received graded card</li>
                 <li>2. Upload multiple photos if needed (max 2MB each)</li>
@@ -441,7 +443,5 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
       </div>
     );
   }
-
-  // Return null if not matching any status that requires user action
   return null;
 }

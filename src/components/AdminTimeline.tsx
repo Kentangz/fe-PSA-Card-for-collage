@@ -4,6 +4,8 @@ import { BsImage } from "react-icons/bs";
 import formatDate from "../utils/FormatDate";
 import axiosInstance from "../lib/axiosInstance";
 import { BE_URL } from "../lib/api";
+// Import from statusUtils
+import { getStatusDisplayText, getStatusStyling } from "../utils/statusUtils";
 
 // Types
 interface StatusType {
@@ -134,33 +136,6 @@ const TIMELINE_PHASES: TimelinePhase[] = [
   }
 ];
 
-// Updated STATUS_LABELS to match STATUS_DISPLAY_MAPPING from UpdateCard.tsx
-const STATUS_LABELS: Record<string, string> = {
-  "submit": "Submit",
-  "received_by_us": "Received by Us",
-  "data_input": "Data Input",
-  "delivery_to_jp": "Delivery to Grading Facility",
-  "received_by_jp_wh": "Received by Grading Facility",
-  "delivery_to_psa": "Delivery to Grading Service",
-  "psa_arrival_of_submission": "Grading Service Arrival",
-  "psa_order_processed": "Grading Order Processed",
-  "psa_research": "Grading Research",
-  "psa_grading": "Grading in Progress",
-  "psa_holder_sealed": "Grading Holder Sealed",
-  "psa_qc": "Grading Quality Check",
-  "psa_grading_completed": "Grading Completed",
-  "psa_completion": "Grading Service Completion",
-  "delivery_to_jp_wh": "Delivery to Facility Warehouse",
-  "waiting_to_delivery_to_id": "Waiting Delivery to Indonesia",
-  "delivery_process_to_id": "Delivery Process to Indonesia",
-  "received_by_wh_id": "Received by Indonesia Warehouse",
-  "payment_request": "Payment Request",
-  "delivery_to_customer": "Delivery to Customer",
-  "received_by_customer": "Received by Customer",
-  "done": "Done",
-  "rejected": "Rejected"
-};
-
 export default function EnhancedTimeline({ statuses, currentStatus, grade, cardId }: EnhancedTimelineProps) {
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [deliveryProofs, setDeliveryProofs] = useState<DeliveryProof[]>([]);
@@ -259,17 +234,17 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade, cardI
           </div>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div className={`border rounded-lg p-3 ${getStatusStyling(currentStatus, true)}`}>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
               <div className="w-2 h-2 sm:w-3 sm:h-3 bg-white rounded-full"></div>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-medium text-blue-900 text-sm sm:text-base">
-                {STATUS_LABELS[currentStatus] || currentStatus}
+              <p className="font-medium text-sm sm:text-base">
+                {getStatusDisplayText(currentStatus)}
               </p>
               {currentStatusObj && (
-                <p className="text-xs sm:text-sm text-blue-700 truncate">
+                <p className="text-xs sm:text-sm opacity-75 truncate">
                   {formatDate(new Date(currentStatusObj.created_at))}
                 </p>
               )}
@@ -382,7 +357,7 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade, cardI
                                     isCurrentStep ? "text-blue-600" :
                                     statusObj ? "text-green-600" : "text-gray-500"
                                   }`}>
-                                    {STATUS_LABELS[statusKey] || statusKey}
+                                    {getStatusDisplayText(statusKey)}
                                   </p>
 
                                   {/* Special messages */}

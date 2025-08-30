@@ -6,6 +6,7 @@ import UserUpdateCard from "../../../components/UserUpdateCard";
 import MobileTimeline from "../../../components/UserTimeline"; // NEW IMPORT
 import axiosInstance from "../../../lib/axiosInstance";
 import formatDate from "../../../utils/FormatDate";
+import { getStatusDisplayText, getStatusStyling, getBatchCategoryStyling } from "../../../utils/statusUtils";
 import { ImHome } from "react-icons/im";
 import { MdTrackChanges } from "react-icons/md";
 import { BsArrowLeft, BsImage } from "react-icons/bs";
@@ -128,41 +129,25 @@ export default function UserTrackingDetail() {
     initializeTrackingDetail();
   }, [id, navigate]);
 
-  const getStatusStyle = (status: string) => {
-    const normalizedStatus = status.toLowerCase().trim();
+  const getStatusBadge = (status: string, includeBorder: boolean = true) => {
+    const displayText = getStatusDisplayText(status);
+    const styling = getStatusStyling(status, includeBorder);
     
-    switch (normalizedStatus) {
-      case 'submitted':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'accepted':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'rejected':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'on process':
-      case 'processing':
-      case 'in_process':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'done':
-      case 'completed':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'pending':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
+    return (
+      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${styling}`}>
+        {displayText}
+      </span>
+    );
   };
 
-  const getBatchCategoryStyle = (category: string) => {
-    switch (category) {
-      case 'PSA-Japan':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'PSA-USA':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'CGC':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
+  const getBatchCategoryBadge = (category: string) => {
+    const styling = getBatchCategoryStyling(category, true);
+    
+    return (
+      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${styling}`}>
+        {category}
+      </span>
+    );
   };
 
   return (
@@ -213,9 +198,7 @@ export default function UserTrackingDetail() {
                       <h1 className="text-xl font-semibold text-gray-900">{card.name}</h1>
                       <p className="text-sm text-gray-600">{card.brand} • {card.year}</p>
                     </div>
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusStyle(card.latest_status.status)}`}>
-                      {card.latest_status.status}
-                    </span>
+                    {getStatusBadge(card.latest_status.status)}
                   </div>
                   
                   <div className="grid grid-cols-1 gap-3 text-sm">
@@ -241,9 +224,7 @@ export default function UserTrackingDetail() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Status:</span>
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusStyle(card.latest_status.status)}`}>
-                        {card.latest_status.status}
-                      </span>
+                      {getStatusBadge(card.latest_status.status)}
                     </div>
                     {/* Batch Information - Mobile */}
                     {card.batch && (
@@ -258,9 +239,7 @@ export default function UserTrackingDetail() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600">Category:</span>
-                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getBatchCategoryStyle(card.batch.category)}`}>
-                            {card.batch.category}
-                          </span>
+                          {getBatchCategoryBadge(card.batch.category)}
                         </div>
                       </>
                     )}
@@ -305,9 +284,7 @@ export default function UserTrackingDetail() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600 font-medium">Status:</span>
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusStyle(card.latest_status.status)}`}>
-                        {card.latest_status.status}
-                      </span>
+                      {getStatusBadge(card.latest_status.status)}
                     </div>
                     {/* Batch Information - Desktop */}
                     {card.batch && (
@@ -322,9 +299,7 @@ export default function UserTrackingDetail() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 font-medium">Category:</span>
-                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getBatchCategoryStyle(card.batch.category)}`}>
-                            {card.batch.category}
-                          </span>
+                          {getBatchCategoryBadge(card.batch.category)}
                         </div>
                       </>
                     )}
@@ -361,7 +336,7 @@ export default function UserTrackingDetail() {
                   </div>
                 </div>
 
-                {/* REPLACED: Mobile Timeline for Desktop */}
+                {/* Timeline Section */}
                 <div className="flex-1">
                   <MobileTimeline 
                     statuses={card.statuses}
@@ -377,7 +352,7 @@ export default function UserTrackingDetail() {
                 </div>
               </div>
 
-              {/* REPLACED: Mobile Timeline */}
+              {/* Mobile Timeline */}
               <div className="block lg:hidden">
                 <MobileTimeline 
                   statuses={card.statuses}

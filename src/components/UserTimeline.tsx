@@ -4,6 +4,8 @@ import { BsImage } from "react-icons/bs";
 import formatDate from "../utils/FormatDate";
 import axiosInstance from "../lib/axiosInstance";
 import { BE_URL } from "../lib/api";
+// Import from statusUtils
+import { getStatusDisplayText, getStatusStyling } from "../utils/statusUtils";
 
 // Types (same as Enhanced Timeline)
 interface StatusType {
@@ -33,30 +35,9 @@ interface MobileTimelineProps {
   cardId: string | number; // Add cardId prop
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  "submit": "Submitted",
-  "received_by_us": "Received",
-  "data_input": "Data Input",
-  "delivery_to_jp": "To Japan",
-  "received_by_jp_wh": "JP Warehouse",
-  "delivery_to_psa": "To PSA",
-  "psa_arrival_of_submission": "PSA Arrival",
-  "psa_order_processed": "PSA Processed",
-  "psa_research": "PSA Research",
-  "psa_grading": "PSA Grading",
-  "psa_holder_sealed": "PSA Sealed",
-  "psa_qc": "PSA QC",
-  "psa_grading_completed": "PSA Complete",
-  "psa_completion": "PSA Done",
-  "delivery_to_jp_wh": "Return to JP",
-  "waiting_to_delivery_to_id": "Waiting Return",
-  "delivery_process_to_id": "To Indonesia",
-  "received_by_wh_id": "ID Warehouse",
-  "payment_request": "Payment",
-  "delivery_to_customer": "Delivering",
-  "received_by_customer": "Received",
-  "done": "Complete",
-  "rejected": "Rejected"
+// Helper function to get status text - now fully using statusUtils
+const getStatusText = (status: string): string => {
+  return getStatusDisplayText(status);
 };
 
 const PHASE_GROUPS = [
@@ -133,7 +114,9 @@ export default function MobileTimeline({ statuses, currentStatus, grade, cardId 
     return { status: "partial", progress: (completed / groupStatuses.length) * 100 };
   };
 
+  // Get color classes for phase groups
   const getColorClasses = (color: string, status: string) => {
+    // Custom styling for phase groups (different from individual status styling)
     const colors = {
       blue: {
         current: "bg-blue-100 text-blue-800 border-blue-300",
@@ -166,17 +149,17 @@ export default function MobileTimeline({ statuses, currentStatus, grade, cardId 
           </div>
         </div>
         
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div className={`border rounded-lg p-3 ${getStatusStyling(currentStatus, true)}`}>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
               <div className="w-2 h-2 sm:w-3 sm:h-3 bg-white rounded-full"></div>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-medium text-blue-900 text-sm sm:text-base">
-                {STATUS_LABELS[currentStatus] || currentStatus}
+              <p className="font-medium text-sm sm:text-base">
+                {getStatusText(currentStatus)}
               </p>
               {currentStatusObj && (
-                <p className="text-xs sm:text-sm text-blue-700 truncate">
+                <p className="text-xs sm:text-sm opacity-75 truncate">
                   {formatDate(new Date(currentStatusObj.created_at))}
                 </p>
               )}
@@ -264,7 +247,7 @@ export default function MobileTimeline({ statuses, currentStatus, grade, cardId 
                               isCurrent ? "text-blue-600 font-medium" :
                               statusObj ? "text-green-600" : "text-gray-500"
                             }`}>
-                              {STATUS_LABELS[statusKey] || statusKey}
+                              {getStatusText(statusKey)}
                             </p>
                           </div>
                           

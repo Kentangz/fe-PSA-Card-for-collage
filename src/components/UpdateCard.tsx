@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { batchPaymentService } from "../services/batchPaymentService";
 import type { BatchPaymentType } from "../types/submission";
+import { getStatusDisplayText } from "../utils/statusUtils";
 
 // Type definition
 type LatestStatus = {
@@ -34,32 +35,6 @@ type DeliveryProofResponse = {
 
 type ButtonColor = 'green' | 'blue' | 'orange' | 'red' | 'gray';
 
-const STATUS_DISPLAY_MAPPING: Record<string, string> = {
-  'submit': 'Submit',
-  'rejected': 'Rejected', 
-  'received_by_us': 'Received by Us',
-  'data_input': 'Data Input',
-  'delivery_to_jp': 'Delivery to Grading Facility',
-  'received_by_jp_wh': 'Received by Grading Facility',
-  'delivery_to_psa': 'Delivery to Grading Service',
-  'psa_arrival_of_submission': 'Grading Service Arrival',
-  'psa_order_processed': 'Grading Order Processed',
-  'psa_research': 'Grading Research',
-  'psa_grading': 'Grading in Progress',
-  'psa_holder_sealed': 'Grading Holder Sealed',
-  'psa_qc': 'Grading Quality Check',
-  'psa_grading_completed': 'Grading Completed',
-  'psa_completion': 'Grading Service Completion',
-  'delivery_to_jp_wh': 'Delivery to Facility Warehouse',
-  'waiting_to_delivery_to_id': 'Waiting Delivery to Indonesia',
-  'delivery_process_to_id': 'Delivery Process to Indonesia',
-  'received_by_wh_id': 'Received by Indonesia Warehouse',
-  'payment_request': 'Payment Request',
-  'delivery_to_customer': 'Delivery to Customer',
-  'received_by_customer': 'Received by Customer',
-  'done': 'Done'
-};
-
 export default function UpdateCard({ card }: { card?: CardType }) {
   const [deliveryProofs, setDeliveryProofs] = useState<DeliveryProof[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -68,7 +43,6 @@ export default function UpdateCard({ card }: { card?: CardType }) {
   const [batchPaymentError, setBatchPaymentError] = useState<string | null>(null);
 
     const fetchBatchPayment = useCallback(async () => {
-    // Hanya fetch jika card ada batch_id dan user_id
     if (!card?.batch_id || !card?.user_id) return;
     
     setIsFetchingBatchPayment(true);
@@ -76,8 +50,6 @@ export default function UpdateCard({ card }: { card?: CardType }) {
     
     try {
       const response = await batchPaymentService.getByBatch(card.batch_id);
-      
-      // Filter untuk user yang sesuai dengan card
       const userBatchPayment = response.payments.find(
         payment => payment.user_id === card.user_id
       );
@@ -97,10 +69,6 @@ export default function UpdateCard({ card }: { card?: CardType }) {
       fetchBatchPayment();
     }
     }, [card?.latest_status.status, fetchBatchPayment]);
-  
-  const getStatusDisplayText = (status: string): string => {
-  return STATUS_DISPLAY_MAPPING[status] || status.replace(/_/g, ' ');
-};
   
   const handleGradeSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -139,8 +107,6 @@ export default function UpdateCard({ card }: { card?: CardType }) {
     
     try {
       await batchPaymentService.sendPaymentLink(batchPayment.id);
-      
-      // Re-fetch data untuk update status
       await fetchBatchPayment();
       
       console.log("Payment link sent successfully");
@@ -148,7 +114,6 @@ export default function UpdateCard({ card }: { card?: CardType }) {
       console.error("Error sending payment link:", error);
     }
   };
-  // Fetch delivery proofs for admin review
   const fetchDeliveryProofs = useCallback(async () => {
     if (!card?.id) return;
     
@@ -167,7 +132,6 @@ export default function UpdateCard({ card }: { card?: CardType }) {
     }
   }, [card?.latest_status.status, fetchDeliveryProofs]);
 
-  // Define workflow mapping - linear flow with next status
 const getStatusConfig = (currentStatus: string) => {
   const configs: Record<string, {
     nextStatus: string;
@@ -311,8 +275,6 @@ const getStatusConfig = (currentStatus: string) => {
 
   return configs[currentStatus] || null;
 };
-
-  // Get button styling
   const getButtonStyle = (color: ButtonColor) => {
     const styles: Record<ButtonColor, string> = {
       green: "bg-green-100 hover:bg-green-200 text-green-800 border-green-300",

@@ -4,6 +4,7 @@ import ProfileMenu from "../../../components/ProfileMenu";
 // import UserNotification from "../../../components/UserNotifications";
 import axiosInstance from "../../../lib/axiosInstance";
 import formatDate from "../../../utils/FormatDate";
+import { getStatusDisplayText, getStatusStyling } from "../../../utils/statusUtils";
 import { Link } from "react-router-dom";
 import { ImHome } from "react-icons/im";
 import {MdTrackChanges } from "react-icons/md";
@@ -124,48 +125,13 @@ export default function UserTracking() {
     initializeTracking();
   }, [navigate]);
 
-  const getStatusStyle = (status: string) => {
-    const normalizedStatus = status.toLowerCase().trim();
-    
-    switch (normalizedStatus) {
-      case 'submitted':
-        return 'bg-orange-100 text-orange-800';
-      case 'accepted':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
-      case 'on process':
-      case 'processing':
-      case 'in_process':
-      case 'in process':
-        return 'bg-blue-100 text-blue-800';
-      case 'done':
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        // Handle variations in status names
-        if (normalizedStatus.includes('submit')) {
-          return 'bg-orange-100 text-orange-800';
-        } else if (normalizedStatus.includes('accept')) {
-          return 'bg-yellow-100 text-yellow-800';
-        } else if (normalizedStatus.includes('reject')) {
-          return 'bg-red-100 text-red-800';
-        } else if (normalizedStatus.includes('process')) {
-          return 'bg-blue-100 text-blue-800';
-        } else if (normalizedStatus.includes('done') || normalizedStatus.includes('complete')) {
-          return 'bg-green-100 text-green-800';
-        } else {
-          return 'bg-gray-100 text-gray-800';
-        }
-    }
-  };
-
   const getStatusBadge = (status: string) => {
+    const displayText = getStatusDisplayText(status);
+    const styling = getStatusStyling(status);
+    
     return (
-      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusStyle(status)}`}>
-        {status}
+      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${styling}`}>
+        {displayText}
       </span>
     );
   };

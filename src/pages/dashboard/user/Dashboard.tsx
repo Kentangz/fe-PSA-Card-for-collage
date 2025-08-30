@@ -11,6 +11,7 @@ import { HiOutlineClipboardList, HiChevronDown, HiChevronUp } from "react-icons/
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 import formatDate from "../../../utils/FormatDate";
+import { getStatusDisplayText, getStatusStyling } from "../../../utils/statusUtils";
 import type { CardType } from "../../../components/UserDashboardStats";
 import type { BatchType, UserType} from "../../../types/submission";
 
@@ -63,25 +64,6 @@ const fields = [
 ];
 
 type CardsResponse = CardType[];
-
-const getStatusStyling = (status: string) => {
-  const normalizedStatus = status?.toLowerCase().trim() || '';
-  
-  switch (normalizedStatus) {
-    case 'submitted':
-      return 'bg-orange-100 text-orange-800';
-    case 'accepted':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'rejected':
-      return 'bg-red-100 text-red-800';
-    case 'on process':
-      return 'bg-blue-100 text-blue-800';
-    case 'done':
-      return 'bg-green-100 text-green-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
 
 export default function DashboardUser() {
   const [currentUser, setCurrentUser] = useState<UserType | undefined>(undefined);
@@ -284,7 +266,7 @@ export default function DashboardUser() {
                       <td className="py-3 px-4 text-gray-600 font-medium">{card.grade}</td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyling(card.latest_status?.status || '')}`}>
-                          {card.latest_status?.status || 'Unknown'}
+                          {getStatusDisplayText(card.latest_status?.status || 'Unknown')}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-gray-600 text-xs">
@@ -305,7 +287,7 @@ export default function DashboardUser() {
                     <div className="flex items-center justify-between">
                       <h6 className="font-medium text-gray-800 truncate pr-2">{card.name}</h6>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${getStatusStyling(card.latest_status?.status || '')}`}>
-                        {card.latest_status?.status || 'Unknown'}
+                        {getStatusDisplayText(card.latest_status?.status || 'Unknown')}
                       </span>
                     </div>
                     

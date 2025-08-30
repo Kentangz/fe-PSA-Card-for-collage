@@ -39,7 +39,6 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
     ? "bg-green-100 text-green-800" 
     : "bg-red-100 text-red-800";
 
-  // Fetch payment data when batch is expanded
   useEffect(() => {
     const fetchPaymentData = async () => {
       if (isOpen && !paymentDataLoaded && submissions.length > 0) {
@@ -48,7 +47,6 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
           setBatchPaymentsData(data);
         } catch (error) {
           console.error('Failed to fetch batch payment data:', error);
-          // Continue without payment data - graceful fallback
           setBatchPaymentsData(null);
         } finally {
           setPaymentDataLoaded(true);
@@ -59,7 +57,6 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
     fetchPaymentData();
   }, [isOpen, batch.id, paymentDataLoaded, submissions.length]);
 
-  // Transform submissions to user groups
   const userPaymentGroups = transformToUserPaymentGroups(submissions, batchPaymentsData || undefined);
 
   const handleToggleBatchStatus = async (e: React.MouseEvent) => {
@@ -103,7 +100,6 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
       }
     } catch (error) {
       console.error('Payment action failed:', error);
-      // TODO: Show error message to user
     }
   };
 
@@ -134,7 +130,7 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
         {/* Accordion Toggle Button */}
         <button
           onClick={onToggle}
-          className="flex-1 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset min-w-0"
+          className="flex-1 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-inset min-w-0"
           aria-expanded={isOpen}
           aria-controls={`batch-content-${batch.id}`}
         >
@@ -155,7 +151,7 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
               </div>
               
               <div className="flex items-center space-x-3 xl:space-x-4 flex-shrink-0">
-                <span className="inline-flex px-2.5 py-1 text-xs xl:text-sm font-medium rounded-full bg-blue-100 text-blue-800 whitespace-nowrap">
+                <span className="inline-flex px-2.5 py-1 text-xs xl:text-sm font-medium rounded-full bg-slate-100 text-slate-700 whitespace-nowrap">
                   {batch.category}
                 </span>
                 
@@ -186,7 +182,7 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
                 </h3>
                 <p className="text-sm text-gray-600 truncate">{batch.register_number}</p>
                 <div className="flex items-center space-x-2 mt-1">
-                  <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                  <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700">
                     {batch.category}
                   </span>
                   <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${statusStyle}`}>
@@ -216,7 +212,7 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
               </h3>
               <p className="text-xs sm:text-sm text-gray-600 truncate">{batch.register_number}</p>
               <div className="flex items-center space-x-1.5 mt-1">
-                <span className="inline-flex px-1.5 py-0.5 text-xs font-medium rounded bg-blue-100 text-blue-800 truncate max-w-20">
+                <span className="inline-flex px-1.5 py-0.5 text-xs font-medium rounded bg-slate-100 text-slate-700 truncate max-w-20">
                   {batch.category}
                 </span>
                 <span className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${statusStyle}`}>
