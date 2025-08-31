@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import FieldInput from '../../components/FieldInput';
 import LeftPanel from '../../components/LeftPanel';
-
 import { useAuth } from '../../hooks/useAuth';
 
 const Signin: React.FC = () => {

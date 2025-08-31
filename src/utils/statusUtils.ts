@@ -1,6 +1,3 @@
-// src/utils/statusUtils.ts
-
-// Status labels mapping - centralized for consistency
 export const STATUS_LABELS: Record<string, string> = {
 	submit: "Submit",
 	received_by_us: "Received by Us",
@@ -25,27 +22,16 @@ export const STATUS_LABELS: Record<string, string> = {
 	received_by_customer: "Received by Customer",
 	done: "Done",
 	rejected: "Rejected",
-	// Legacy status mappings for backward compatibility
 };
 
-/**
- * Get the display text for a status
- * @param status - The status code
- * @returns Human-readable status text
- */
 export const getStatusDisplayText = (status: string): string => {
 	if (!status) return "Unknown";
 
-	const normalizedStatus = status.toLowerCase().trim();
+	const normalizedStatus = status.toLowerCase().trim().replace(/ /g, "_");
 	return STATUS_LABELS[normalizedStatus] || status.replace(/_/g, " ");
 };
 
-/**
- * Get the CSS classes for status styling
- * @param status - The status code
- * @param includeBorder - Whether to include border classes (default: false)
- * @returns CSS class string
- */
+
 export const getStatusStyling = (
 	status: string,
 	includeBorder: boolean = false
@@ -55,7 +41,7 @@ export const getStatusStyling = (
 			? "bg-gray-100 text-gray-800 border-gray-200"
 			: "bg-gray-100 text-gray-800";
 
-	const normalizedStatus = status.toLowerCase().trim();
+	const normalizedStatus = status.toLowerCase().trim().replace(/ /g, "_");
 
 	const baseClasses = (() => {
 		switch (normalizedStatus) {
@@ -86,10 +72,9 @@ export const getStatusStyling = (
 			case "payment_request":
 			case "delivery_to_customer":
 			case "received_by_customer":
-			case "on process":
+			case "on_process":
 			case "processing":
 			case "in_process":
-			case "in process":
 				return "bg-blue-100 text-blue-800";
 			case "done":
 			case "completed":
@@ -119,12 +104,7 @@ export const getStatusStyling = (
 	return baseClasses;
 };
 
-/**
- * Get the full CSS classes for a status badge
- * @param status - The status code
- * @param options - Additional options for the badge
- * @returns Object with CSS classes and display text
- */
+
 export const getStatusBadgeClasses = (
 	status: string,
 	options: {
@@ -150,12 +130,6 @@ export const getStatusBadgeClasses = (
 	};
 };
 
-/**
- * Get batch category styling
- * @param category - The batch category
- * @param includeBorder - Whether to include border classes
- * @returns CSS class string
- */
 export const getBatchCategoryStyling = (
 	category: string,
 	includeBorder: boolean = false
@@ -185,4 +159,55 @@ export const getBatchCategoryStyling = (
 	}
 
 	return baseClasses;
+};
+
+export type CardCategory =
+	| "processing"
+	| "grading"
+	| "delivery"
+	| "completed"
+	| "rejected"
+	| "unknown";
+
+export const getCardCategory = (status: string): CardCategory => {
+	if (!status) return "unknown";
+
+	const normalizedStatus = status.toLowerCase().trim().replace(/ /g, "_");
+
+	const processingStatuses = [
+		"submit",
+		"received_by_us",
+		"data_input",
+		"delivery_to_jp",
+		"received_by_jp_wh",
+		"delivery_to_psa",
+	];
+	const gradingStatuses = [
+		"psa_arrival_of_submission",
+		"psa_order_processed",
+		"psa_research",
+		"psa_grading",
+		"psa_holder_sealed",
+		"psa_qc",
+		"psa_grading_completed",
+		"psa_completion",
+	];
+	const deliveryStatuses = [
+		"delivery_to_jp_wh",
+		"waiting_to_delivery_to_id",
+		"delivery_process_to_id",
+		"received_by_wh_id",
+		"payment_request",
+		"delivery_to_customer",
+		"received_by_customer",
+	];
+
+	if (processingStatuses.includes(normalizedStatus)) return "processing";
+	if (gradingStatuses.includes(normalizedStatus)) return "grading";
+	if (deliveryStatuses.includes(normalizedStatus)) return "delivery";
+	if (normalizedStatus === "done" || normalizedStatus === "completed")
+		return "completed";
+	if (normalizedStatus === "rejected") return "rejected";
+
+	return "unknown";
 };

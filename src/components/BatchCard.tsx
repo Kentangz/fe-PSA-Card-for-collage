@@ -19,9 +19,9 @@ interface BatchCardProps {
   onCreateSubmission: (id: number) => void;
 }
 
-const UserBatchCard = ({ batch, onCreateSubmission }: BatchCardProps) => {
+const BatchCard = ({ batch, onCreateSubmission }: BatchCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const maxLength = 150; // Characters to show before truncation
+  const maxLength = 150;
   
   const shouldTruncate = batch.services.length > maxLength;
   const displayServices = shouldTruncate && !isExpanded 
@@ -72,4 +72,4 @@ const UserBatchCard = ({ batch, onCreateSubmission }: BatchCardProps) => {
   );
 };
 
-export default UserBatchCard;
+export default BatchCard;
