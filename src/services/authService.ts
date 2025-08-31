@@ -1,37 +1,13 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 import { API_URL } from "../lib/api";
-
-interface LoginCredentials {
-	email: string;
-	password: string;
-}
-
-interface LoginResponse {
-	token: string;
-	user: {
-		role: string;
-	};
-}
-
-interface RegisterCredentials {
-	name: string;
-	email: string;
-	phone_number: string;
-	password: string;
-	password_confirmation: string;
-}
-
-interface ForgotPasswordCredentials {
-  email: string;
-}
-
-interface ResetPasswordCredentials {
-  token: string;
-  email: string;
-  password: string;
-  password_confirmation: string;
-}
+import type {
+	LoginCredentials,
+	LoginResponse,
+	RegisterCredentials,
+	ForgotPasswordCredentials,
+	ResetPasswordCredentials,
+} from "../types/auth.types";
 
 const COOKIE_EXPIRE_DAYS = 1;
 
