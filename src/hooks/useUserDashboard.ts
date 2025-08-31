@@ -5,25 +5,8 @@ import Cookies from "js-cookie";
 import type { Card } from "../types/card.types";
 import type { Batch } from "../types/batch.types";
 import type { CurrentUser } from "../types/user.types";
-
-interface AxiosError {
-	isAxiosError: true;
-	response?: {
-		status?: number;
-		data?: {
-			message?: string;
-		};
-	};
-}
-
-function isAxiosError(error: unknown): error is AxiosError {
-	return (
-		typeof error === "object" &&
-		error !== null &&
-		"isAxiosError" in error &&
-		(error as { isAxiosError?: boolean }).isAxiosError === true
-	);
-}
+import { isAxiosError } from "../utils/errorUtils";
+// import type { AxiosError } from "../types/error.types";
 
 export const useUserDashboard = () => {
 	const [currentUser, setCurrentUser] = useState<CurrentUser | undefined>(
