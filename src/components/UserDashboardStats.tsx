@@ -33,7 +33,7 @@ interface UserDashboardStatsProps {
   cards: CardType[] | undefined;
 }
 
-// Timeline phases mapping - Simplified for User (Processing, PSA Grading, Delivery)
+// Timeline phases mapping - Simplified for User (Processing, Grading, Delivery)
 const TIMELINE_PHASES = [
   {
     id: "processing",
@@ -52,7 +52,7 @@ const TIMELINE_PHASES = [
   },
   {
     id: "psa_grading",
-    title: "PSA Grading",
+    title: "Grading",
     statuses: [
       "psa_arrival_of_submission",
       "psa_order_processed",
@@ -120,7 +120,7 @@ export default function UserDashboardStats({ cards }: UserDashboardStatsProps) {
       
       acc.totalSubmitted += 1;
       
-      // Check each phase - Simplified for User (Processing, PSA Grading, Delivery)
+      // Check each phase - Simplified for User (Processing, Grading, Delivery)
       const processingPhase = TIMELINE_PHASES.find(p => p.id === "processing");
       const psaGradingPhase = TIMELINE_PHASES.find(p => p.id === "psa_grading");
       const deliveryPhase = TIMELINE_PHASES.find(p => p.id === "delivery");
@@ -165,7 +165,7 @@ export default function UserDashboardStats({ cards }: UserDashboardStatsProps) {
 
   return (
     <div className="space-y-4 sm:space-y-6 p-2 sm:p-4 mb-4 sm:mb-6 lg:mb-8">
-      {/* Stats Cards - Simplified for User: Processing, PSA Grading, Delivery */}
+      {/* Stats Cards - Simplified for User: Processing, Grading, Delivery */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
         {/* Total Cards Submitted */}
         <div className="bg-white border border-gray-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
@@ -187,13 +187,12 @@ export default function UserDashboardStats({ cards }: UserDashboardStatsProps) {
           <p className="text-xs sm:text-sm text-blue-700 leading-tight">Processing</p>
         </div>
         
-        {/* PSA Grading */}
+        {/* Grading */}
         <div className="bg-yellow-50 border border-yellow-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
           <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-yellow-800">
             {(stats?.psaGrading ?? 0).toLocaleString()}
           </h2>
           <p className="text-xs sm:text-sm text-yellow-700 leading-tight">
-            <span className="hidden lg:inline">PSA</span>
             <br className="lg:hidden" />
             <span>Grading</span>
           </p>

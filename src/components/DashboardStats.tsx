@@ -331,7 +331,7 @@ export default function DashboardStats({ onStatsLoad }: DashboardStatsProps) {
           </p>
         </div>
         
-        {/* PSA Grading */}
+        {/* Grading */}
         <div className="bg-yellow-50 border border-yellow-200 p-2 sm:p-3 lg:p-4 text-center rounded-lg shadow-sm hover:shadow-md transition-shadow">
           <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-0.5 sm:mb-1 text-yellow-800">
             {(statsCards?.psaGrading ?? 0).toLocaleString()}

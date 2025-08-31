@@ -50,7 +50,7 @@ const PHASE_GROUPS = [
   },
   {
     id: "grading",
-    title: "PSA Grading",
+    title: "Grading",
     icon: "⭐",
     color: "yellow",
     statuses: [
