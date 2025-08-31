@@ -1,48 +1,23 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import FieldInput from "../../components/FieldInput";
 import LeftPanel from "../../components/LeftPanel";
-import { API_URL } from "../../lib/api";
+import { useAuth } from "../../hooks/useAuth";
 
 const ForgotPassword: React.FC = () => {
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const { sendPasswordResetLink, loading, error, successMessage } = useAuth();
+  
   const [email, setEmail] = useState<string>("");
 
   const handleForgotPassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    setSuccessMessage(null);
-    setError(null);
-
-    const body = { email };
-
-    try {
-      const response = await axios.post(`${API_URL}/forgot-password`, body);
-      setSuccessMessage((response.data as { status?: string })?.status || "Check your email for reset instructions.");
-    } catch (err: unknown) {
-      const error = err as { response?: { status: number; data?: { message?: string } } };
-      if (error?.response) {
-        if (error.response.status === 422) {
-          setError(error.response.data?.message || "Invalid email address");
-        } else {
-          setError("An unexpected error occurred. Please try again.");
-        }
-      } else {
-        setError("Network error. Please check your connection.");
-      }
-    } finally {
-      setLoading(false);
-    }
+    await sendPasswordResetLink({ email });
   };
 
   return (
     <div className="flex min-h-screen bg-white">
       <LeftPanel />
       
-      {/* Right Side - Forgot Password Form */}
       <div className="flex flex-col justify-center items-center w-full lg:w-1/2 px-8 lg:px-12">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
@@ -115,7 +90,6 @@ const ForgotPassword: React.FC = () => {
             </p>
           </div>
 
-          {/* Footer Links */}
           <div className="mt-10 flex justify-center gap-6 text-sm text-purple-600">
             <Link to="#" className="hover:text-purple-700 transition-colors">Shipping</Link>
             <Link to="#" className="hover:text-purple-700 transition-colors">Help</Link>

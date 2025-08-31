@@ -1,56 +1,27 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { Link } from "react-router-dom";
 import FieldInput from "../../components/FieldInput";
 import LeftPanel from "../../components/LeftPanel";
-import { API_URL } from "../../lib/api";
-
-interface ValidationErrors {
-  [key: string]: string;
-}
+import { useAuth } from "../../hooks/useAuth";
 
 const Signup: React.FC = () => {
-  const [error, setError] = useState<ValidationErrors>({});
-  const [loading, setLoading] = useState<boolean>(false);
+  const { signUp, loading, error } = useAuth();
+  
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState<string>("+62");
   const [password, setPassword] = useState<string>("");
   const [passwordConfirmation, setPasswordConfirmation] = useState<string>("");
-  const navigate = useNavigate();
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    setError({});
-
-    const user = {
+    await signUp({
       name,
       email,
       phone_number: phoneNumber,
       password,
       password_confirmation: passwordConfirmation,
-    };
-
-    try {
-      const response = await axios.post(`${API_URL}/register`, user);
-      if (response.data) {
-        navigate("/signin");
-      }
-    } catch (err: unknown) {
-      const error = err as { response?: { status: number; data?: { errors?: ValidationErrors; message?: string } } };
-      if (error?.response) {
-        if (error.response.status === 422) {
-          setError(error.response.data?.errors || {});
-        } else {
-          setError({ general: error.response.data?.message || "Registration failed" });
-        }
-      } else {
-        setError({ general: "Network error. Please check your connection." });
-      }
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   return (
@@ -66,9 +37,9 @@ const Signup: React.FC = () => {
             </p>
           </div>
 
-          {error.general && (
+          {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-              {error.general}
+              {error}
             </div>
           )}
 
@@ -85,9 +56,6 @@ const Signup: React.FC = () => {
                 onChange={(e) => setName(e.target.value)}
                 required 
               />
-              {error.name && (
-                <p className="mt-1 text-sm text-red-600">{error.name}</p>
-              )}
             </div>
 
             <div>
@@ -102,9 +70,6 @@ const Signup: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required 
               />
-              {error.email && (
-                <p className="mt-1 text-sm text-red-600">{error.email}</p>
-              )}
             </div>
 
             <div>
@@ -119,9 +84,6 @@ const Signup: React.FC = () => {
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 required 
               />
-              {error.phone_number && (
-                <p className="mt-1 text-sm text-red-600">{error.phone_number}</p>
-              )}
             </div>
 
             <div>
@@ -136,9 +98,6 @@ const Signup: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required 
               />
-              {error.password && (
-                <p className="mt-1 text-sm text-red-600">{error.password}</p>
-              )}
             </div>
 
             <div>
@@ -153,9 +112,6 @@ const Signup: React.FC = () => {
                 onChange={(e) => setPasswordConfirmation(e.target.value)}
                 required 
               />
-              {error.password_confirmation && (
-                <p className="mt-1 text-sm text-red-600">{error.password_confirmation}</p>
-              )}
             </div>
 
             <button

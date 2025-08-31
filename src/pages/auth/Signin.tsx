@@ -1,63 +1,24 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import Cookies from "js-cookie";
-import FieldInput from "../../components/FieldInput";
-import LeftPanel from "../../components/LeftPanel";
-import { API_URL } from "../../lib/api";
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import FieldInput from '../../components/FieldInput';
+import LeftPanel from '../../components/LeftPanel';
 
-interface LoginResponse {
-  token: string;
-  user: {
-    role: string;
-  };
-}
+import { useAuth } from '../../hooks/useAuth';
 
 const Signin: React.FC = () => {
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const navigate = useNavigate();
-  const COOKIE_EXPIRE_DAYS = 1;
+  const { signIn, loading, error } = useAuth();
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
 
   const handleSignin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    const user = { email, password };
-
-    try {
-      const response = await axios.post<LoginResponse>(`${API_URL}/login`, user);
-      const data = response.data;
-
-      if (data?.token) {
-        Cookies.set("token", data.token, { expires: COOKIE_EXPIRE_DAYS });
-        Cookies.set("role", data.user.role, { expires: COOKIE_EXPIRE_DAYS });
-        navigate("/dashboard");
-      }
-    } catch (err: unknown) {
-      const error = err as { response?: { status: number; data?: { message?: string } } };
-      if (error?.response) {
-        if (error.response.status === 401 || error.response.status === 400) {
-          setError(error.response.data?.message || "Login failed");
-        } else {
-          setError("An unexpected error occurred. Please try again.");
-        }
-      } else {
-        setError("Network error. Please check your connection.");
-      }
-    } finally {
-      setLoading(false);
-    }
+    await signIn({ email, password });
   };
 
   return (
     <div className="flex min-h-screen bg-white">
       <LeftPanel />
       
-      {/* Right Side - Sign In Form */}
       <div className="flex flex-col justify-center items-center w-full lg:w-1/2 px-8 lg:px-12">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
@@ -138,7 +99,6 @@ const Signin: React.FC = () => {
             </Link>
           </p>
 
-          {/* Footer Links */}
           <div className="mt-10 flex justify-center gap-6 text-sm text-purple-600">
             <Link to="#" className="hover:text-purple-700 transition-colors">Shipping</Link>
             <Link to="#" className="hover:text-purple-700 transition-colors">Help</Link>
