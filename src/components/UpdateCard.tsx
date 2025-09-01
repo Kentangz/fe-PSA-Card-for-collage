@@ -41,6 +41,7 @@ export default function UpdateCard({ card }: { card?: CardType }) {
   const [batchPayment, setBatchPayment] = useState<BatchPaymentType | null>(null);
   const [isFetchingBatchPayment, setIsFetchingBatchPayment] = useState(false);
   const [batchPaymentError, setBatchPaymentError] = useState<string | null>(null);
+  const [certificates, setCertificates] = useState<{cert_url: string}[]>([{cert_url: ''}]);
 
     const fetchBatchPayment = useCallback(async () => {
     if (!card?.batch_id || !card?.user_id) return;
@@ -76,10 +77,18 @@ export default function UpdateCard({ card }: { card?: CardType }) {
     const grade = formData.get("grade");
     const serialNumber = formData.get("serial_number");
 
+    // Validasi certificates - semua field harus diisi
+    const hasEmptyCertificates = certificates.some(cert => !cert.cert_url.trim());
+    if (hasEmptyCertificates) {
+      alert("Please fill in all certificate links");
+      return;
+    }
+
     try {
       const response = await axiosInstance.put(`/card/${card?.id}`, { 
         grade: grade,
-        serial_number: serialNumber 
+        serial_number: serialNumber,
+        certificates: certificates
       });
       if (response.status === 200) {
         await handleUpdateSubmission("received_by_wh_id");
@@ -88,7 +97,28 @@ export default function UpdateCard({ card }: { card?: CardType }) {
       console.error(error);
     }
   };
+    // Handler untuk menambah cert link field
+  const addCertificateField = () => {
+    if (certificates.length < 5) {
+      setCertificates([...certificates, {cert_url: ''}]);
+    }
+  };
 
+  // Handler untuk menghapus cert link field
+  const removeCertificateField = (index: number) => {
+    if (certificates.length > 1) {
+      const newCertificates = certificates.filter((_, i) => i !== index);
+      setCertificates(newCertificates);
+    }
+  };
+
+  // Handler untuk update cert link value
+  const updateCertificateField = (index: number, value: string) => {
+    const newCertificates = certificates.map((cert, i) => 
+      i === index ? {cert_url: value} : cert
+    );
+    setCertificates(newCertificates);
+  };
   const handleUpdateSubmission = async (status: string) => {
     try {
       const response = await axiosInstance.post("/status", { 
@@ -392,7 +422,7 @@ const getStatusConfig = (currentStatus: string) => {
             <div className="space-y-4 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  PSA Grade
+                  Grade
                 </label>
                 <input 
                   type="text"
@@ -404,15 +434,61 @@ const getStatusConfig = (currentStatus: string) => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Grading Serial Number
+                  Serial Number
                 </label>
                 <input 
                   type="text"
                   name="serial_number"
-                  placeholder="Enter grading serial number"
+                  placeholder="Enter serial number"
                   className="w-full h-12 px-4 border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base"
                   required
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Image Cert Links
+                </label>
+                <div className="space-y-3">
+                  {certificates.map((cert, index) => (
+                    <div key={index} className="flex gap-2 items-center">
+                      <input 
+                        type="text"
+                        value={cert.cert_url}
+                        onChange={(e) => updateCertificateField(index, e.target.value)}
+                        placeholder="https://d1htnxwo4o0jhw.cloudfront.net/cert/...."
+                        className="flex-1 h-12 px-4 border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base"
+                        required
+                      />
+                      
+                      {/* Remove button - hanya tampil jika lebih dari 1 field */}
+                      {certificates.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeCertificateField(index)}
+                          className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg border border-red-300 hover:border-red-400 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  
+                  {/* Add button - hanya tampil jika belum mencapai maksimal */}
+                  {certificates.length < 5 && (
+                    <button
+                      type="button"
+                      onClick={addCertificateField}
+                      className="w-full h-10 flex items-center justify-center text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg border border-blue-300 hover:border-blue-400 border-dashed transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Add Certificate Link
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">

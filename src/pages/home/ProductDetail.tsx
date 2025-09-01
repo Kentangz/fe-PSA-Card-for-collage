@@ -20,6 +20,19 @@ interface CardStatus {
   updated_at: string;
 }
 
+interface DisplayImage {
+  type: 'certificate' | 'upload';
+  url: string;
+}
+
+interface Certificate {
+  id: number;
+  card_id: string;
+  cert_url: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface CardDetail {
   id: string;
   user_id: number;
@@ -32,8 +45,16 @@ interface CardDetail {
   created_at: string;
   updated_at: string;
   images: CardImage[];
+  display_images: DisplayImage[];
+  certificates: Certificate[];
   latest_status: CardStatus;
   statuses: CardStatus[];
+}
+
+interface ResolvedImage {
+  url: string;
+  type: 'certificate' | 'upload' | 'placeholder';
+  index: number;
 }
 
 const ProductDetail: React.FC = () => {
@@ -41,6 +62,8 @@ const ProductDetail: React.FC = () => {
   const [card, setCard] = useState<CardDetail | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [resolvedImages, setResolvedImages] = useState<ResolvedImage[]>([]);
+  const [imageLoadingStates, setImageLoadingStates] = useState<boolean[]>([]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -49,6 +72,78 @@ const ProductDetail: React.FC = () => {
       fetchCardDetail(serialNumber);
     }
   }, [serialNumber]);
+
+  // Smart Fallback Image Loading
+  useEffect(() => {
+    if (!card || !card.display_images) return;
+
+    const loadImages = async () => {
+      const displayImages = card.display_images;
+      const fallbackImages = card.images || [];
+      
+      // Initialize loading states
+      setImageLoadingStates(new Array(displayImages.length).fill(true));
+      
+      // Load images in parallel with smart fallback
+      const imagePromises = displayImages.map(async (displayImg, index): Promise<ResolvedImage | null> => {
+        try {
+          // Try primary image (from display_images)
+          const isValidImage = await checkImageUrl(displayImg.url);
+          if (isValidImage) {
+            return {
+              url: displayImg.url,
+              type: displayImg.type, // This now matches ResolvedImage type
+              index
+            } as ResolvedImage;
+          }
+        } catch (error) {
+          console.log(`Primary image failed for index ${index}:`, error);
+        }
+
+        // Fallback to images array if available
+        if (fallbackImages[index]) {
+          try {
+            const fallbackUrl = fallbackImages[index].path;
+            const isValidFallback = await checkImageUrl(fallbackUrl);
+            if (isValidFallback) {
+              return {
+                url: fallbackUrl,
+                type: 'upload' as const,
+                index
+              } as ResolvedImage;
+            }
+          } catch (error) {
+            console.log(`Fallback image failed for index ${index}:`, error);
+          }
+        }
+
+        // Both failed, return null (will be filtered out)
+        return null;
+      });
+
+      // Wait for all promises and filter out nulls
+      const results = await Promise.all(imagePromises);
+      const validImages = results.filter((img): img is ResolvedImage => img !== null);
+      
+      setResolvedImages(validImages);
+      setImageLoadingStates(new Array(displayImages.length).fill(false));
+    };
+
+    loadImages();
+  }, [card]);
+
+  // Helper function to check if image URL is valid
+  const checkImageUrl = (url: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = url;
+      
+      // Timeout after 5 seconds
+      setTimeout(() => resolve(false), 5000);
+    });
+  };
 
   const fetchCardDetail = async (serial: string) => {
     setIsLoading(true);
@@ -88,6 +183,64 @@ const ProductDetail: React.FC = () => {
     return 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
+  // Image Gallery Component with Smart Loading
+  const ImageGallery = () => {
+    const isImagesLoading = imageLoadingStates.some(state => state);
+    const hasImages = resolvedImages.length > 0;
+
+    // Show skeleton while loading
+    if (isImagesLoading && card?.display_images) {
+      return (
+        <div className="mb-8">
+          <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 max-w-xs sm:max-w-4xl mx-auto justify-center">
+            {card.display_images.map((_, index) => (
+              <div key={index} className="flex-shrink-0">
+                <div className="bg-gray-300 rounded-xl aspect-[3/4] w-32 sm:w-48 animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Show resolved images
+    if (hasImages) {
+      return (
+        <div className="mb-8">
+          <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 max-w-xs sm:max-w-4xl mx-auto justify-center">
+            {resolvedImages.map((image, displayIndex) => (
+              <div key={`${image.index}-${displayIndex}`} className="flex-shrink-0">
+                <div className="rounded-xl overflow-hidden aspect-[3/4] w-32 sm:w-48 shadow-lg">
+                  <img
+                    src={image.url}
+                    alt={`Card image ${displayIndex + 1}`}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjI2NyIgdmlld0JveD0iMCAwIDIwMCAyNjciIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjY3IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMDAgMTMzLjVMMTIwIDExMy41SDE4MFYxNTMuNUgxMjBMMTAwIDEzMy41WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Show empty state
+    return (
+      <div className="mb-8">
+        <div className="bg-gray-100 rounded-xl aspect-[3/4] w-32 sm:w-48 mx-auto flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <div className="w-8 sm:w-12 h-8 sm:h-12 bg-gray-300 rounded-lg mx-auto mb-2"></div>
+            <p className="text-xs sm:text-sm">No images available</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Skeleton Loading Component
   const SkeletonLoader = () => (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-pulse">
@@ -103,9 +256,12 @@ const ProductDetail: React.FC = () => {
       <div className="">
         {/* Card Images Skeleton */}
         <div className="mb-8">
-          <div className="grid grid-cols-2 gap-3 sm:gap-6 max-w-xs sm:max-w-2xl mx-auto">
-            <div className="bg-gray-300 rounded-xl aspect-[3/4]"></div>
-            <div className="bg-gray-300 rounded-xl aspect-[3/4]"></div>
+          <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 max-w-xs sm:max-w-4xl mx-auto justify-center">
+            {[...Array(3)].map((_, index) => (
+              <div key={index} className="flex-shrink-0">
+                <div className="bg-gray-300 rounded-xl aspect-[3/4] w-32 sm:w-48"></div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -208,11 +364,16 @@ const ProductDetail: React.FC = () => {
                 <span className="sm:hidden"> </span>number is defined as the following:
               </p>
               
-              <div className="inline-block border-2 border-purple-[#462895] rounded-lg px-2 py-1 mb-6">
+              <a 
+                href={`https://www.psacard.com/cert/${card.serial_number.toLowerCase()}/${card.brand.toLowerCase()}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block border-2 border-purple-[#462895] rounded-lg px-2 py-1 mb-6 hover:bg-purple-50 transition-colors cursor-pointer"
+              >
                 <span className="text-lg sm:text-2xl font-semibold text-[#462895]" style={{ fontFamily: 'Inter Tight, sans-serif' }}>
-                  {formatCertNumber(card.id)}
+                  {formatCertNumber(card.serial_number)}
                 </span>
-              </div>
+              </a>
 
               <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-semibold mb-0 px-2" style={{ fontFamily: 'Inter Tight, sans-serif' }}>
                 {card.name.toUpperCase()}
@@ -221,35 +382,8 @@ const ProductDetail: React.FC = () => {
             </div>
 
             <div className="">
-              {/* Card Images */}
-              <div className="mb-8">
-                {card.images && card.images.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-3 sm:gap-6 max-w-xs sm:max-w-2xl mx-auto">
-                    {card.images.slice(0, 2).map((image, index) => (
-                      <div key={image.id} className="relative">
-                        <div className="rounded-xl overflow-hidden aspect-[3/4] shadow-lg">
-                          <img
-                            src={image.path}
-                            alt={`Card image ${index + 1}`}
-                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjI2NyIgdmlld0JveD0iMCAwIDIwMCAyNjciIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjY3IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMDAgMTMzLjVMMTIwIDExMy41SDE4MFYxNTMuNUgxMjBMMTAwIDEzMy41WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-gray-100 rounded-xl aspect-[3/4] flex items-center justify-center max-w-xs sm:max-w-md mx-auto">
-                    <div className="text-center text-gray-500">
-                      <div className="w-12 sm:w-16 h-12 sm:h-16 bg-gray-300 rounded-lg mx-auto mb-3"></div>
-                      <p className="text-xs sm:text-sm">No image available</p>
-                    </div>
-                  </div>
-                )}
-              </div>
+              {/* Smart Image Gallery */}
+              <ImageGallery />
 
               {/* Card Information - Below Images */}
               <div className="max-w-2xl mx-auto space-y-6 sm:space-y-8" style={{ fontFamily: 'Inter Tight, sans-serif' }}>
@@ -298,9 +432,9 @@ const ProductDetail: React.FC = () => {
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] lg:grid-cols-[400px_1fr] items-start gap-2 sm:gap-3">
                       <div className="flex items-center gap-3">
-                        <dt className="text-xs sm:text-sm font-sembold" style={{ fontFamily: 'Inter Tight, sans-serif' }}>Cert Number</dt>
+                        <dt className="text-xs sm:text-sm font-sembold" style={{ fontFamily: 'Inter Tight, sans-serif' }}>Card ID</dt>
                       </div>
-                      <dd className="text-base sm:text-lg font-semibold text-gray-900 ml-7 sm:ml-0" style={{ fontFamily: 'Inter Tight, sans-serif' }}>{formatCertNumber(card.id)}</dd>
+                      <dd className="text-base sm:text-lg font-semibold text-gray-900 ml-7 sm:ml-0" style={{ fontFamily: 'Inter Tight, sans-serif' }}>{(card.id)}</dd>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] lg:grid-cols-[400px_1fr] items-start gap-2 sm:gap-3">
