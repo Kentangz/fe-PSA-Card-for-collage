@@ -1,6 +1,8 @@
 // import Input from "./FieldInput"; // Not needed anymore
 import type { ChangeEvent } from "react";
-import { LuUpload } from "react-icons/lu";
+import { useState } from "react";
+import { LuUpload, LuCamera } from "react-icons/lu";
+import CameraCapture from "./CameraCapture";
 
 type SubmissionData = {
   name: string;
@@ -21,6 +23,8 @@ export default function SubmissionForm({
   onChange: (index: number, data: SubmissionData) => void;
   disabled?: boolean;
 }) {
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+
   const updateField = (key: keyof SubmissionData, value: string | File[]) => {
     if (!disabled) {
       onChange(index, { ...data, [key]: value });
@@ -39,6 +43,11 @@ export default function SubmissionForm({
     }
   };
 
+  const handleCameraCapture = (capturedImages: File[]) => {
+    if (disabled) return;
+    updateField("images", [...data.images, ...capturedImages]);
+  };
+
   const removeImage = (imageIndex: number) => {
     if (disabled) return;
     
@@ -46,16 +55,20 @@ export default function SubmissionForm({
     updateField("images", updatedImages);
   };
 
+  const isCameraSupported = () => {
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  };
+
   return (
     <div className="border border-gray-200 bg-white p-3 sm:p-4 lg:p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-      {/* Form Header - Mobile */}
+      {/* Mobile */}
       <div className="sm:hidden mb-4 pb-3 border-b border-gray-100">
         <h3 className="text-sm font-medium text-gray-800">
           Submission {index + 1}
         </h3>
       </div>
 
-      {/* Form Fields - Responsive Grid */}
+      {/* Form Fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div className="sm:col-span-2 sm:grid sm:grid-cols-2 sm:gap-4 space-y-3 sm:space-y-0">
           {/* Card Name */}
@@ -182,46 +195,84 @@ export default function SubmissionForm({
           </div>
         )}
 
-        {/* Upload Button - Responsive */}
-        <label
-          htmlFor={`picture-${index}`}
-          className={`
-            flex items-center justify-center gap-2 w-full h-10 sm:h-12 
-            border-2 border-dashed border-gray-300 rounded-lg
-            text-gray-600 cursor-pointer transition-all text-sm sm:text-base
-            ${disabled 
-              ? 'bg-gray-50 cursor-not-allowed opacity-50' 
-              : 'hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600'
-            }
-          `}
-        >
-          <LuUpload className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="hidden sm:inline">
-            {data.images?.length > 0 ? 'Add More Images' : 'Upload Card Images'}
-          </span>
-          <span className="sm:hidden">
-            {data.images?.length > 0 ? 'Add Images' : 'Upload Images'}
-          </span>
-        </label>
-        <input
-          type="file"
-          name="image"
-          onChange={handleFileChange}
-          id={`picture-${index}`}
-          className="hidden"
-          multiple
-          accept="image/*"
-          disabled={disabled}
-        />
+        {/* Upload Options - Camera and File Upload */}
+        <div className="space-y-3 sm:space-y-4">
+          
+          {/* Camera Button - Only show if supported */}
+          {isCameraSupported() && (
+            <button
+              type="button"
+              onClick={() => setIsCameraOpen(true)}
+              disabled={disabled}
+              className={`
+                flex items-center justify-center gap-2 w-full h-10 sm:h-12 
+                border-2 border-dashed border-blue-300 rounded-lg
+                text-blue-600 bg-blue-50 cursor-pointer transition-all text-sm sm:text-base
+                ${disabled 
+                  ? 'bg-gray-50 border-gray-300 text-gray-400 cursor-not-allowed opacity-50' 
+                  : 'hover:border-blue-400 hover:bg-blue-100'
+                }
+              `}
+            >
+              <LuCamera className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Take Photos with Camera</span>
+              <span className="sm:hidden">Take Photos</span>
+            </button>
+          )}
+
+          {/* File Upload Button */}
+          <label
+            htmlFor={`picture-${index}`}
+            className={`
+              flex items-center justify-center gap-2 w-full h-10 sm:h-12 
+              border-2 border-dashed border-gray-300 rounded-lg
+              text-gray-600 cursor-pointer transition-all text-sm sm:text-base
+              ${disabled 
+                ? 'bg-gray-50 cursor-not-allowed opacity-50' 
+                : 'hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600'
+              }
+            `}
+          >
+            <LuUpload className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">
+              {data.images?.length > 0 ? 'Add More Images' : 'Upload Card Images'}
+            </span>
+            <span className="sm:hidden">
+              {data.images?.length > 0 ? 'Add Images' : 'Upload Images'}
+            </span>
+          </label>
+          <input
+            type="file"
+            name="image"
+            onChange={handleFileChange}
+            id={`picture-${index}`}
+            className="hidden"
+            multiple
+            accept="image/*"
+            disabled={disabled}
+          />
+        </div>
         
         {/* Upload Instructions */}
         {data.images?.length === 0 && (
-          <p className="text-xs text-gray-500 mt-1 sm:mt-2">
-            <span className="hidden sm:inline">Please upload at least one image of your card</span>
-            <span className="sm:hidden">Upload at least one image</span>
+          <p className="text-xs text-gray-500 mt-2">
+            <span className="hidden sm:inline">
+              Take photos with camera or upload images from your device
+            </span>
+            <span className="sm:hidden">
+              Take photos or upload images
+            </span>
           </p>
         )}
       </div>
+
+      {/* Camera Capture Modal */}
+      <CameraCapture
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onCapture={handleCameraCapture}
+        disabled={disabled}
+      />
     </div>
   );
 }
