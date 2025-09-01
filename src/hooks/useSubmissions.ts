@@ -9,7 +9,7 @@ export interface SubmissionFormData {
 	name: string;
 	year: string;
 	brand: string;
-	grade_target: string;
+	// grade_target: string;
 	images: File[];
 }
 
@@ -26,7 +26,13 @@ export const useSubmissions = () => {
 	);
 
 	const [submissions, setSubmissions] = useState<SubmissionFormData[]>([
-		{ name: "", year: "", brand: "", grade_target: "", images: [] },
+		{
+			name: "",
+			year: "",
+			brand: "",
+			// grade_target: "",
+			images: []
+		},
 	]);
 
 	const [loading, setLoading] = useState(true);
@@ -69,7 +75,13 @@ export const useSubmissions = () => {
 	const addSubmission = useCallback(() => {
 		setSubmissions((prev) => [
 			...prev,
-			{ name: "", year: "", brand: "", grade_target: "", images: [] },
+			{
+				name: "",
+				year: "",
+				brand: "",
+				// grade_target: "",
+				images: []
+			},
 		]);
 	}, []);
 
@@ -97,7 +109,7 @@ export const useSubmissions = () => {
 				sub.name &&
 				sub.year &&
 				sub.brand &&
-				sub.grade_target &&
+				// sub.grade_target &&
 				sub.images.length > 0
 		);
 	};
@@ -119,7 +131,7 @@ export const useSubmissions = () => {
 				formData.append("name", submission.name);
 				formData.append("year", submission.year);
 				formData.append("brand", submission.brand);
-				formData.append("grade_target", submission.grade_target);
+				// formData.append("grade_target", submission.grade_target);
 				formData.append("batch_id", batchId);
 				submission.images.forEach((file) => formData.append("images[]", file));
 

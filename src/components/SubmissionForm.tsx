@@ -3,14 +3,9 @@ import type { ChangeEvent } from "react";
 import { useState } from "react";
 import { LuUpload, LuCamera } from "react-icons/lu";
 import CameraCapture from "./CameraCapture";
+import type { SubmissionFormData } from "../hooks/useSubmissions";
 
-type SubmissionData = {
-  name: string;
-  year: string;
-  brand: string;
-  grade_target: string;
-  images: File[];
-};
+type SubmissionData = SubmissionFormData;
 
 export default function SubmissionForm({
   index,
@@ -132,7 +127,7 @@ export default function SubmissionForm({
         </div>
         
         {/* Grade Target */}
-        <div className="sm:col-span-2">
+        {/* <div className="sm:col-span-2">
           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
             Grade Target
           </label>
@@ -148,7 +143,7 @@ export default function SubmissionForm({
             <option value="B">B</option>
             <option value="C">C</option>
           </select>
-        </div>
+        </div> */}
       </div>
 
       {/* Images Section */}
