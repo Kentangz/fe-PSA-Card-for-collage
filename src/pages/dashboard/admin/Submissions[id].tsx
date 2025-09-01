@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { BsPeopleFill, BsArrowLeft, BsImage } from "react-icons/bs";
+import { BsPeopleFill, BsArrowLeft, BsImage, BsPencil, BsCheck, BsX } from "react-icons/bs";
 import { ImHome } from "react-icons/im";
 import { MdAssignment } from "react-icons/md";
 import Sidebar from "../../../components/SideBar";
@@ -128,7 +128,51 @@ export default function SubmissionDetail() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  
+  // Edit name states
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState("");
+  const [isUpdatingName, setIsUpdatingName] = useState(false);
+  
   const navigate = useNavigate();
+
+  // Function to handle name update
+  const handleUpdateName = async () => {
+    if (!card || !editedName.trim()) return;
+    
+    try {
+      setIsUpdatingName(true);
+      await axiosInstance.put(`/card/${card.id}`, {
+        name: editedName.trim()
+      });
+      
+      // Update local card state
+      if (card) {
+        setCard({
+          ...card,
+          name: editedName.trim()
+        });
+      }
+      
+      setIsEditingName(false);
+      setError(null);
+    } catch (error) {
+      console.error('Error updating card name:', error);
+      setError('Failed to update card name');
+    } finally {
+      setIsUpdatingName(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditedName(card?.name || "");
+    setIsEditingName(false);
+  };
+
+  const handleStartEdit = () => {
+    setEditedName(card?.name || "");
+    setIsEditingName(true);
+  };
 
   // Auth and fetch logic
   useEffect(() => {
@@ -141,7 +185,6 @@ export default function SubmissionDetail() {
           navigate("/signin", { replace: true });
           return;
         }
-
         const response = await axiosInstance.get<CurrentUserType>("/user");
         setCurrentUser(response.data);
       } catch (error) {
@@ -158,11 +201,9 @@ export default function SubmissionDetail() {
   useEffect(() => {
     const fetchCard = async () => {
       if (!id || !currentUser) return;
-
       try {
         setLoading(true);
         setError(null);
-
         const response = await axiosInstance.get<ApiResponse | CardType | CardResponse>(`/card/${id}`);
         
         if (response.data && typeof response.data === 'object') {
@@ -186,11 +227,85 @@ export default function SubmissionDetail() {
         setLoading(false);
       }
     };
-
     fetchCard();
   }, [id, currentUser]);
 
-  if (error) {
+  // EditableCardName Component
+  const EditableCardName = ({ 
+    name, 
+    onEdit, 
+    className = "",
+    isMobile = false
+  }: { 
+    name: string; 
+    onEdit: () => void; 
+    className?: string;
+    isMobile?: boolean;
+  }) => {
+    if (isEditingName) {
+      return (
+        <div className={`w-full ${className}`}>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={editedName}
+              onChange={(e) => setEditedName(e.target.value)}
+              className={`${
+                isMobile 
+                  ? 'text-lg' 
+                  : 'text-xl lg:text-2xl'
+              } font-semibold text-gray-900 bg-transparent border-b border-blue-300 focus:border-blue-500 outline-none flex-1 min-w-0 pb-1`}
+              autoFocus
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleUpdateName();
+                }
+                if (e.key === 'Escape') {
+                  handleCancelEdit();
+                }
+              }}
+            />
+            <div className="flex gap-1 self-start sm:self-center">
+              <button
+                onClick={handleUpdateName}
+                disabled={isUpdatingName || !editedName.trim()}
+                className="p-2 sm:p-1 text-green-600 hover:text-green-700 hover:bg-green-50 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <BsCheck className="h-4 w-4" />
+              </button>
+              <button
+                onClick={handleCancelEdit}
+                disabled={isUpdatingName}
+                className="p-2 sm:p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded disabled:opacity-50"
+              >
+                <BsX className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className={`flex items-start gap-2 w-full ${className}`}>
+        <h1 className={`${
+          isMobile 
+            ? 'text-lg' 
+            : 'text-xl lg:text-2xl'
+        } font-semibold text-gray-900 flex-1 min-w-0 leading-tight`}>
+          {name}
+        </h1>
+        <button
+          onClick={onEdit}
+          className="p-2 sm:p-1 mt-1 sm:mt-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded flex-shrink-0"
+        >
+          <BsPencil className="h-4 w-4" />
+        </button>
+      </div>
+    );
+  };
+
+  if (error && !card) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Sidebar menu={menu} />
@@ -268,6 +383,13 @@ export default function SubmissionDetail() {
             <span className="text-gray-900">Detail</span>
           </div>
 
+          {/* Error Message */}
+          {error && card && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
           {loading ? (
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
               <div className="animate-pulse">
@@ -283,15 +405,19 @@ export default function SubmissionDetail() {
               <div className="block lg:hidden">
                 <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
                   <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h1 className="text-xl font-semibold text-gray-900">{card.name}</h1>
+                    <div className="flex-1 min-w-0 mr-4">
+                      <EditableCardName 
+                        name={card.name} 
+                        onEdit={handleStartEdit}
+                        className="mb-1"
+                        isMobile={true}
+                      />
                       <p className="text-sm text-gray-600">{card.brand} • {card.year}</p>
                     </div>
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusStyle(card.latest_status.status)}`}>
+                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusStyle(card.latest_status.status)} flex-shrink-0`}>
                       {card.latest_status.status}
                     </span>
                   </div>
-
                   <div className="grid grid-cols-1 gap-3 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Brand:</span>
@@ -351,11 +477,15 @@ export default function SubmissionDetail() {
               <div className="hidden lg:flex lg:gap-8">
                 {/* Card Information */}
                 <div className="w-96 bg-white border border-gray-200 p-6 rounded-lg shadow-sm h-fit">
-                  <div className="flex items-center gap-2 mb-4">
-                    <h1 className="text-2xl font-semibold text-gray-900">{card.name}</h1>
+                  <div className="mb-4">
+                    <EditableCardName 
+                      name={card.name} 
+                      onEdit={handleStartEdit}
+                      className="mb-2"
+                      isMobile={false}
+                    />
                     <span className="text-sm text-gray-600">({card.year})</span>
                   </div>
-
                   <div className="space-y-3 mb-6">
                     <div className="flex justify-between">
                       <span className="text-gray-600 font-medium">Brand:</span>
@@ -403,7 +533,6 @@ export default function SubmissionDetail() {
                       </>
                     )}
                   </div>
-
                   {/* Card Images inside Card Information */}
                   <div>
                     <div className="flex items-center gap-2 mb-3">
