@@ -5,7 +5,7 @@ import { getStatusDisplayText, getStatusStyling } from '../utils/statusUtils';
 import type { Card } from '../types/card.types';
 
 interface SubmissionHistoryProps {
-  cards: Card[] | undefined;
+  submissions: Card[] | undefined;
 }
 
 const fields = [
@@ -19,7 +19,7 @@ const fields = [
   { label: "Submitted at", name: "created_at" },
 ];
 
-const SubmissionHistory: React.FC<SubmissionHistoryProps> = ({ cards }) => {
+const SubmissionHistory: React.FC<SubmissionHistoryProps> = ({ submissions }) => {
   return (
     <div className="w-full">
       <h5 className="text-base sm:text-lg font-medium text-gray-800 mb-3 sm:mb-4">
@@ -28,7 +28,7 @@ const SubmissionHistory: React.FC<SubmissionHistoryProps> = ({ cards }) => {
       </h5>
       
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        {cards && cards.length > 0 ? (
+        {submissions && submissions.length > 0 ? (
           <>
             {/* Desktop */}
             <div className="hidden lg:block overflow-x-auto">
@@ -43,7 +43,7 @@ const SubmissionHistory: React.FC<SubmissionHistoryProps> = ({ cards }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {cards.map((card) => (
+                  {submissions.map((card) => (
                     <tr key={card.id} className="hover:bg-gray-50">
                       <td className="py-3 px-4 text-gray-800 font-medium">{card.name}</td>
                       <td className="py-3 px-4 text-gray-600">{card.year}</td>
@@ -67,7 +67,7 @@ const SubmissionHistory: React.FC<SubmissionHistoryProps> = ({ cards }) => {
 
             {/* Mobile */}
             <div className="lg:hidden divide-y divide-gray-200">
-              {cards.map((card) => (
+              {submissions.map((card) => (
                 <div key={card.id} className="p-4 hover:bg-gray-50 transition-colors">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">

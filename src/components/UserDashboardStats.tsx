@@ -12,29 +12,29 @@ interface UserStats {
 }
 
 interface UserDashboardStatsProps {
-  cards: Card[] | undefined;
+  summaryCards: Card[] | undefined;
 }
 
-export default function UserDashboardStats({ cards }: UserDashboardStatsProps) {
+export default function UserDashboardStats({ summaryCards }: UserDashboardStatsProps) {
   const stats: UserStats = useMemo(() => {
-    if (!cards) {
+    if (!summaryCards) {
       return { totalSubmitted: 0, processing: 0, grading: 0, delivery: 0, completed: 0, rejected: 0 };
     }
-    return cards.reduce((acc, card) => {
+    return summaryCards.reduce((acc, card) => {
       const category = getCardCategory(card.latest_status.status);
       if (category !== 'unknown') {
         acc[category]++;
       }
       return acc;
     }, {
-      totalSubmitted: cards.length,
+      totalSubmitted: summaryCards.length,
       processing: 0,
       grading: 0,
       delivery: 0,
       completed: 0,
       rejected: 0,
     });
-  }, [cards]);
+  }, [summaryCards]);
 
   return (
     <div className="space-y-4 sm:space-y-6 p-2 sm:p-4 mb-4 sm:mb-6 lg:mb-8">
