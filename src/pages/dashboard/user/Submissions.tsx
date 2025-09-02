@@ -1,8 +1,9 @@
-import Sidebar from "../../../components/SideBar";
-import ProfileMenu from "../../../components/ProfileMenu";
-import SubmissionForm from "../../../components/SubmissionForm";
-import BatchInfo from "../../../components/BatchInfo";
-import { useSubmissions } from "../../../hooks/useSubmissions";
+import ProfileMenu from "@/components/ProfileMenu";
+import SubmissionForm from "@/components/SubmissionForm";
+import BatchInfo from "@/components/BatchInfo";
+import { useSubmissions } from "@/hooks/useSubmissions";
+import UserLayout from "@/layouts/UserLayout";
+import { PATHS } from "@/routes/paths";
 import { ImHome } from "react-icons/im";
 import { MdTrackChanges } from "react-icons/md";
 import { HiOutlineClipboardList } from "react-icons/hi";
@@ -10,12 +11,12 @@ import { HiOutlineClipboardList } from "react-icons/hi";
 const menu = [
   {
     title: "home",
-    link: "/dashboard/user",
+    link: PATHS.DASHBOARD.USER.ROOT,
     icon: ImHome
   },
   {
     title: "track submission",
-    link: "/dashboard/user/tracking",
+    link: PATHS.DASHBOARD.USER.TRACKING,
     icon: MdTrackChanges
   },
 ];
@@ -37,34 +38,17 @@ export default function CreateSubmissionPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Sidebar menu={menu} />
-        {/*Loading Skeleton*/}
-        <div className="lg:pl-64 pl-4 pr-4 pb-4">
-          <div className="mt-4 space-y-6">
-            <div className="bg-gray-200 animate-pulse h-20 rounded-lg"></div>
-            <div className="bg-gray-200 animate-pulse h-96 rounded-lg"></div>
-          </div>
-        </div>
-      </div>
+      <UserLayout menu={menu} isLoading title="Create Submission" />
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar menu={menu} />
-      
-      <nav className="w-full lg:pl-64 pl-4 mt-4">
-        <div className="h-14 flex justify-between items-center px-2">
-          <p className="text-lg lg:text-xl font-medium text-gray-800 truncate">
-            Create Submission{selectedBatch ? ` - ${selectedBatch.batch_number}` : ''}
-          </p>
-          <ProfileMenu currentUser={currentUser} />
-        </div>
-      </nav>
-      
-      <div className="lg:pl-64 pl-4 pr-4 pb-4">
-        <div className="mt-4 space-y-4 sm:space-y-6">
+    <UserLayout
+      menu={menu}
+      title={`Create Submission${selectedBatch ? ` - ${selectedBatch.batch_number}` : ''}`}
+      navbarRight={<ProfileMenu currentUser={currentUser} />}
+    >
+        <div className="space-y-4 sm:space-y-6">
           
           {selectedBatch ? (
             <BatchInfo 
@@ -138,7 +122,6 @@ export default function CreateSubmissionPage() {
             </>
           )}
         </div>
-      </div>
-    </div>
+    </UserLayout>
   );
 }

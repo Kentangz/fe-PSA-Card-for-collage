@@ -1,19 +1,20 @@
-import Sidebar from "../../../components/SideBar";
-import ProfileMenu from "../../../components/ProfileMenu";
-import SubmissionList from "../../../components/SubmissionList";
-import { useTracking } from "../../../hooks/useTracking";
+import ProfileMenu from "@/components/ProfileMenu";
+import SubmissionList from "@/components/SubmissionList";
+import UserLayout from "@/layouts/UserLayout";
+import { useTracking } from "@/hooks/useTracking";
+import { PATHS } from "@/routes/paths";
 import { ImHome } from "react-icons/im";
 import { MdTrackChanges } from "react-icons/md";
 
 const menu = [
   {
     title: "home",
-    link: "/dashboard/user",
+    link: PATHS.DASHBOARD.USER.ROOT,
     icon: ImHome
   },
   {
     title: "track submission",
-    link: "/dashboard/user/tracking",
+    link: PATHS.DASHBOARD.USER.TRACKING,
     icon: MdTrackChanges
   },
 ];
@@ -42,39 +43,24 @@ export default function TrackingPage() {
   const { currentUser, cards, loading, error } = useTracking();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar menu={menu} />
-      
-      <nav className="w-full lg:pl-64 pl-4 mt-4">
-        <div className="h-14 flex justify-between items-center px-2">
-          <div className="flex items-center">
-            <div className="w-10 lg:w-0"></div>
-            <p className="text-lg lg:text-xl font-medium text-gray-800 truncate">
-              Track Submission
-            </p>
-          </div>
-          <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
-            <ProfileMenu currentUser={currentUser} />
-          </div>
+    <UserLayout
+      menu={menu}
+      title="Track Submission"
+      navbarRight={<ProfileMenu currentUser={currentUser} />}
+      isLoading={false}
+    >
+      {error && (
+        <div className="bg-red-100 border border-red-300 text-red-800 p-4 rounded-lg">
+          <p className="font-bold">Error</p>
+          <p>{error}</p>
         </div>
-      </nav>
-      
-      <div className="lg:pl-64 pl-4 pr-4 pb-4">
-        <div className="mt-4 space-y-4 sm:space-y-6">
-          {error && (
-            <div className="bg-red-100 border border-red-300 text-red-800 p-4 rounded-lg">
-              <p className="font-bold">Error</p>
-              <p>{error}</p>
-            </div>
-          )}
+      )}
 
-          {loading ? (
-            <TrackingLoadingSkeleton />
-          ) : (
-            <SubmissionList cards={cards || []} />
-          )}
-        </div>
-      </div>
-    </div>
+      {loading ? (
+        <TrackingLoadingSkeleton />
+      ) : (
+        <SubmissionList cards={cards} />
+      )}
+    </UserLayout>
   );
 }

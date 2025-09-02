@@ -31,7 +31,7 @@ export const useSubmissions = () => {
 			year: "",
 			brand: "",
 			// grade_target: "",
-			images: []
+			images: [],
 		},
 	]);
 
@@ -80,7 +80,7 @@ export const useSubmissions = () => {
 				year: "",
 				brand: "",
 				// grade_target: "",
-				images: []
+				images: [],
 			},
 		]);
 	}, []);

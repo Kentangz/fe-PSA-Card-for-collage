@@ -1,18 +1,18 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
-import axiosInstance from "../lib/axiosInstance";
-import { getUserCards } from "../services/cardService";
-import type { Card } from "../types/card.types";
-import type { CurrentUser } from "../types/user.types";
-import { isAxiosError } from "../utils/errorUtils";
+import axiosInstance from "@/lib/axiosInstance";
+import { getUserCards } from "@/services/cardService";
+import type { Card } from "@/types/card.types";
+import type { CurrentUser } from "@/types/user.types";
+import { isAxiosError } from "@/utils/errorUtils";
 // import type { AxiosError } from "../types/error.types";
 
 export const useTracking = () => {
 	const [currentUser, setCurrentUser] = useState<CurrentUser | undefined>(
 		undefined
 	);
-	const [cards, setCards] = useState<Card[] | undefined>(undefined);
+	const [cards, setCards] = useState<Card[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const navigate = useNavigate();
@@ -38,8 +38,7 @@ export const useTracking = () => {
 				}
 
 				setCurrentUser(user);
-				setCards(cardsData);
-				const sortedCards = cardsData.sort(
+				const sortedCards = [...cardsData].sort(
 					(a, b) =>
 						new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
 				);
