@@ -6,9 +6,9 @@ import { useAuth } from "../../hooks/useAuth";
 
 const ResetPassword: React.FC = () => {
   const { performPasswordReset, loading, error } = useAuth();
-  // const { token } = useParams<{ token: string }>(); // Untuk Production (/reset-password/TOKENNYADISINI)
-  const [searchParams] = useSearchParams(); // Untuk Development
-  const token = searchParams.get("token");   // Untuk Development (/reset-password?token=TOKENNYADISINI)
+  const { token } = useParams<{ token: string }>(); // Production (/reset-password?token=)
+  const [searchParams] = useSearchParams(); 
+  // const token = searchParams.get("token");   // Development (/reset-password/)
   const emailParam = searchParams.get("email");
 
   const [password, setPassword] = useState<string>("");

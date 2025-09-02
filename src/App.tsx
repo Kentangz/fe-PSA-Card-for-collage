@@ -37,7 +37,10 @@ function App() {
         <Route path="/signin" element={<AuthRoute><Signin /></AuthRoute>} />
         <Route path="/signup" element={<AuthRoute><Signup /></AuthRoute>} />
         <Route path="/forgot-password" element={<AuthRoute><ForgotPassword /></AuthRoute>} />
+        {/* Production */}
         <Route path="/reset-password/:token" element={<AuthRoute><ResetPassword /></AuthRoute>} />
+        {/* Development */}
+        {/* <Route path="/reset-password/" element={<AuthRoute><ResetPassword /></AuthRoute>} /> */}
         
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardRedirect />} />
