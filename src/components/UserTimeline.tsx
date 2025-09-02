@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { BsImage } from "react-icons/bs";
-import formatDate from "../utils/FormatDate";
-import axiosInstance from "../lib/axiosInstance";
-import { BE_URL } from "../lib/api";
-// Import from statusUtils
-import { getStatusDisplayText, getStatusStyling } from "../utils/statusUtils";
+import formatDate from "@/utils/FormatDate";
+import axiosInstance from "@/lib/axiosInstance";
+import { BE_URL } from "@/lib/api";
+import { getStatusStyling } from "@/utils/statusUtils";
+import { useTimelineData } from "@/hooks/useTimelineData";
+import TimelineItem from "@/components/TimelineItem";
 
 // Types (same as Enhanced Timeline)
 interface StatusType {
@@ -32,45 +33,11 @@ interface MobileTimelineProps {
   statuses: StatusType[];
   currentStatus: string;
   grade?: string | null;
-  cardId: string | number; // Add cardId prop
+  cardId: string | number;
+  variant?: "compact" | "full";
 }
 
-// Helper function to get status text - now fully using statusUtils
-const getStatusText = (status: string): string => {
-  return getStatusDisplayText(status);
-};
-
-const PHASE_GROUPS = [
-  {
-    id: "processing",
-    title: "Processing",
-    icon: "📝",
-    color: "blue",
-    statuses: ["submit", "received_by_us", "data_input", "delivery_to_jp", "received_by_jp_wh"]
-  },
-  {
-    id: "grading",
-    title: "Grading",
-    icon: "⭐",
-    color: "yellow",
-    statuses: [
-      "delivery_to_psa", "psa_arrival_of_submission", "psa_order_processed",
-      "psa_research", "psa_grading", "psa_holder_sealed", "psa_qc",
-      "psa_grading_completed", "psa_completion"
-    ]
-  },
-  {
-    id: "delivery",
-    title: "Delivery",
-    icon: "🚚",
-    color: "green",
-    statuses: [
-      "delivery_to_jp_wh", "waiting_to_delivery_to_id", "delivery_process_to_id",
-      "received_by_wh_id", "payment_request", "delivery_to_customer",
-      "received_by_customer", "done"
-    ]
-  }
-];
+// Status text and phase groups resolved via useTimelineData
 
 export default function MobileTimeline({ statuses, currentStatus, grade, cardId }: MobileTimelineProps) {
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
@@ -78,7 +45,8 @@ export default function MobileTimeline({ statuses, currentStatus, grade, cardId 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [loadingProofs, setLoadingProofs] = useState(false);
 
-  const currentStatusObj = statuses.find(s => s.status === currentStatus);
+  const { phaseGroups, sortedStatuses, getGroupStatus, getStatusText } = useTimelineData(statuses as unknown as { id: number; card_id: string; status: string; created_at: string; updated_at: string }[], currentStatus);
+  const currentStatusObj = sortedStatuses.find(s => s.status === currentStatus);
   const isCompleted = currentStatus === "done" || currentStatus === "completed";
 
   const fetchDeliveryProofs = useCallback(async () => {
@@ -102,17 +70,6 @@ export default function MobileTimeline({ statuses, currentStatus, grade, cardId 
       fetchDeliveryProofs();
     }
   }, [isCompleted, cardId, fetchDeliveryProofs]);
-
-  // Get group status
-  const getGroupStatus = (groupStatuses: string[]) => {
-    const completed = statuses.filter(s => groupStatuses.includes(s.status)).length;
-    const hasCurrent = groupStatuses.includes(currentStatus);
-    
-    if (completed === 0) return { status: "pending", progress: 0 };
-    if (hasCurrent) return { status: "current", progress: (completed / groupStatuses.length) * 100 };
-    if (completed === groupStatuses.length) return { status: "completed", progress: 100 };
-    return { status: "partial", progress: (completed / groupStatuses.length) * 100 };
-  };
 
   // Get color classes for phase groups
   const getColorClasses = (color: string, status: string) => {
@@ -173,8 +130,8 @@ export default function MobileTimeline({ statuses, currentStatus, grade, cardId 
         <h4 className="font-semibold text-gray-900 mb-3 text-base sm:text-lg">Phase Progress</h4>
         
         <div className="space-y-3">
-          {PHASE_GROUPS.map((group) => {
-            const { status, progress } = getGroupStatus(group.statuses);
+          {phaseGroups.map((group) => {
+            const { status, progress } = getGroupStatus([...group.statuses]);
             const isExpanded = expandedGroup === group.id;
             
             return (
@@ -230,36 +187,21 @@ export default function MobileTimeline({ statuses, currentStatus, grade, cardId 
 
                 {/* Group Details */}
                 {isExpanded && (
-                  <div className="mt-2 ml-2 sm:ml-4 space-y-2 overflow-hidden">
+                  <ol className="mt-2 ml-2 sm:ml-4 space-y-2 overflow-hidden">
                     {group.statuses.map((statusKey) => {
-                      const statusObj = statuses.find(s => s.status === statusKey);
+                      const statusObj = sortedStatuses.find((s) => s.status === statusKey);
                       const isCurrent = statusKey === currentStatus;
-                      
                       return (
-                        <div key={statusKey} className="flex items-center gap-2 sm:gap-3 py-1">
-                          <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0 ${
-                            isCurrent ? "bg-blue-500 animate-pulse" :
-                            statusObj ? "bg-green-500" : "bg-gray-300"
-                          }`}></div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-xs sm:text-sm truncate ${
-                              isCurrent ? "text-blue-600 font-medium" :
-                              statusObj ? "text-green-600" : "text-gray-500"
-                            }`}>
-                              {getStatusText(statusKey)}
-                            </p>
-                          </div>
-                          
-                          {statusObj && (
-                            <span className="text-xs text-gray-500 flex-shrink-0">
-                              {formatDate(new Date(statusObj.created_at))}
-                            </span>
-                          )}
-                        </div>
+                        <TimelineItem
+                          key={statusKey}
+                          label={getStatusText(statusKey)}
+                          date={statusObj ? formatDate(new Date(statusObj.created_at)) : undefined}
+                          isCurrent={isCurrent}
+                          isCompleted={Boolean(statusObj)}
+                        />
                       );
                     })}
-                  </div>
+                  </ol>
                 )}
               </div>
             );

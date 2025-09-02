@@ -7,6 +7,7 @@ import PreviewGrid from "@/components/user-update/PreviewGrid";
 import ProofsGrid from "@/components/user-update/ProofsGrid";
 import ActionButtons from "@/components/user-update/ActionButtons";
 import UploadDropzone from "@/components/user-update/UploadDropzone";
+import { validateFiles } from "@/utils/fileValidation";
 
 // Type definition
 type LatestStatus = {
@@ -137,25 +138,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
     
     if (!files || files.length === 0) return;
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
-    const maxFileSize = 2048 * 1024; // 2MB
-    const validFiles: File[] = [];
-    const errors: string[] = [];
-
-    // Validate each file
-    Array.from(files).forEach((file) => {
-      if (!allowedTypes.includes(file.type)) {
-        errors.push(`${file.name}: Only JPEG, PNG, JPG, or GIF images allowed`);
-        return;
-      }
-
-      if (file.size > maxFileSize) {
-        errors.push(`${file.name}: File size must be less than 2MB`);
-        return;
-      }
-
-      validFiles.push(file);
-    });
+    const { valid: validFiles, errors } = validateFiles(Array.from(files));
 
     // Show validation errors if any
     if (errors.length > 0) {

@@ -4,15 +4,12 @@ import React, { Suspense } from "react";
 const UserUpdateCard = React.lazy(() => import("@/components/UserUpdateCard"));
 import { TimelineSection, CardInfoPanel, ImageGallery, ImageModal } from "@/components/tracking-detail";
 import UserLayout from "@/layouts/UserLayout";
-// import formatDate from "@/utils/FormatDate";
 import { PATHS } from "@/routes/paths";
-// import type { CardImage } from "@/types/card.types";
 import { useTrackingDetail } from "@/hooks/useTrackingDetail";
 import { useImageModal } from "@/hooks/useImageModal";
 import { ImHome } from "react-icons/im";
 import { MdTrackChanges } from "react-icons/md";
 import { BsImage } from "react-icons/bs";
-// import { getImageUrl } from "@/utils/imageUtils";
 
 const menu = [
   {
@@ -27,8 +24,6 @@ const menu = [
   },
 ];
 
-// Keep for compatibility if needed in future, currently unused
-// type CardDetailType = CardDetail & { payment_url?: string | null };
 
 export default function UserTrackingDetail() {
   const { id } = useParams<{ id: string }>();
