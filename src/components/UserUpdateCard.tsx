@@ -1,8 +1,12 @@
-import axiosInstance from "../lib/axiosInstance";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { BE_URL } from "../lib/api";
-// Import from statusUtils
-import { getStatusDisplayText } from "../utils/statusUtils";
+import { getStatusDisplayText } from "@/utils/statusUtils";
+// import { getImageUrl } from "@/utils/imageUtils";
+import { useDeliveryProofs } from "@/hooks/useDeliveryProofs";
+import { useStatusActions } from "@/hooks/useStatusActions";
+import PreviewGrid from "@/components/user-update/PreviewGrid";
+import ProofsGrid from "@/components/user-update/ProofsGrid";
+import ActionButtons from "@/components/user-update/ActionButtons";
+import UploadDropzone from "@/components/user-update/UploadDropzone";
 
 // Type definition
 type LatestStatus = {
@@ -15,57 +19,11 @@ type CardType = {
   payment_url?: string | null;
 };
 
-type DeliveryProof = {
-  id: number;
-  card_id: string;
-  image_path: string;
-  created_at: string;
-  updated_at: string;
-};
+// Delivery proof shape comes from services/hooks
 
-type DeliveryProofResponse = {
-  card_id: string;
-  card_name: string;
-  delivery_proofs: DeliveryProof[];
-};
+// (Responses moved to services; not needed locally)
 
-type UploadResponse = {
-  success: boolean;
-  message: string;
-  data: {
-    id: number;
-    card_id: string;
-    image_path: string;
-    image_url: string;
-    created_at: string;
-  };
-};
-
-// Define window upload state types for multiple files
-interface WindowUploadState {
-  previewImages: { file: File; preview: string; id: string }[];
-  timestamp: number;
-  uploadSuccessful: boolean;
-  expired?: boolean;
-  cancelledTimestamp?: number; // Add cancelled timestamp
-}
-
-interface WindowUploadCompleted {
-  cardId: string | number;
-  timestamp: number;
-}
-
-interface WindowCancelledState {
-  cardId: string | number;
-  timestamp: number;
-}
-
-// Add global delivery proofs state for cross-responsive sync
-interface WindowDeliveryProofsState {
-  cardId: string | number;
-  proofs: DeliveryProof[];
-  timestamp: number;
-}
+// Removed window upload state globals; using local state only
 
 interface ApiError {
   response?: {
@@ -77,21 +35,13 @@ interface ApiError {
 }
 
 // Extend Window interface to include our custom properties
-declare global {
-  interface Window {
-    __UPLOAD_STATE?: WindowUploadState;
-    __UPLOAD_COMPLETED?: WindowUploadCompleted;
-    __UPLOAD_CANCELLED?: WindowCancelledState; // Add cancelled state
-    __DELIVERY_PROOFS?: WindowDeliveryProofsState; // Add delivery proofs sync
-  }
-}
+// No global window declarations required
 
 export default function UserUpdateCard({ card }: { card?: CardType }) {
   const [uploadingProof, setUploadingProof] = useState(false);
-  const [deliveryProofs, setDeliveryProofs] = useState<DeliveryProof[]>([]);
+  const { deliveryProofs, fetchProofs, uploadFiles, deleteProof, deletingId } = useDeliveryProofs(card?.id);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [previewImages, setPreviewImages] = useState<{ file: File; preview: string; id: string }[]>([]);
-  const [deletingProofId, setDeletingProofId] = useState<number | null>(null);
   const [uploadSuccessful, setUploadSuccessful] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   
@@ -100,75 +50,9 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
   // Get current status early
   const currentStatus = card?.latest_status.status;
   
-  // Fetch existing delivery proofs with better error handling and sync
-  const fetchDeliveryProofs = useCallback(async (forceRefresh = false) => {
-    if (!card?.id) return;
-    
-    try {
-      const response = await axiosInstance.get<DeliveryProofResponse>(`/card/${card.id}/delivery-proof`);
-      const newProofs = response.data.delivery_proofs || [];
-      
-      setDeliveryProofs(newProofs);
-      
-      // Update global delivery proofs state for cross-responsive sync
-      window.__DELIVERY_PROOFS = {
-        cardId: card.id,
-        proofs: newProofs,
-        timestamp: Date.now()
-      };
-      
-      // If this is a forced refresh, trigger update in other responsive modes
-      if (forceRefresh) {
-        // Dispatch a custom event to notify other components
-        window.dispatchEvent(new CustomEvent('deliveryProofsUpdated', {
-          detail: { cardId: card.id, proofs: newProofs }
-        }));
-      }
-      
-    } catch (error) {
-      console.error("Error fetching delivery proofs:", error);
-      setDeliveryProofs([]);
-      
-      // Clear global state on error
-      if (window.__DELIVERY_PROOFS && window.__DELIVERY_PROOFS.cardId === card.id) {
-        delete window.__DELIVERY_PROOFS;
-      }
-    }
-  }, [card?.id]);
+  const fetchDeliveryProofs = useCallback(() => { fetchProofs(); }, [fetchProofs]);
   
-  // Add event listener for cross-responsive delivery proofs sync
-  useEffect(() => {
-    const handleDeliveryProofsUpdate = (event: CustomEvent) => {
-      const { cardId, proofs } = event.detail;
-      if (cardId === card?.id) {
-        setDeliveryProofs(proofs);
-      }
-    };
-    
-    window.addEventListener('deliveryProofsUpdated', handleDeliveryProofsUpdate as EventListener);
-    return () => {
-      window.removeEventListener('deliveryProofsUpdated', handleDeliveryProofsUpdate as EventListener);
-    };
-  }, [card?.id]);
-  
-  // Sync delivery proofs across responsive modes - FIXED WITH useRef TO AVOID DEPENDENCY ISSUES
-  const prevDeliveryProofsRef = useRef<DeliveryProof[]>([]);
-  
-  useEffect(() => {
-    const globalProofs = window.__DELIVERY_PROOFS;
-    if (globalProofs && 
-        globalProofs.cardId === card?.id && 
-        globalProofs.timestamp > (Date.now() - 30000) && // Within last 30 seconds
-        JSON.stringify(prevDeliveryProofsRef.current) !== JSON.stringify(globalProofs.proofs)) {
-      setDeliveryProofs(globalProofs.proofs);
-      prevDeliveryProofsRef.current = globalProofs.proofs;
-    }
-  }, [card?.id]);
-  
-  // Update ref when deliveryProofs changes
-  useEffect(() => {
-    prevDeliveryProofsRef.current = deliveryProofs;
-  }, [deliveryProofs]);
+  // Delivery proofs syncing handled by useDeliveryProofs
   
   // Persistent state preservation for multiple files
   const preservedState = useRef<{
@@ -185,167 +69,39 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
     cancelledTimestamp: 0
   });
   
-  // Debug effect for state changes - updated for multiple images
+  // Preserve local state only (no window globals)
   useEffect(() => {
-    if (!uploadSuccessful) {
-      preservedState.current = {
-        previewImages,
-        uploadSuccessful,
-        timestamp: Date.now()
-      };
-      
-      if (previewImages.length > 0) {
-        window.__UPLOAD_STATE = {
-          previewImages,
-          timestamp: Date.now(),
-          uploadSuccessful
-        };
-      }
-    } else {
-      preservedState.current = {
-        previewImages: [],
-        uploadSuccessful: true,
-        timestamp: Date.now()
-      };
-      
-      if (window.__UPLOAD_STATE) {
-        window.__UPLOAD_STATE = {
-          uploadSuccessful: true,
-          timestamp: Date.now(),
-          expired: true,
-          previewImages: []
-        };
-        
-        setTimeout(() => {
-          delete window.__UPLOAD_STATE;
-        }, 1000);
-      }
-      
-      window.__UPLOAD_COMPLETED = {
-        cardId: card?.id || '',
-        timestamp: Date.now()
-      };
-    }
-  }, [previewImages, uploadSuccessful, card?.id]);
+    preservedState.current = {
+      previewImages,
+      uploadSuccessful,
+      timestamp: Date.now()
+    };
+  }, [previewImages, uploadSuccessful]);
   
-  // Restore state on component mount - updated for multiple images
+  // Restore recent local state on mount only
   useEffect(() => {
-    const uploadCompleted = window.__UPLOAD_COMPLETED;
-    if (uploadCompleted && uploadCompleted.cardId === card?.id) {
-      setUploadSuccessful(true);
-      return;
-    }
-    
-    const savedState = window.__UPLOAD_STATE;
-    if (savedState && 
-        !savedState.expired &&
-        savedState.timestamp > (Date.now() - 30000) && 
-        !savedState.uploadSuccessful) {
-      setPreviewImages(savedState.previewImages);
-      setUploadSuccessful(false);
-    } else if (savedState && (savedState.uploadSuccessful || savedState.expired)) {
-      delete window.__UPLOAD_STATE;
-      setUploadSuccessful(true);
-    }
-  }, [card?.id]);
-  
-  // Window resize handler - PROPERLY FIXED WITH useCallback TO AVOID DEPENDENCY ISSUES
-  const handleResize = useCallback(() => {
-    // Check for cancelled state first - this takes priority
-    const cancelledState = window.__UPLOAD_CANCELLED;
-    if (cancelledState && cancelledState.cardId === card?.id) {
-      if (previewImages.length > 0) {
-        setPreviewImages([]);
-      }
-      if (uploadSuccessful) {
-        setUploadSuccessful(false);
-      }
-      return; // Exit early, don't restore anything
-    }
-    
-    // Always check upload completed 
-    const uploadCompleted = window.__UPLOAD_COMPLETED;
-    if (uploadCompleted && uploadCompleted.cardId === card?.id) {
-      if (!uploadSuccessful) {
-        setUploadSuccessful(true);
-      }
-      if (previewImages.length > 0) {
-        setPreviewImages([]);
-      }
-      return;
-    }
-    
-    // Check if preserved state was recently cancelled
-    if (preservedState.current.cancelled && 
-        preservedState.current.cancelledTimestamp &&
-        (Date.now() - preservedState.current.cancelledTimestamp) < 2000) {
-      if (previewImages.length > 0) {
-        setPreviewImages([]);
-      }
-      return; // Don't restore cancelled state
-    }
-    
-    // Check window state and sync with current state
-    const windowState = window.__UPLOAD_STATE;
-    
-    // If window state is expired or has cancel timestamp, ignore it completely
-    if (windowState && (windowState.expired || windowState.cancelledTimestamp)) {
-      if (previewImages.length > 0) {
-        setPreviewImages([]);
-      }
-      delete window.__UPLOAD_STATE;
-      return;
-    }
-    
-    if (windowState && !windowState.expired) {
-      // If window has upload success but local doesn't
-      if (windowState.uploadSuccessful && !uploadSuccessful) {
-        setUploadSuccessful(true);
-        setPreviewImages([]);
-        return;
-      }
-      
-      // If window has preview images but local doesn't or different length
-      if (!windowState.uploadSuccessful && 
-          windowState.previewImages.length > 0 && 
-          (previewImages.length === 0 || previewImages.length !== windowState.previewImages.length)) {
-        setPreviewImages(windowState.previewImages);
-        if (uploadSuccessful) {
-          setUploadSuccessful(false);
-        }
-        return;
-      }
-      
-      // If local has preview images but window doesn't or different length
-      if (!windowState.uploadSuccessful && 
-          previewImages.length > 0 && 
-          (windowState.previewImages.length === 0 || previewImages.length !== windowState.previewImages.length)) {
-        window.__UPLOAD_STATE = {
-          previewImages,
-          timestamp: Date.now(),
-          uploadSuccessful: false
-        };
-        return;
-      }
-    }
-    
-    // If no window state, check preserved state but NEVER restore cancelled state
-    if (!windowState && 
-        preservedState.current.previewImages.length > 0 && 
-        !preservedState.current.uploadSuccessful &&
-        !preservedState.current.cancelled && // Never restore cancelled state
-        previewImages.length === 0 && 
-        !uploadSuccessful &&
-        (Date.now() - preservedState.current.timestamp) > 1000) { // Only restore if more than 1 second old
+    if (
+      preservedState.current.previewImages.length > 0 &&
+      !preservedState.current.uploadSuccessful &&
+      preservedState.current.timestamp > Date.now() - 30000
+    ) {
       setPreviewImages(preservedState.current.previewImages);
-      
-      window.__UPLOAD_STATE = {
-        previewImages: preservedState.current.previewImages,
-        timestamp: Date.now(),
-        uploadSuccessful: false
-      };
+      setUploadSuccessful(false);
     }
-  }, [previewImages, uploadSuccessful, card?.id]);
+  }, []);
+  
+  // Resize handler: optionally restore from preserved state only
+  const handleResize = useCallback(() => {
+    if (
+      preservedState.current.previewImages.length > 0 &&
+      !preservedState.current.uploadSuccessful &&
+      previewImages.length === 0 &&
+      !uploadSuccessful &&
+      Date.now() - preservedState.current.timestamp > 1000
+    ) {
+      setPreviewImages(preservedState.current.previewImages);
+    }
+  }, [previewImages, uploadSuccessful]);
 
   useEffect(() => {
     window.addEventListener('resize', handleResize);
@@ -354,101 +110,8 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
   
   // Interval recovery - PROPERLY FIXED WITH useCallback TO AVOID DEPENDENCY ISSUES
   const checkInterval = useCallback(() => {
-    // Check for cancelled state first - this takes priority
-    const cancelledState = window.__UPLOAD_CANCELLED;
-    if (cancelledState && cancelledState.cardId === card?.id) {
-      if (previewImages.length > 0) {
-        setPreviewImages([]);
-      }
-      if (uploadSuccessful) {
-        setUploadSuccessful(false);
-      }
-      return; // Exit early, don't restore anything
-    }
-    
-    // Always check upload completed 
-    const uploadCompleted = window.__UPLOAD_COMPLETED;
-    if (uploadCompleted && uploadCompleted.cardId === card?.id) {
-      if (!uploadSuccessful) {
-        setUploadSuccessful(true);
-      }
-      if (previewImages.length > 0) {
-        setPreviewImages([]);
-      }
-      return;
-    }
-    
-    // Check if preserved state was recently cancelled
-    if (preservedState.current.cancelled && 
-        preservedState.current.cancelledTimestamp &&
-        (Date.now() - preservedState.current.cancelledTimestamp) < 2000) {
-      if (previewImages.length > 0) {
-        setPreviewImages([]);
-      }
-      return; // Don't restore cancelled state
-    }
-    
-    // Check window state synchronization
-    const windowState = window.__UPLOAD_STATE;
-    
-    // If window state is expired or cancelled, clear everything
-    if (windowState && (windowState.expired || windowState.cancelledTimestamp)) {
-      if (previewImages.length > 0) {
-        setPreviewImages([]);
-      }
-      delete window.__UPLOAD_STATE;
-      return;
-    }
-    
-    if (windowState && !windowState.expired) {
-      // Sync upload success state
-      if (windowState.uploadSuccessful && !uploadSuccessful) {
-        setUploadSuccessful(true);
-        setPreviewImages([]);
-        return;
-      }
-      
-      // Sync preview images state
-      if (!windowState.uploadSuccessful && 
-          windowState.previewImages.length > 0 && 
-          (previewImages.length !== windowState.previewImages.length)) {
-        setPreviewImages(windowState.previewImages);
-        if (uploadSuccessful) {
-          setUploadSuccessful(false);
-        }
-        return;
-      }
-      
-      // Update window state if local state is more recent
-      if (!windowState.uploadSuccessful &&
-          previewImages.length > 0 &&
-          (windowState.previewImages.length !== previewImages.length)) {
-        window.__UPLOAD_STATE = {
-          previewImages,
-          timestamp: Date.now(),
-          uploadSuccessful: false
-        };
-        return;
-      }
-    }
-    
-    // If no window state but preserved state exists, NEVER restore cancelled state
-    if (!windowState && 
-        preservedState.current.previewImages.length > 0 && 
-        !preservedState.current.uploadSuccessful &&
-        !preservedState.current.cancelled && // Never restore cancelled state
-        previewImages.length === 0 && 
-        !uploadSuccessful &&
-        (Date.now() - preservedState.current.timestamp) > 1000) { // Only restore if more than 1 second old
-      setPreviewImages(preservedState.current.previewImages);
-      
-      window.__UPLOAD_STATE = {
-        previewImages: preservedState.current.previewImages,
-        timestamp: Date.now(),
-        uploadSuccessful: false
-      };
-    }
-  }, [previewImages, uploadSuccessful, card?.id]); // REMOVED currentStatus as it's not used
+    // No-op; kept for minimal interval work if needed later
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(checkInterval, 300); // More frequent checking for better responsiveness
@@ -461,19 +124,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
     }
   }, [currentStatus, fetchDeliveryProofs]);
 
-  const handleUpdateSubmission = async (status: string) => {
-    try {
-      const response = await axiosInstance.post("/status", { 
-        card_id: card?.id, 
-        status: status 
-      });
-      if (response.status === 200) {
-        window.location.reload(); 
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const { handleUpdateSubmission } = useStatusActions(card?.id);
 
   // Generate unique ID for file tracking
   const generateFileId = () => {
@@ -521,10 +172,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
     // Reset upload success state for new files
     setUploadSuccessful(false);
     
-    // Clear completion marker for new upload
-    if (window.__UPLOAD_COMPLETED) {
-      delete window.__UPLOAD_COMPLETED;
-    }
+    // Clear completion marker (local only)
 
     // Process valid files
     const newPreviewPromises = validFiles.map((file) => {
@@ -558,12 +206,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
         timestamp: Date.now()
       };
       
-      // Update window state for new upload
-      window.__UPLOAD_STATE = {
-        previewImages: updatedPreviews,
-        timestamp: Date.now(),
-        uploadSuccessful: false
-      };
+      // No window state sync
     });
 
     // Clear input value for next selection
@@ -578,51 +221,10 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
     setUploadProgress({});
     
     try {
-      const uploadPromises = previewImages.map(async (imageData) => {
-        const formData = new FormData();
-        formData.append('image', imageData.file);
-
-        // Update progress for this specific file
-        setUploadProgress(prev => ({
-          ...prev,
-          [imageData.id]: 0
-        }));
-
-        try {
-          const response = await axiosInstance.post<UploadResponse>(`/card/${card.id}/delivery-proof`, formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            }
-          });
-
-          if (response.data.success) {
-            // Create new proof object
-            const newProof: DeliveryProof = {
-              id: response.data.data.id,
-              card_id: response.data.data.card_id,
-              image_path: response.data.data.image_path,
-              created_at: response.data.data.created_at,
-              updated_at: response.data.data.created_at
-            };
-            
-            return newProof;
-          } else {
-            throw new Error(response.data.message || 'Upload failed');
-          }
-        } catch (error) {
-          console.error(`Error uploading file ${imageData.file.name}:`, error);
-          throw error;
-        }
-      });
-
-      // Wait for all uploads to complete
-      const newProofs = await Promise.all(uploadPromises);
+      const files = previewImages.map((p) => p.file);
+      await uploadFiles(files);
       
-      // Set permanent completion marker
-      window.__UPLOAD_COMPLETED = {
-        cardId: card?.id,
-        timestamp: Date.now()
-      };
+      // Mark completion locally via state
       
       // Mark upload as successful
       setUploadSuccessful(true);
@@ -634,36 +236,9 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
         timestamp: Date.now()
       };
       
-      // Clear window state
-      if (window.__UPLOAD_STATE) {
-        window.__UPLOAD_STATE = {
-          uploadSuccessful: true,
-          timestamp: Date.now(),
-          expired: true,
-          previewImages: []
-        };
-        
-        setTimeout(() => {
-          delete window.__UPLOAD_STATE;
-        }, 500);
-      }
+      // No window state to clear
       
       // Add to delivery proofs state and force refresh across all responsive modes
-      const updatedProofs = [...deliveryProofs, ...newProofs];
-      setDeliveryProofs(updatedProofs);
-      
-      // Update global delivery proofs state for cross-responsive sync
-      window.__DELIVERY_PROOFS = {
-        cardId: card?.id,
-        proofs: updatedProofs,
-        timestamp: Date.now()
-      };
-      
-      // Notify other responsive modes
-      window.dispatchEvent(new CustomEvent('deliveryProofsUpdated', {
-        detail: { cardId: card?.id, proofs: updatedProofs }
-      }));
-      
       // Force refresh delivery proofs to ensure consistency across responsive modes - SINGLE REFRESH ONLY
       setTimeout(() => {
         fetchDeliveryProofs(); // Simple fetch without force refresh to prevent loops
@@ -696,64 +271,9 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
   // Handle delivery proof deletion with improved error handling and sync
   const handleDeleteDeliveryProof = async (proofId: number) => {
     if (!card?.id) return;
-
-    // Check if the proof still exists in current state
-    const proofExists = deliveryProofs.some(proof => proof.id === proofId);
-    if (!proofExists) {
-      await fetchDeliveryProofs(true); // Force refresh with sync
-      return;
-    }
-
-    setDeletingProofId(proofId);
-    
-    try {
-      const response = await axiosInstance.delete(`/card/${card.id}/delivery-proof/${proofId}`);
-      
-      if (response.status === 200) {
-        // Update local state immediately
-        const updatedProofs = deliveryProofs.filter(proof => proof.id !== proofId);
-        setDeliveryProofs(updatedProofs);
-        
-        // Update global delivery proofs state for cross-responsive sync
-        window.__DELIVERY_PROOFS = {
-          cardId: card.id,
-          proofs: updatedProofs,
-          timestamp: Date.now()
-        };
-        
-        // Notify other responsive modes immediately
-        window.dispatchEvent(new CustomEvent('deliveryProofsUpdated', {
-          detail: { cardId: card.id, proofs: updatedProofs }
-        }));
-        
-        // Close modal if this image was selected
-        if (selectedImage && selectedImage.includes(`delivery-proof/${proofId}`)) {
-          setSelectedImage(null);
-        }
-        
-        // Force refresh to ensure consistency
-        setTimeout(() => {
-          fetchDeliveryProofs(true); // Force refresh with sync
-        }, 100);
-      }
-    } catch (err) {
-      const apiError = err as ApiError;
-      console.error("Error deleting delivery proof:", apiError);
-      
-      // Check if it's a 404 error (image already deleted)
-      if (apiError?.response?.status === 404) {
-        await fetchDeliveryProofs(true); // Force refresh with sync
-        
-        // Close modal if this image was selected
-        if (selectedImage && selectedImage.includes(`delivery-proof/${proofId}`)) {
-          setSelectedImage(null);
-        }
-      } else {
-        const errorMessage = apiError?.response?.data?.message || 'Failed to delete delivery proof';
-        alert(errorMessage);
-      }
-    } finally {
-      setDeletingProofId(null);
+    await deleteProof(proofId);
+    if (selectedImage && selectedImage.includes(`delivery-proof/${proofId}`)) {
+      setSelectedImage(null);
     }
   };
 
@@ -769,22 +289,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
       timestamp: Date.now()
     };
     
-    // Update or delete window state based on remaining images
-    if (updatedPreviews.length > 0) {
-      window.__UPLOAD_STATE = {
-        previewImages: updatedPreviews,
-        timestamp: Date.now(),
-        uploadSuccessful: false
-      };
-    } else {
-      delete window.__UPLOAD_STATE;
-      // Force cleanup after small delay
-      setTimeout(() => {
-        if (window.__UPLOAD_STATE) {
-          delete window.__UPLOAD_STATE;
-        }
-      }, 100);
-    }
+    // No window state sync; local state only
   };
 
   // Handle cancel all previews with proper state cleanup
@@ -805,14 +310,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
       cancelledTimestamp: cancelTimestamp
     };
     
-    // Set global cancel marker
-    window.__UPLOAD_CANCELLED = {
-      cardId: card?.id || '',
-      timestamp: cancelTimestamp
-    };
-    
-    // Completely remove window state
-    delete window.__UPLOAD_STATE;
+    // No window state
     
     // Clear input values
     const input = document.getElementById('delivery-proof-upload') as HTMLInputElement;
@@ -824,9 +322,6 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
     
     cleanupPhases.forEach((delay) => {
       setTimeout(() => {
-        // Clear all possible state remnants
-        delete window.__UPLOAD_STATE;
-        
         // Update preserved state again
         preservedState.current = { 
           previewImages: [], 
@@ -835,26 +330,10 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
           cancelled: true,
           cancelledTimestamp: cancelTimestamp
         };
-        
         // Force re-render if components still have preview images
         setPreviewImages(current => current.length > 0 ? [] : current);
-        
-        // Keep cancel marker alive
-        if (!window.__UPLOAD_CANCELLED || window.__UPLOAD_CANCELLED.timestamp < cancelTimestamp) {
-          window.__UPLOAD_CANCELLED = {
-            cardId: card?.id || '',
-            timestamp: cancelTimestamp
-          };
-        }
       }, delay);
     });
-    
-    // Final cleanup after 3 seconds to remove cancel marker
-    setTimeout(() => {
-      if (window.__UPLOAD_CANCELLED && window.__UPLOAD_CANCELLED.timestamp === cancelTimestamp) {
-        delete window.__UPLOAD_CANCELLED;
-      }
-    }, 3000);
   };
 
   // Handle file select button click
@@ -1018,111 +497,18 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
                   id="delivery-proof-upload"
                 />
                 
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                  <button
-                    type="button"
-                    onClick={handleFileSelectClick}
-                    disabled={uploadingProof}
-                    className={`w-full cursor-pointer flex flex-col items-center justify-center ${
-                      uploadingProof ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'
-                    } rounded-lg p-4 transition-colors border-none bg-transparent`}
-                  >
-                    {uploadingProof ? (
-                      <>
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
-                        <p className="text-sm text-gray-600">Uploading {previewImages.length} image(s)...</p>
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        <p className="text-sm text-gray-600">Click to select images (Multiple supported)</p>
-                        <p className="text-xs text-gray-500 mt-1">Max 2MB per image • JPEG, PNG, JPG, GIF</p>
-                        {previewImages.length > 0 && (
-                          <p className="text-xs text-blue-600 mt-1">
-                            {previewImages.length} image(s) selected • Click to add more
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </button>
-                </div>
+                <UploadDropzone uploading={uploadingProof} onClick={handleFileSelectClick} />
 
                 {previewImages.length > 0 && !uploadSuccessful && (
-                  <div className="mt-3 space-y-3 border-2 border-green-500 p-4 rounded-lg bg-green-50">
-                    <div className="flex justify-between items-center">
-                      <h5 className="text-sm font-medium text-green-900">
-                        Selected Images ({previewImages.length})
-                      </h5>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto">
-                      {previewImages.map((imageData) => (
-                        <div key={imageData.id} className="relative group">
-                          <img 
-                            src={imageData.preview} 
-                            alt={`Preview ${imageData.file.name}`}
-                            className="w-full h-16 sm:h-20 object-cover rounded-lg border border-gray-300 shadow-sm"
-                          />
-                          
-                          {/* Upload progress bar */}
-                          {uploadingProof && uploadProgress[imageData.id] !== undefined && (
-                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
-                              <div className="text-white text-xs">
-                                {uploadProgress[imageData.id]}%
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* Remove button */}
-                          <button
-                            onClick={() => handleCancelSinglePreview(imageData.id)}
-                            disabled={uploadingProof}
-                            className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Remove image"
-                          >
-                            ×
-                          </button>
-                          
-                          {/* File name */}
-                          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 rounded-b-lg truncate">
-                            {imageData.file.name}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full">
-                      <button
-                        onClick={handleDeliveryProofUpload}
-                        disabled={uploadingProof}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm flex items-center justify-center gap-2"
-                      >
-                        {uploadingProof ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            Uploading {previewImages.length} image(s)...
-                          </>
-                        ) : (
-                          <>
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                            </svg>
-                            Upload {previewImages.length} Image(s)
-                          </>
-                        )}
-                      </button>
-                      
-                      <button
-                        onClick={handleCancelAllPreviews}
-                        disabled={uploadingProof}
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-                      >
-                        Cancel All
-                      </button>
-                    </div>
-                  </div>
+                  <>
+                    <PreviewGrid
+                      previews={previewImages}
+                      uploading={uploadingProof}
+                      uploadProgress={uploadProgress}
+                      onRemove={handleCancelSinglePreview}
+                    />
+                    <ActionButtons uploading={uploadingProof} count={previewImages.length} onUpload={handleDeliveryProofUpload} onCancelAll={handleCancelAllPreviews} />
+                  </>
                 )}
               </div>
             )}
@@ -1142,49 +528,17 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
             )}
 
             {deliveryProofs.length > 0 && (
-              <div>
-                <h5 className="text-sm font-medium text-gray-700 mb-3">
-                  Uploaded Proofs ({deliveryProofs.length})
-                </h5>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {deliveryProofs.map((proof) => (
-                    <div key={proof.id} className="relative group">
-                      <img
-                        src={`${BE_URL}/storage/${proof.image_path}`}
-                        alt={`Delivery proof ${proof.id}`}
-                        className="w-full h-20 sm:h-24 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
-                        onClick={() => setSelectedImage(`${BE_URL}/storage/${proof.image_path}`)}
-                      />
-                      
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteDeliveryProof(proof.id);
-                        }}
-                        disabled={deletingProofId === proof.id}
-                        className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Delete image"
-                      >
-                        {deletingProofId === proof.id ? (
-                          <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
-                        ) : (
-                          "×"
-                        )}
-                      </button>
-                      
-                      <div className="absolute bottom-1 right-1 bg-green-600 text-white text-xs px-1.5 py-0.5 rounded">
-                        ✓
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <ProofsGrid
+                proofs={deliveryProofs}
+                deletingId={deletingId}
+                onDelete={handleDeleteDeliveryProof}
+                onPreview={(url) => setSelectedImage(url)}
+              />
             )}
 
             {uploadSuccessful && (
               <button
                 onClick={() => {
-                  delete window.__UPLOAD_COMPLETED;
                   setUploadSuccessful(false);
                 }}
                 className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm flex items-center justify-center gap-2"
