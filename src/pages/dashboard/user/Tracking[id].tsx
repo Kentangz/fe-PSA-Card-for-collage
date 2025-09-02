@@ -1,133 +1,39 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import Sidebar from "../../../components/SideBar";
-import ProfileMenu from "../../../components/ProfileMenu";
-import UserUpdateCard from "../../../components/UserUpdateCard";
-import MobileTimeline from "../../../components/UserTimeline"; // NEW IMPORT
-import axiosInstance from "../../../lib/axiosInstance";
-import formatDate from "../../../utils/FormatDate";
-import { getStatusDisplayText, getStatusStyling, getBatchCategoryStyling } from "../../../utils/statusUtils";
+import { useParams, Link } from "react-router-dom";
+import ProfileMenu from "@/components/ProfileMenu";
+import UserUpdateCard from "@/components/UserUpdateCard";
+import UserTimeline from "@/components/UserTimeline";
+import UserLayout from "@/layouts/UserLayout";
+import formatDate from "@/utils/FormatDate";
+import { getStatusDisplayText, getStatusStyling, getBatchCategoryStyling } from "@/utils/statusUtils";
+import { PATHS } from "@/routes/paths";
+import type { CardImage } from "@/types/card.types";
+import { useTrackingDetail } from "@/hooks/useTrackingDetail";
+import { useImageModal } from "@/hooks/useImageModal";
 import { ImHome } from "react-icons/im";
 import { MdTrackChanges } from "react-icons/md";
-import { BsArrowLeft, BsImage } from "react-icons/bs";
-import Cookies from "js-cookie";
-import { BE_URL } from "../../../lib/api";
+import { BsImage } from "react-icons/bs";
+import { BE_URL } from "@/lib/api";
 
 const menu = [
   {
     title: "home",
-    link: "/dashboard/user",
+    link: PATHS.DASHBOARD.USER.ROOT,
     icon: ImHome
   },
   {
     title: "track submission",
-    link: "/dashboard/user/tracking",
+    link: PATHS.DASHBOARD.USER.TRACKING,
     icon: MdTrackChanges
   },
 ];
 
-type UserType = {
-  name: string;
-  email: string;
-  role: string;
-  is_active: boolean;
-};
-
-type StatusType = {
-  id: number;
-  card_id: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-};
-
-type ImageType = {
-  id: number;
-  card_id: string;
-  path: string;
-  created_at: string;
-  updated_at: string;
-};
-
-type Batch = {
-  id: string | number;
-  batch_number: string;
-  register_number: string;
-  services: string;
-  category: string;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
-};
-
-type CardDetailType = {
-  id: string;
-  user_id: number;
-  name: string;
-  year: number;
-  brand: string;
-  serial_number: string;
-  latest_status: StatusType;
-  grade_target: string;
-  grade: string | null;
-  payment_url?: string | null;
-  created_at: string;
-  updated_at: string;
-  statuses: StatusType[];
-  images: ImageType[];
-  batch?: Batch;
-};
+// Keep for compatibility if needed in future, currently unused
+// type CardDetailType = CardDetail & { payment_url?: string | null };
 
 export default function UserTrackingDetail() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [currentUser, setCurrentUser] = useState<UserType | undefined>(undefined);
-  const [card, setCard] = useState<CardDetailType | undefined>(undefined);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-
-  useEffect(() => {
-    const initializeTrackingDetail = async () => {
-      try {
-        const token = Cookies.get("token");
-        const role = Cookies.get("role");
-        
-        if (!token || role !== "user") {
-          navigate("/signin", { replace: true });
-          return;
-        }
-
-        if (!id) {
-          navigate("/dashboard/user/tracking", { replace: true });
-          return;
-        }
-
-        const userResponse = await axiosInstance.get<UserType>("/user");
-        
-        if (!userResponse.data.is_active) {
-          Cookies.remove("token");
-          Cookies.remove("role");
-          navigate("/signin", { replace: true });
-          return;
-        }
-
-        if (userResponse.data.role === "admin") {
-          navigate("/dashboard/admin", { replace: true });
-          return;
-        }
-
-        setCurrentUser(userResponse.data);
-
-        const cardResponse = await axiosInstance.get<CardDetailType>(`/user-cards/${id}`);
-        setCard(cardResponse.data);
-        
-      } catch (error) {
-        console.error(error);
-        navigate("/dashboard/user/tracking", { replace: true });
-      }
-    };
-    
-    initializeTrackingDetail();
-  }, [id, navigate]);
+  const { currentUser, card } = useTrackingDetail(id);
+  const { selectedImage, open, close } = useImageModal();
 
   const getStatusBadge = (status: string, includeBorder: boolean = true) => {
     const displayText = getStatusDisplayText(status);
@@ -151,37 +57,15 @@ export default function UserTrackingDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar menu={menu} />
-      
-      {/* Navigation Bar */}
-      <nav className="w-full lg:pl-64 pl-4 mt-4">
-        <div className="h-14 flex justify-between items-center px-2">
-          <div className="flex items-center gap-3">
-            <div className="w-10 lg:w-0"></div>
-            <Link 
-              to="/dashboard/user/tracking"
-              className="lg:hidden text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <BsArrowLeft className="h-5 w-5" />
-            </Link>
-            <p className="text-lg lg:text-xl font-medium text-gray-800 truncate">
-              <span className="hidden lg:inline">Card Details</span>
-              <span className="lg:hidden">Details</span>
-            </p>
-          </div>
-          <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
-            <ProfileMenu currentUser={currentUser} />
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <div className="lg:pl-64 pl-4 pr-4 pb-4">
-        <div className="mt-4">
+    <UserLayout
+      menu={menu}
+      title="Card Details"
+      navbarRight={<ProfileMenu currentUser={currentUser} />}
+    >
+        <div className="mt-0">
           {/* Breadcrumb - Desktop Only */}
           <div className="hidden lg:flex mb-4 text-sm text-gray-500">
-            <Link to="/dashboard/user/tracking" className="hover:text-gray-700 transition-colors">
+            <Link to={PATHS.DASHBOARD.USER.TRACKING} className="hover:text-gray-700 transition-colors">
               Track Submission
             </Link>
             <span className="mx-2">/</span>
@@ -313,7 +197,7 @@ export default function UserTrackingDetail() {
                     </div>
                     {card.images && card.images.length > 0 ? (
                       <div className="grid grid-cols-1 gap-3">
-                        {card.images.map((image: ImageType, index: number) => (
+                        {card.images.map((image: CardImage, index: number) => (
                           <div
                             key={image.id}
                             className="aspect-w-16 aspect-h-9 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden"
@@ -322,7 +206,7 @@ export default function UserTrackingDetail() {
                               src={`${BE_URL}/storage/${image.path}`}
                               alt={`Card image ${index + 1}`}
                               className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200"
-                              onClick={() => setSelectedImage(`${BE_URL}/storage/${image.path}`)}
+                              onClick={() => open(`${BE_URL}/storage/${image.path}`)}
                             />
                           </div>
                         ))}
@@ -338,7 +222,7 @@ export default function UserTrackingDetail() {
 
                 {/* Timeline Section */}
                 <div className="flex-1">
-                  <MobileTimeline 
+                  <UserTimeline 
                     statuses={card.statuses}
                     currentStatus={card.latest_status.status}
                     grade={card.grade}
@@ -354,7 +238,7 @@ export default function UserTrackingDetail() {
 
               {/* Mobile Timeline */}
               <div className="block lg:hidden">
-                <MobileTimeline 
+                <UserTimeline 
                   statuses={card.statuses}
                   currentStatus={card.latest_status.status}
                   grade={card.grade}
@@ -370,7 +254,7 @@ export default function UserTrackingDetail() {
                 </div>
                 {card.images && card.images.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {card.images.map((image: ImageType, index: number) => (
+                    {card.images.map((image: CardImage, index: number) => (
                       <div
                         key={image.id}
                         className="aspect-w-16 aspect-h-9 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden"
@@ -379,7 +263,7 @@ export default function UserTrackingDetail() {
                           src={`${BE_URL}/storage/${image.path}`}
                           alt={`Card image ${index + 1}`}
                           className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200"
-                          onClick={() => setSelectedImage(`${BE_URL}/storage/${image.path}`)}
+                          onClick={() => open(`${BE_URL}/storage/${image.path}`)}
                         />
                       </div>
                     ))}
@@ -407,7 +291,7 @@ export default function UserTrackingDetail() {
           {selectedImage && (
             <div 
               className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-              onClick={() => setSelectedImage(null)}
+              onClick={close}
             >
               <div className="max-w-4xl max-h-full">
                 <img 
@@ -419,7 +303,6 @@ export default function UserTrackingDetail() {
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </UserLayout>
   );
 }

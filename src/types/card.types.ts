@@ -23,3 +23,16 @@ export interface Card {
 	batch_id?: number;
 	batch?: Batch;
 }
+
+export interface CardImage {
+	id: number;
+	card_id: string;
+	path: string;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface CardDetail extends Card {
+	statuses: CardStatus[];
+	images: CardImage[];
+}
