@@ -17,9 +17,10 @@ const getCategoryStyling = (category: string) => {
 interface BatchCardProps {
   batch: BatchType;
   onCreateSubmission: (id: number) => void;
+  isLoading?: boolean;
 }
 
-const BatchCard = ({ batch, onCreateSubmission }: BatchCardProps) => {
+const BatchCard = ({ batch, onCreateSubmission, isLoading = false }: BatchCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const maxLength = 150;
   
@@ -61,8 +62,14 @@ const BatchCard = ({ batch, onCreateSubmission }: BatchCardProps) => {
         </div>
         
         <button
-          onClick={() => onCreateSubmission(batch.id)}
-          className="w-full sm:w-auto sm:flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base touch-manipulation"
+          onClick={() => {
+            if (!Number.isFinite(batch.id) || (batch.id as unknown as number) <= 0) return;
+            if (isLoading) return;
+            onCreateSubmission(batch.id);
+          }}
+          disabled={isLoading || !Number.isFinite(batch.id) || (batch.id as unknown as number) <= 0}
+          className="w-full sm:w-auto sm:flex-shrink-0 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base touch-manipulation"
+          aria-disabled={isLoading}
         >
           <span className="hidden sm:inline">Create Submission</span>
           <span className="sm:hidden">Create Submission</span>

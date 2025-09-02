@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { HiOutlineClipboardList, HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import BatchCard from './BatchCard';
 import type { Batch } from '../types/batch.types';
@@ -11,6 +11,18 @@ interface ActiveBatchesProps {
 
 const ActiveBatches: React.FC<ActiveBatchesProps> = ({ batches, isLoading, onCreateSubmission }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
+
+  const totalItems = batches?.length ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+  const pagedBatches = useMemo(() => {
+    if (!batches || !isExpanded) return [] as Batch[];
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    return batches.slice(start, end);
+  }, [batches, currentPage, isExpanded]);
 
   return (
     <div className="w-full">
@@ -54,11 +66,41 @@ const ActiveBatches: React.FC<ActiveBatchesProps> = ({ batches, isLoading, onCre
                 ))}
               </div>
             ) : batches && batches.length > 0 ? (
-              <div className="divide-y divide-gray-200">
-                {batches.map((batch) => (
-                  <BatchCard key={batch.id} batch={batch} onCreateSubmission={onCreateSubmission} />
-                ))}
-              </div>
+              <>
+                <div className="divide-y divide-gray-200">
+                  {pagedBatches.map((batch) => (
+                    <BatchCard key={batch.id} batch={batch} onCreateSubmission={onCreateSubmission} isLoading={isLoading} />
+                  ))}
+                </div>
+
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between p-4 border-t border-gray-200">
+                    <p className="text-sm text-gray-600">
+                      Page {currentPage} of {totalPages}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="px-3 py-1.5 rounded border text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        aria-label="Previous page"
+                      >
+                        Prev
+                      </button>
+                      <button
+                        type="button"
+                        className="px-3 py-1.5 rounded border text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        aria-label="Next page"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="p-6 sm:p-8 text-center">
                 <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3 sm:mb-4">
