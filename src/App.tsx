@@ -1,31 +1,31 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ProtectedRoute } from "./routes/ProtectedRoute";
-import { AuthRoute } from "./routes/AuthRoute";
-import DashboardRedirect from "./routes/DashboardRedirect";
+import { ProtectedRoute } from "@/routes/ProtectedRoute";
+import { AuthRoute } from "@/routes/AuthRoute";
+import DashboardRedirect from "@/routes/DashboardRedirect";
 
 // Auth pages
-import Signin from "./pages/auth/Signin";
-import Signup from "./pages/auth/Signup";
-import ResetPassword from "./pages/auth/Resetpassword";
-import ForgotPassword from "./pages/auth/Forgotpassword";
+import Signin from "@/pages/auth/Signin";
+import Signup from "@/pages/auth/Signup";
+import ResetPassword from "@/pages/auth/ResetPassword";
+import ForgotPassword from "@/pages/auth/ForgotPassword";
 
 // Dashboard pages
-import DashboardAdmin from "./pages/dashboard/admin/Dasboard";
-import Users from "./pages/dashboard/admin/Users"
-import UserDetail from "./pages/dashboard/admin/Users[id]";
-import Submissions from "./pages/dashboard/admin/Submissions";
-import DoneSubmissions from "./pages/dashboard/admin/DoneSubmissions";
-import RejectedSubmissions from "./pages/dashboard/admin/RejectedSubmissions";
-import SubmissionDetail from "./pages/dashboard/admin/Submissions[id]";
+import DashboardAdmin from "@/pages/dashboard/admin/Dashboard";
+import Users from "@/pages/dashboard/admin/Users"
+import UserDetail from "@/pages/dashboard/admin/Users[id]";
+import Submissions from "@/pages/dashboard/admin/Submissions";
+import DoneSubmissions from "@/pages/dashboard/admin/DoneSubmissions";
+import RejectedSubmissions from "@/pages/dashboard/admin/RejectedSubmissions";
+import SubmissionDetail from "@/pages/dashboard/admin/Submissions[id]";
 
-import DashboardUser from "./pages/dashboard/user/Dashboard";
-import UserSubmissions from "./pages/dashboard/user/Submissions";
-import UserTracking from "./pages/dashboard/user/Tracking";
-import UserTrackingDetail from "./pages/dashboard/user/Tracking[id]";
+import DashboardUser from "@/pages/dashboard/user/Dashboard";
+import UserSubmissions from "@/pages/dashboard/user/Submissions";
+import UserTracking from "@/pages/dashboard/user/Tracking";
+import UserTrackingDetail from "@/pages/dashboard/user/Tracking[id]";
 
 // Home
-import Home from "./pages/home/Home";
-import ProductDetail from "./pages/home/ProductDetail";
+import Home from "@/pages/home/Home";
+import ProductDetail from "@/pages/home/ProductDetail";
 
 function App() {
   return (

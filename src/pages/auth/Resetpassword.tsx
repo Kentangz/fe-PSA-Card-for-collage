@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useSearchParams, Link, useParams } from "react-router-dom";
-import FieldInput from "../../components/FieldInput";
-import LeftPanel from "../../components/LeftPanel";
-import { useAuth } from "../../hooks/useAuth";
+import FieldInput from "@/components/FieldInput";
+import AuthLayout from "@/layouts/AuthLayout";
+import { useAuth } from "@/hooks/useAuth";
 
 const ResetPassword: React.FC = () => {
   const { performPasswordReset, loading, error } = useAuth();
@@ -28,9 +28,7 @@ const ResetPassword: React.FC = () => {
 
   if (!token || !emailParam) {
     return (
-      <div className="flex min-h-screen bg-white">
-        <LeftPanel />
-        <div className="flex flex-col justify-center items-center w-full lg:w-1/2 px-8 lg:px-12">
+      <AuthLayout>
           <div className="w-full max-w-md text-center">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Invalid Reset Link</h2>
             <p className="text-gray-500 mb-6">
@@ -43,16 +41,12 @@ const ResetPassword: React.FC = () => {
               Request New Reset Link
             </Link>
           </div>
-        </div>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-white">
-      <LeftPanel />
-      
-      <div className="flex flex-col justify-center items-center w-full lg:w-1/2 px-8 lg:px-12">
+    <AuthLayout>
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Reset Password</h2>
@@ -145,9 +139,9 @@ const ResetPassword: React.FC = () => {
             <Link to="#" className="hover:text-purple-700 transition-colors">Return</Link>
           </div>
         </div>
-      </div>
-    </div>
+    </AuthLayout>
   );
 };
 
 export default ResetPassword;
+ 

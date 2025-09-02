@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import FieldInput from "../../components/FieldInput";
-import LeftPanel from "../../components/LeftPanel";
-import { useAuth } from "../../hooks/useAuth";
+import FieldInput from "@/components/FieldInput";
+import AuthLayout from "@/layouts/AuthLayout";
+import { useAuth } from "@/hooks/useAuth";
 
 const Signup: React.FC = () => {
   const { signUp, loading, error } = useAuth();
@@ -25,10 +25,7 @@ const Signup: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-white">
-      <LeftPanel />
-      <div className="flex flex-col justify-center items-center w-full lg:w-1/2 px-8 lg:px-12">
-        <div className="w-full max-w-md">
+    <AuthLayout>
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h2>
             <h3 className="text-2xl font-bold text-gray-900 mb-4">for PSA Card</h3>
@@ -146,9 +143,7 @@ const Signup: React.FC = () => {
             <Link to="#" className="hover:text-purple-700 transition-colors">Product Policy</Link>
             <Link to="#" className="hover:text-purple-700 transition-colors">Return</Link>
           </div>
-        </div>
-      </div>
-    </div>
+    </AuthLayout>
   );
 };
 
