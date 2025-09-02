@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import FieldInput from "@/components/FieldInput";
 import AuthLayout from "@/layouts/AuthLayout";
 import { useAuth } from "@/hooks/useAuth";
+import { PATHS } from "@/routes/paths";
 
 const Signin: React.FC = () => {
   const { signIn, loading, error } = useAuth();
@@ -61,7 +62,7 @@ const Signin: React.FC = () => {
 
             <div className="flex justify-end">
               <Link 
-                to="/forgot-password" 
+                to={PATHS.AUTH.FORGOT}
                 className="text-purple-600 text-sm hover:text-purple-700 font-medium transition-colors"
               >
                 Forgot the password?
@@ -87,7 +88,7 @@ const Signin: React.FC = () => {
           <p className="mt-6 text-center text-gray-500">
             Don't have an account?{" "}
             <Link 
-              to="/signup" 
+              to={PATHS.AUTH.SIGNUP}
               className="text-purple-600 font-medium hover:text-purple-700 transition-colors"
             >
               Sign Up

@@ -2,12 +2,14 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 import { AuthRoute } from "@/routes/AuthRoute";
 import DashboardRedirect from "@/routes/DashboardRedirect";
+import { PATHS } from "@/routes/paths";
 
 // Auth pages
 import Signin from "@/pages/auth/Signin";
 import Signup from "@/pages/auth/Signup";
 import ResetPassword from "@/pages/auth/ResetPassword";
 import ForgotPassword from "@/pages/auth/ForgotPassword";
+import NotFound from "@/pages/NotFound";
 
 // Dashboard pages
 import DashboardAdmin from "@/pages/dashboard/admin/Dashboard";
@@ -31,32 +33,34 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/product/:serialNumber" element={<ProductDetail />} />
+        <Route path={PATHS.HOME} element={<Home />} />
+        <Route path={PATHS.PRODUCT_DETAIL() } element={<ProductDetail />} />
 
-        <Route path="/signin" element={<AuthRoute><Signin /></AuthRoute>} />
-        <Route path="/signup" element={<AuthRoute><Signup /></AuthRoute>} />
-        <Route path="/forgot-password" element={<AuthRoute><ForgotPassword /></AuthRoute>} />
+        <Route path={PATHS.AUTH.SIGNIN} element={<AuthRoute><Signin /></AuthRoute>} />
+        <Route path={PATHS.AUTH.SIGNUP} element={<AuthRoute><Signup /></AuthRoute>} />
+        <Route path={PATHS.AUTH.FORGOT} element={<AuthRoute><ForgotPassword /></AuthRoute>} />
         {/* Production */}
-        <Route path="/reset-password/:token" element={<AuthRoute><ResetPassword /></AuthRoute>} />
+        <Route path={PATHS.AUTH.RESET()} element={<AuthRoute><ResetPassword /></AuthRoute>} />
         {/* Development */}
         {/* <Route path="/reset-password/" element={<AuthRoute><ResetPassword /></AuthRoute>} /> */}
         
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<DashboardRedirect />} />
-          <Route path="/dashboard/admin" element={<DashboardAdmin />} />
-          <Route path="/dashboard/admin/users" element={<Users />} />
-          <Route path="/dashboard/admin/users/:id" element={<UserDetail />} />
-          <Route path="/dashboard/admin/submissions" element={<Submissions />} />
-          <Route path="/dashboard/admin/submissions/done" element={<DoneSubmissions />} />
-          <Route path="/dashboard/admin/submissions/rejected" element={<RejectedSubmissions />} />
-          <Route path="/dashboard/admin/submissions/:id" element={<SubmissionDetail />} />
+          <Route path={PATHS.DASHBOARD.ROOT} element={<DashboardRedirect />} />
+          <Route path={PATHS.DASHBOARD.ADMIN.ROOT} element={<DashboardAdmin />} />
+          <Route path={PATHS.DASHBOARD.ADMIN.USERS} element={<Users />} />
+          <Route path={PATHS.DASHBOARD.ADMIN.USER_DETAIL()} element={<UserDetail />} />
+          <Route path={PATHS.DASHBOARD.ADMIN.SUBMISSIONS} element={<Submissions />} />
+          <Route path={PATHS.DASHBOARD.ADMIN.SUBMISSIONS_DONE} element={<DoneSubmissions />} />
+          <Route path={PATHS.DASHBOARD.ADMIN.SUBMISSIONS_REJECTED} element={<RejectedSubmissions />} />
+          <Route path={PATHS.DASHBOARD.ADMIN.SUBMISSION_DETAIL()} element={<SubmissionDetail />} />
           
-          <Route path="/dashboard/user" element={<DashboardUser />} />
-          <Route path="/dashboard/user/submissions" element={<UserSubmissions />} />
-          <Route path="/dashboard/user/tracking" element={<UserTracking />} />
-          <Route path="/dashboard/user/tracking/:id" element={<UserTrackingDetail />} />
+          <Route path={PATHS.DASHBOARD.USER.ROOT} element={<DashboardUser />} />
+          <Route path={PATHS.DASHBOARD.USER.SUBMISSIONS} element={<UserSubmissions />} />
+          <Route path={PATHS.DASHBOARD.USER.TRACKING} element={<UserTracking />} />
+          <Route path={PATHS.DASHBOARD.USER.TRACKING_DETAIL()} element={<UserTrackingDetail />} />
         </Route>
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

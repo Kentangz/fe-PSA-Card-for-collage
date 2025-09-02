@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useSearchParams, Link, useParams } from "react-router-dom";
+import { PATHS } from "@/routes/paths";
 import FieldInput from "@/components/FieldInput";
 import AuthLayout from "@/layouts/AuthLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,7 +36,7 @@ const ResetPassword: React.FC = () => {
               The password reset link is invalid or has expired. Please request a new one.
             </p>
             <Link 
-              to="/forgot-password"
+              to={PATHS.AUTH.FORGOT}
               className="inline-block bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white py-3 px-6 rounded-full font-medium transition-all duration-200 transform hover:scale-[1.02]"
             >
               Request New Reset Link
@@ -125,7 +126,7 @@ const ResetPassword: React.FC = () => {
 
           <div className="mt-6 text-center">
             <Link 
-              to="/signin" 
+              to={PATHS.AUTH.SIGNIN}
               className="text-purple-600 font-medium hover:text-purple-700 transition-colors"
             >
               ← Back to Sign In

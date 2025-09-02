@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { PATHS } from "@/routes/paths";
 import FieldInput from "@/components/FieldInput";
 import AuthLayout from "@/layouts/AuthLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -130,7 +131,7 @@ const Signup: React.FC = () => {
           <p className="mt-6 text-center text-gray-500">
             Already have an account?{" "}
             <Link 
-              to="/signin" 
+              to={PATHS.AUTH.SIGNIN}
               className="text-purple-600 font-medium hover:text-purple-700 transition-colors"
             >
               Sign In
