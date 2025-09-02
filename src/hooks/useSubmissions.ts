@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import axiosInstance from "../lib/axiosInstance";
-import type { Batch } from "../types/batch.types";
-import type { CurrentUser } from "../types/user.types";
-import { createCard } from "../services/cardService";
+import type { Batch } from "@/types/batch.types";
+import type { CurrentUser } from "@/types/user.types";
+import { createCard } from "@/services/cardService";
+import { userService } from "@/services/userService";
+import { batchService } from "@/services/batchService";
 
 export interface SubmissionFormData {
 	name: string;
@@ -46,22 +47,18 @@ export const useSubmissions = () => {
 				return;
 			}
 			try {
-				const [userResponse, batchResponse] = await Promise.all([
-					axiosInstance.get<CurrentUser>("/user"),
-					axiosInstance.get<Batch>(`/batches/${batchId}`),
+				const [user, batch] = await Promise.all([
+					userService.getCurrentUser(),
+					batchService.getBatch(Number(batchId)),
 				]);
 
-				if (
-					!userResponse.data.is_active ||
-					userResponse.data.role === "admin" ||
-					!batchResponse.data.is_active
-				) {
+				if (!user.is_active || user.role === "admin" || !batch.is_active) {
 					navigate("/dashboard/user", { replace: true });
 					return;
 				}
 
-				setCurrentUser(userResponse.data);
-				setSelectedBatch(batchResponse.data);
+				setCurrentUser(user);
+				setSelectedBatch(batch);
 			} catch (err) {
 				console.error(err);
 				navigate("/dashboard/user", { replace: true });

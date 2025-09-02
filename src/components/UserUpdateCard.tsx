@@ -8,6 +8,7 @@ import ProofsGrid from "@/components/user-update/ProofsGrid";
 import ActionButtons from "@/components/user-update/ActionButtons";
 import UploadDropzone from "@/components/user-update/UploadDropzone";
 import { validateFiles } from "@/utils/fileValidation";
+import { ImageModal } from "@/components/tracking-detail";
 
 // Type definition
 type LatestStatus = {
@@ -109,16 +110,6 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
     return () => window.removeEventListener('resize', handleResize);
   }, [handleResize]);
   
-  // Interval recovery - PROPERLY FIXED WITH useCallback TO AVOID DEPENDENCY ISSUES
-  const checkInterval = useCallback(() => {
-    // No-op; kept for minimal interval work if needed later
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(checkInterval, 300); // More frequent checking for better responsiveness
-    return () => clearInterval(interval);
-  }, [checkInterval]);
-
   useEffect(() => {
     if (currentStatus === "received_by_customer") {
       fetchDeliveryProofs();
@@ -558,20 +549,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
           </div>
         </div>
 
-        {selectedImage && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-            onClick={() => setSelectedImage(null)}
-          >
-            <div className="max-w-4xl max-h-full">
-              <img 
-                src={selectedImage} 
-                alt="Delivery proof full size"
-                className="max-w-full max-h-full object-contain"
-              />
-            </div>
-          </div>
-        )}
+        <ImageModal url={selectedImage} onClose={() => setSelectedImage(null)} />
       </div>
     );
   }

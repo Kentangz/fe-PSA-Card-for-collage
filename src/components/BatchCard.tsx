@@ -1,21 +1,9 @@
 import { useState } from "react";
-import type { BatchType } from "../types/submission";
-
-const getCategoryStyling = (category: string) => {
-  switch (category) {
-    case 'PSA-Japan':
-      return 'bg-slate-100 text-slate-700';
-    case 'PSA-USA':
-      return 'bg-gray-100 text-gray-700';
-    case 'CGC':
-      return 'bg-zinc-100 text-zinc-700';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
+import type { Batch } from "@/types/batch.types";
+import CategoryBadge from "@/components/CategoryBadge";
 
 interface BatchCardProps {
-  batch: BatchType;
+  batch: Batch;
   onCreateSubmission: (id: number) => void;
   isLoading?: boolean;
 }
@@ -37,9 +25,7 @@ const BatchCard = ({ batch, onCreateSubmission, isLoading = false }: BatchCardPr
             <h6 className="font-semibold text-gray-900 text-sm sm:text-base">
               {batch.batch_number}
             </h6>
-            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium w-fit ${getCategoryStyling(batch.category)}`}>
-              {batch.category}
-            </span>
+            <CategoryBadge category={batch.category} />
           </div>
           
           <div className="space-y-2 text-sm text-gray-600">

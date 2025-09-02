@@ -1,16 +1,11 @@
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../lib/axiosInstance";
+import axiosInstance from "@/lib/axiosInstance";
+import type { User } from "@/types/user.types";
 
-type UserType = {
-  name: string;
-  email: string;
-  phone_number: string;
-  role: string;
-  is_active: boolean;
-};
+type UserFormUser = Pick<User, "name" | "email" | "phone_number" | "role" | "is_active">;
 
-export default function UserForm({ user, id }: { user: UserType; id: string }) {
+export default function UserForm({ user, id }: { user: UserFormUser; id: string }) {
   const navigate = useNavigate();
 
   const handleUpdate = async (e: FormEvent) => {

@@ -2,9 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { BsEye } from 'react-icons/bs';
 import { MdTrackChanges } from 'react-icons/md';
-import formatDate from '../utils/FormatDate';
-import { getStatusDisplayText, getStatusStyling } from '../utils/statusUtils';
-import type { Card } from '../types/card.types';
+import formatDate from '@/utils/FormatDate';
+import StatusBadge from '@/components/StatusBadge';
+import type { Card } from '@/types/card.types';
+import { PATHS } from '@/routes/paths';
 
 interface SubmissionListProps {
   cards: Card[];
@@ -21,9 +22,7 @@ const fields = [
 
 const SubmissionList: React.FC<SubmissionListProps> = ({ cards }) => {
   const getStatusBadge = (status: string) => (
-    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusStyling(status)}`}>
-      {getStatusDisplayText(status)}
-    </span>
+    <StatusBadge status={status} />
   );
 
   if (!cards || cards.length === 0) {
@@ -76,9 +75,10 @@ const SubmissionList: React.FC<SubmissionListProps> = ({ cards }) => {
                 <td className="py-3 px-6 whitespace-nowrap text-gray-600">{formatDate(new Date(card.created_at))}</td>
                 <td className="py-3 px-6 whitespace-nowrap text-center">
                   <Link
-                    to={`/dashboard/user/tracking/${card.id}`}
+                    to={`${PATHS.DASHBOARD.USER.TRACKING}/${card.id}`}
                     className="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
                     title="View Details"
+                    aria-label={`View details for ${card.name}`}
                   >
                     <BsEye className="w-4 h-4" />
                   </Link>
@@ -122,8 +122,9 @@ const SubmissionList: React.FC<SubmissionListProps> = ({ cards }) => {
             </div>
             <div className="mt-3 pt-3 border-t border-gray-100">
               <Link
-                to={`/dashboard/user/tracking/${card.id}`}
+                to={`${PATHS.DASHBOARD.USER.TRACKING}/${card.id}`}
                 className="w-full flex items-center justify-center gap-2 px-3 py-2 text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium"
+                aria-label={`View details for ${card.name}`}
               >
                 <BsEye className="w-4 h-4" />
                 View Details

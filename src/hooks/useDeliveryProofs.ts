@@ -22,10 +22,6 @@ export const useDeliveryProofs = (cardId: string | number | undefined) => {
 		}
 	}, [cardId]);
 
-	// Removed cross-window event syncing; rely on local state only
-
-	// Removed window global sync dependency
-
 	useEffect(() => {
 		prevProofsRef.current = deliveryProofs;
 	}, [deliveryProofs]);

@@ -2,8 +2,9 @@
 import type { ChangeEvent } from "react";
 import { useState } from "react";
 import { LuUpload, LuCamera } from "react-icons/lu";
-import CameraCapture from "./CameraCapture";
-import type { SubmissionFormData } from "../hooks/useSubmissions";
+import CameraCapture from "@/components/CameraCapture";
+import type { SubmissionFormData } from "@/hooks/useSubmissions";
+import { validateFiles } from "@/utils/fileValidation";
 
 type SubmissionData = SubmissionFormData;
 
@@ -30,11 +31,13 @@ export default function SubmissionForm({
     if (disabled) return;
     
     const files = e.target.files;
-    if (files) {
-      const validImages = Array.from(files).filter((file) =>
-        file.type.startsWith("image/")
-      );
-      updateField("images", [...data.images, ...validImages]);
+    if (!files) return;
+    const { valid, errors } = validateFiles(Array.from(files));
+    if (errors.length > 0) {
+      alert(errors.join('\n'));
+    }
+    if (valid.length > 0) {
+      updateField("images", [...data.images, ...valid]);
     }
   };
 

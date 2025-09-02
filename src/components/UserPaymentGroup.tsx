@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
 import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
-import formatDate from "../utils/FormatDate";
-import { getPaymentButtonState, formatSentAt } from "../utils/batchPaymentUtils";
-import { getStatusDisplayText, getStatusStyling } from "../utils/statusUtils";
-import type { UserPaymentGroup as UserPaymentGroupType, CardType } from "../types/submission";
+import formatDate from "@/utils/FormatDate";
+import { getPaymentButtonState, formatSentAt } from "@/utils/batchPaymentUtils";
+import StatusBadge from "@/components/StatusBadge";
+import { PATHS } from "@/routes/paths";
+import type { UserPaymentGroup as UserPaymentGroupType, CardType } from "@/types/submission";
 
 const fields = [
   { label: "Name", name: "name", shortLabel: "Name" },
@@ -133,10 +134,8 @@ const UserPaymentGroup: React.FC<UserPaymentGroupProps> = ({
                         {item.brand} • {item.year}
                       </p>
                     </div>
-                    <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ${getStatusStyling(item.latest_status.status)}`}>
-                      <span className="truncate max-w-16" title={getStatusDisplayText(item.latest_status.status)}>
-                        {getStatusDisplayText(item.latest_status.status)}
-                      </span>
+                    <span className="inline-flex flex-shrink-0">
+                      <StatusBadge status={item.latest_status.status} />
                     </span>
                   </div>
                   
@@ -163,8 +162,9 @@ const UserPaymentGroup: React.FC<UserPaymentGroupProps> = ({
                   
                   <div className="flex justify-end">
                     <Link 
-                      to={`/dashboard/admin/submissions/${item.id}`}
+                      to={PATHS.DASHBOARD.ADMIN.SUBMISSION_DETAIL(String(item.id))}
                       className="inline-flex items-center px-2.5 py-1 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+                      aria-label={`View submission ${item.name}`}
                     >
                       <BsEye className="mr-1 h-3 w-3" />
                       <span>View</span>
@@ -223,11 +223,7 @@ const UserPaymentGroup: React.FC<UserPaymentGroupProps> = ({
                         {item.grade}
                       </td>
                       <td className="py-2 px-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${getStatusStyling(item.latest_status.status)}`}>
-                          <span className="truncate max-w-20 md:max-w-none" title={getStatusDisplayText(item.latest_status.status)}>
-                            {getStatusDisplayText(item.latest_status.status)}
-                          </span>
-                        </span>
+                        <StatusBadge status={item.latest_status.status} />
                       </td>
                       <td className="py-2 px-4 whitespace-nowrap text-gray-600 text-xs">
                         <div className="truncate max-w-20 md:max-w-24 lg:max-w-none">
@@ -236,9 +232,10 @@ const UserPaymentGroup: React.FC<UserPaymentGroupProps> = ({
                       </td>
                       <td className="py-2 px-4 whitespace-nowrap">
                         <Link 
-                          to={`/dashboard/admin/submissions/${item.id}`}
+                          to={PATHS.DASHBOARD.ADMIN.SUBMISSION_DETAIL(String(item.id))}
                           className="text-blue-600 hover:text-blue-800 transition-colors duration-200 inline-flex items-center justify-center w-7 h-7 rounded-full hover:bg-blue-50"
                           title="View Details"
+                          aria-label={`View submission ${item.name}`}
                         >
                           <BsEye className="text-sm" />
                         </Link>

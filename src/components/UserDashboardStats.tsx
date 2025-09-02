@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { getCardCategory } from "../utils/statusUtils";
-import type { Card } from "../types/card.types";
+import { getCardCategory } from "@/utils/statusUtils";
+import type { Card } from "@/types/card.types";
 
 interface UserStats {
   totalSubmitted: number;

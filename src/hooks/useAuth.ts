@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { login, register, forgotPassword, resetPassword } from "../services/authService";
+import { login, register, forgotPassword, resetPassword } from "@/services/authService";
 import type {
 	LoginCredentials,
 	RegisterCredentials,
 	ForgotPasswordCredentials,
 	ResetPasswordCredentials,
-} from "../types/auth.types";
+} from "@/types/auth.types";
 
 export const useAuth = () => {
 	const [loading, setLoading] = useState<boolean>(false);

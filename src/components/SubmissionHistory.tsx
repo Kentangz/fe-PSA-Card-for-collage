@@ -1,8 +1,8 @@
 import React from 'react';
 import { MdAssignmentAdd } from 'react-icons/md';
-import formatDate from '../utils/FormatDate';
-import { getStatusDisplayText, getStatusStyling } from '../utils/statusUtils';
-import type { Card } from '../types/card.types';
+import formatDate from '@/utils/FormatDate';
+import StatusBadge from '@/components/StatusBadge';
+import type { Card } from '@/types/card.types';
 
 interface SubmissionHistoryProps {
   submissions: Card[] | undefined;
@@ -52,9 +52,7 @@ const SubmissionHistory: React.FC<SubmissionHistoryProps> = ({ submissions }) =>
                       {/* <td className="py-3 px-4 text-gray-600 font-medium">{card.grade_target}</td> */}
                       <td className="py-3 px-4 text-gray-600 font-medium">{card.grade ?? '-'}</td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyling(card.latest_status?.status || '')}`}>
-                          {getStatusDisplayText(card.latest_status?.status || 'Unknown')}
-                        </span>
+                        <StatusBadge status={card.latest_status?.status || ''} />
                       </td>
                       <td className="py-3 px-4 text-gray-600 text-xs">
                         {formatDate(new Date(card.created_at))}
@@ -72,8 +70,8 @@ const SubmissionHistory: React.FC<SubmissionHistoryProps> = ({ submissions }) =>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <h6 className="font-medium text-gray-800 truncate pr-2">{card.name}</h6>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${getStatusStyling(card.latest_status?.status || '')}`}>
-                        {getStatusDisplayText(card.latest_status?.status || 'Unknown')}
+                      <span className="flex-shrink-0">
+                        <StatusBadge status={card.latest_status?.status || ''} />
                       </span>
                     </div>
                     

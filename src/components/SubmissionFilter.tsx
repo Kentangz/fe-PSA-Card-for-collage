@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { BsSearch, BsX, BsFilter, BsChevronDown, BsChevronUp } from "react-icons/bs";
-import type { FilterOptions } from "../types/submission";
+import type { FilterOptions } from "@/types/submission";
 
 interface SubmissionFilterProps {
   onFilterChange: (filters: FilterOptions) => void;

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { HiOutlineClipboardList, HiChevronDown, HiChevronUp } from 'react-icons/hi';
-import BatchCard from './BatchCard';
-import type { Batch } from '../types/batch.types';
+import BatchCard from '@/components/BatchCard';
+import type { Batch } from '@/types/batch.types';
 
 interface ActiveBatchesProps {
   batches: Batch[] | undefined;

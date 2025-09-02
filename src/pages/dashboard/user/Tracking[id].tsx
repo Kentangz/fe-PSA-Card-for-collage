@@ -84,7 +84,7 @@ export default function UserTrackingDetail() {
 
                 {/* Timeline Section */}
                 <div className="flex-1">
-                  <TimelineSection statuses={card.statuses} currentStatus={card.latest_status.status} grade={card.grade} cardId={card.id} />
+                  <TimelineSection statuses={card.statuses} currentStatus={card.latest_status.status} grade={card.grade} variant="full" />
                 </div>
 
                 {/* Desktop User Action Card */}
@@ -97,7 +97,7 @@ export default function UserTrackingDetail() {
 
               {/* Mobile Timeline */}
               <div className="block lg:hidden">
-                <TimelineSection statuses={card.statuses} currentStatus={card.latest_status.status} grade={card.grade} cardId={card.id} />
+                <TimelineSection statuses={card.statuses} currentStatus={card.latest_status.status} grade={card.grade} variant="compact" />
               </div>
 
               {/* Card Images - Mobile Only */}

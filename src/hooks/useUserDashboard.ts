@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../lib/axiosInstance";
 import Cookies from "js-cookie";
-import type { Card } from "../types/card.types";
-import type { Batch } from "../types/batch.types";
-import type { CurrentUser } from "../types/user.types";
-import { isAxiosError } from "../utils/errorUtils";
-// import type { AxiosError } from "../types/error.types";
+import type { Card } from "@/types/card.types";
+import type { Batch } from "@/types/batch.types";
+import type { CurrentUser } from "@/types/user.types";
+import { isAxiosError } from "@/utils/errorUtils";
+import { userService } from "@/services/userService";
+import { getUserCards } from "@/services/cardService";
+import { batchService } from "@/services/batchService";
 
 export const useUserDashboard = () => {
 	const [currentUser, setCurrentUser] = useState<CurrentUser | undefined>(
@@ -31,18 +32,15 @@ export const useUserDashboard = () => {
 				setLoading(true);
 				setError(null);
 
-				const [userResponse, cardsResponse, batchesResponse] =
-					await Promise.all([
-						axiosInstance.get<CurrentUser>("/user"),
-						axiosInstance
-							.get<Card[]>("/user-cards")
-							.catch(() => ({ data: [] })),
-						axiosInstance
-							.get<Batch[]>("/active-batches")
-							.catch(() => ({ data: [] })),
-					]);
-
-				const user = userResponse.data;
+				const [user, cardsData, batchesData] = await Promise.all<
+					[Promise<CurrentUser>, Promise<Card[]>, Promise<Batch[]>]
+				>([
+					userService.getCurrentUser(),
+					getUserCards().catch(() => Promise.resolve([] as Card[])),
+					batchService
+						.getActiveBatches()
+						.catch(() => Promise.resolve([] as Batch[])),
+				]);
 
 				if (!user.is_active) {
 					Cookies.remove("token");
@@ -56,8 +54,8 @@ export const useUserDashboard = () => {
 				}
 
 				setCurrentUser(user);
-				setCards(cardsResponse.data);
-				setActiveBatches(batchesResponse.data);
+				setCards(cardsData);
+				setActiveBatches(batchesData);
 			} catch (err: unknown) {
 				console.error("Dashboard error:", err);
 				if (isAxiosError(err)) {
