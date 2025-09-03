@@ -10,7 +10,8 @@ import AddBatchModal from "../../../components/AddBatchModal";
 import BatchAccordion from "../../../components/BatchAccordion";
 import axiosInstance from "../../../lib/axiosInstance";
 import { filterAndSortSubmissions } from "../../../utils/submissionUtils";
-import type { CardType, CardsResponse, ApiResponse, FilterOptions, UserType, BatchType } from "../../../types/submission";
+import type { CardType, CardsResponse, ApiResponse, FilterOptions, UserType } from "../../../types/submission";
+import type { Batch } from "../../../types/batch.types";
 import Cookies from "js-cookie";
 import { batchService } from "../../../services/batchService";
 
@@ -59,7 +60,7 @@ export default function Submission() {
   });
   const navigate = useNavigate();
   const [showAddBatchModal, setShowAddBatchModal] = useState(false);
-  const [batches, setBatches] = useState<BatchType[]>([]);
+  const [batches, setBatches] = useState<Batch[]>([]);
   const [expandedBatches, setExpandedBatches] = useState<Set<number>>(new Set());
   const [batchUpdateError, setBatchUpdateError] = useState<string | null>(null);
 

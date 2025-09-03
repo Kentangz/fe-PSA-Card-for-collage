@@ -9,7 +9,7 @@ import UpdateCard from "../../../components/UpdateCard";
 import EnhancedTimeline from "../../../components/AdminTimeline";
 import axiosInstance from "../../../lib/axiosInstance";
 import { BE_URL} from "../../../lib/api";
-import formatDate from "../../../utils/FormatDate";
+import formatDate from "../../../utils/formatDate";
 import Cookies from "js-cookie";
 
 // Type definitions

@@ -1,42 +1,11 @@
-export interface CardType {
-	id: string;
-	user_id: number;
-	batch_id?: number;
-	name: string;
-	year: number;
-	brand: string;
-	serial_number: string;
-	grade_target: string;
-	grade: string;
-	payment_url?: string;
-	batch?: BatchType;
-	latest_status: {
-		status: string;
-	};
-	created_at: string;
-	updated_at: string;
-}
+import type { Batch } from "./batch.types";
+import type { Card } from "./card.types";
+import type { User } from "./user.types";
 
-export interface BatchType {
-	id: number;
-	batch_number: string;
-	register_number: string;
-	services: string;
-	category: "PSA-Japan" | "PSA-USA" | "CGC";
-	is_active: boolean;
-	cards_count?: number;
-	created_at: string;
-	updated_at: string;
-}
+export type CardType = Card;
 
 // New BatchPayment related types
-export interface UserType {
-	id: number;
-	name: string;
-	email: string;
-	role: string;
-	is_active: boolean;
-}
+export type UserType = User;
 
 export interface BatchPaymentType {
 	id: number;
@@ -49,7 +18,7 @@ export interface BatchPaymentType {
 	created_at: string;
 	updated_at: string;
 	user: UserType;
-	batch: BatchType;
+	batch: Batch;
 	submissions_detail: CardType[];
 }
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { BsEye } from 'react-icons/bs';
 import { MdTrackChanges } from 'react-icons/md';
-import formatDate from '@/utils/FormatDate';
+import formatDate from '@/utils/formatDate';
 import StatusBadge from '@/components/StatusBadge';
 import type { Card } from '@/types/card.types';
 import { PATHS } from '@/routes/paths';

@@ -1,5 +1,5 @@
-import React, { Suspense } from "react";
-const UserTimeline = React.lazy(() => import("@/components/UserTimeline"));
+import React from "react";
+import UserTimeline from "@/components/UserTimeline";
 import type { CardStatus } from "@/types/card.types";
 
 type Props = {
@@ -13,9 +13,7 @@ type Props = {
 const TimelineSection: React.FC<Props> = ({ statuses, currentStatus, grade, className, variant = "full" }) => {
   return (
     <div className={className}>
-      <Suspense fallback={<div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 h-32 animate-pulse"></div>}>
-        <UserTimeline statuses={statuses} currentStatus={currentStatus} grade={grade} variant={variant} />
-      </Suspense>
+      <UserTimeline statuses={statuses} currentStatus={currentStatus} grade={grade} variant={variant} />
     </div>
   );
 };

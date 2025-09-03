@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getStatusDisplayText } from "@/utils/statusUtils";
-// import { getImageUrl } from "@/utils/imageUtils";
 import { useDeliveryProofs } from "@/hooks/useDeliveryProofs";
 import { useStatusActions } from "@/hooks/useStatusActions";
 import PreviewGrid from "@/components/user-update/PreviewGrid";
@@ -10,7 +9,6 @@ import UploadDropzone from "@/components/user-update/UploadDropzone";
 import { validateFiles } from "@/utils/fileValidation";
 import { ImageModal } from "@/components/tracking-detail";
 
-// Type definition
 type LatestStatus = {
   status: string;
 };
@@ -21,12 +19,6 @@ type CardType = {
   payment_url?: string | null;
 };
 
-// Delivery proof shape comes from services/hooks
-
-// (Responses moved to services; not needed locally)
-
-// Removed window upload state globals; using local state only
-
 interface ApiError {
   response?: {
     data?: {
@@ -35,9 +27,6 @@ interface ApiError {
     status?: number;
   };
 }
-
-// Extend Window interface to include our custom properties
-// No global window declarations required
 
 export default function UserUpdateCard({ card }: { card?: CardType }) {
   const [uploadingProof, setUploadingProof] = useState(false);
@@ -49,19 +38,15 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Get current status early
   const currentStatus = card?.latest_status.status;
   
   const fetchDeliveryProofs = useCallback(() => { fetchProofs(); }, [fetchProofs]);
-  
-  // Delivery proofs syncing handled by useDeliveryProofs
-  
-  // Persistent state preservation for multiple files
+
   const preservedState = useRef<{
     previewImages: { file: File; preview: string; id: string }[];
     uploadSuccessful: boolean;
     timestamp: number;
-    cancelled?: boolean; // Add cancelled flag
+    cancelled?: boolean;
     cancelledTimestamp?: number;
   }>({
     previewImages: [],
@@ -71,7 +56,6 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
     cancelledTimestamp: 0
   });
   
-  // Preserve local state only (no window globals)
   useEffect(() => {
     preservedState.current = {
       previewImages,
@@ -80,7 +64,6 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
     };
   }, [previewImages, uploadSuccessful]);
   
-  // Restore recent local state on mount only
   useEffect(() => {
     if (
       preservedState.current.previewImages.length > 0 &&
@@ -92,7 +75,6 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
     }
   }, []);
   
-  // Resize handler: optionally restore from preserved state only
   const handleResize = useCallback(() => {
     if (
       preservedState.current.previewImages.length > 0 &&
@@ -118,12 +100,10 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
 
   const { handleUpdateSubmission } = useStatusActions(card?.id);
 
-  // Generate unique ID for file tracking
   const generateFileId = () => {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
   };
 
-  // Handle multiple file selection
   const handleFileSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     
@@ -131,7 +111,6 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
 
     const { valid: validFiles, errors } = validateFiles(Array.from(files));
 
-    // Show validation errors if any
     if (errors.length > 0) {
       alert(errors.join('\n'));
       event.target.value = '';
@@ -143,12 +122,8 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
       return;
     }
 
-    // Reset upload success state for new files
     setUploadSuccessful(false);
     
-    // Clear completion marker (local only)
-
-    // Process valid files
     const newPreviewPromises = validFiles.map((file) => {
       return new Promise<{ file: File; preview: string; id: string }>((resolve) => {
         const reader = new FileReader();
@@ -166,28 +141,22 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
       });
     });
 
-    // Wait for all previews to be generated
     Promise.all(newPreviewPromises).then((newPreviews) => {
-      // Add to existing previews (append mode)
       const updatedPreviews = [...previewImages, ...newPreviews];
       
       setPreviewImages(updatedPreviews);
       
-      // Update preserved state with new previews
       preservedState.current = {
         previewImages: updatedPreviews,
         uploadSuccessful: false,
         timestamp: Date.now()
       };
       
-      // No window state sync
     });
 
-    // Clear input value for next selection
     event.target.value = '';
   };
 
-  // Handle actual upload for multiple files
   const handleDeliveryProofUpload = async () => {
     if (previewImages.length === 0 || !card?.id) return;
 
@@ -197,34 +166,26 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
     try {
       const files = previewImages.map((p) => p.file);
       await uploadFiles(files);
-      
-      // Mark completion locally via state
-      
-      // Mark upload as successful
+            
       setUploadSuccessful(true);
       
-      // Update preserved state
       preservedState.current = {
         previewImages: [],
         uploadSuccessful: true,
         timestamp: Date.now()
       };
       
-      // No window state to clear
       
-      // Add to delivery proofs state and force refresh across all responsive modes
-      // Force refresh delivery proofs to ensure consistency across responsive modes - SINGLE REFRESH ONLY
+      
       setTimeout(() => {
-        fetchDeliveryProofs(); // Simple fetch without force refresh to prevent loops
+        fetchDeliveryProofs();
       }, 500);
       
-      // Clear preview states
       setTimeout(() => {
         setPreviewImages([]);
         setUploadProgress({});
       }, 100);
       
-      // Clear input
       const input = document.getElementById('delivery-proof-upload') as HTMLInputElement;
       if (input) input.value = '';
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -242,7 +203,6 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
     }
   };
 
-  // Handle delivery proof deletion with improved error handling and sync
   const handleDeleteDeliveryProof = async (proofId: number) => {
     if (!card?.id) return;
     await deleteProof(proofId);
@@ -251,31 +211,25 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
     }
   };
 
-  // Handle cancel preview for specific image with proper state sync
   const handleCancelSinglePreview = (imageId: string) => {
     const updatedPreviews = previewImages.filter(img => img.id !== imageId);
     setPreviewImages(updatedPreviews);
     
-    // Update preserved state
     preservedState.current = { 
       previewImages: updatedPreviews, 
       uploadSuccessful: false,
       timestamp: Date.now()
     };
     
-    // No window state sync; local state only
   };
 
-  // Handle cancel all previews with proper state cleanup
   const handleCancelAllPreviews = () => {
     const cancelTimestamp = Date.now();
     
-    // Clear local state immediately
     setPreviewImages([]);
     setUploadSuccessful(false);
     setUploadProgress({});
     
-    // Set cancelled state markers
     preservedState.current = { 
       previewImages: [], 
       uploadSuccessful: false,
@@ -284,19 +238,15 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
       cancelledTimestamp: cancelTimestamp
     };
     
-    // No window state
     
-    // Clear input values
     const input = document.getElementById('delivery-proof-upload') as HTMLInputElement;
     if (input) input.value = '';
     if (fileInputRef.current) fileInputRef.current.value = '';
     
-    // Aggressive cleanup with multiple phases
     const cleanupPhases = [100, 300, 600, 1000, 1500];
     
     cleanupPhases.forEach((delay) => {
       setTimeout(() => {
-        // Update preserved state again
         preservedState.current = { 
           previewImages: [], 
           uploadSuccessful: false,
@@ -304,13 +254,11 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
           cancelled: true,
           cancelledTimestamp: cancelTimestamp
         };
-        // Force re-render if components still have preview images
         setPreviewImages(current => current.length > 0 ? [] : current);
       }, delay);
     });
   };
 
-  // Handle file select button click
   const handleFileSelectClick = () => {
     let input = fileInputRef.current;
     if (!input) {

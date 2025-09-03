@@ -7,10 +7,10 @@ import { batchPaymentService } from "../services/batchPaymentService";
 import { transformToUserPaymentGroups } from "../utils/batchPaymentUtils";
 import type { 
   CardType, 
-  BatchType, 
   UserPaymentGroup as UserPaymentGroupType,
   BatchPaymentsResponse 
 } from "../types/submission";
+import type { Batch } from "../types/batch.types";
 import { queueService } from "../services/queueService";
 import {
   DndContext,
@@ -63,7 +63,7 @@ const DraggableUserRow: React.FC<DraggableUserRowProps> = ({ id, isSyncing, chil
 };
 
 interface BatchAccordionProps {
-  batch: BatchType;
+  batch: Batch;
   submissions: CardType[];
   isOpen: boolean;
   onToggle: () => void;

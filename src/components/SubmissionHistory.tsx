@@ -1,6 +1,6 @@
 import React from 'react';
 import { MdAssignmentAdd } from 'react-icons/md';
-import formatDate from '@/utils/FormatDate';
+import formatDate from '@/utils/formatDate';
 import StatusBadge from '@/components/StatusBadge';
 import type { Card } from '@/types/card.types';
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { BsImage } from "react-icons/bs";
-import formatDate from "../utils/FormatDate";
+import formatDate from "../utils/formatDate";
 import axiosInstance from "../lib/axiosInstance";
 import { BE_URL } from "../lib/api";
 // Import from statusUtils

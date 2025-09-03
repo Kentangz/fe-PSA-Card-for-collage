@@ -4,6 +4,7 @@ import type {
 	UserPaymentGroup,
 	BatchPaymentsResponse,
 } from "../types/submission";
+import type { User } from "../types/user.types";
 
 export const transformToUserPaymentGroups = (
 	submissions: CardType[],
@@ -30,16 +31,19 @@ export const transformToUserPaymentGroups = (
 
 	submissionsByUser.forEach((userSubmissions, userId) => {
 		const paymentInfo = paymentsByUser.get(userId) || null;
-		let user;
+		let user: User;
 		if (paymentInfo?.user) {
-			user = paymentInfo.user;
+			user = paymentInfo.user as User;
 		} else {
 			user = {
 				id: userId,
 				name: `User ${userId}`,
 				email: "",
+				phone_number: "",
 				role: "user",
 				is_active: true,
+				created_at: new Date(0).toISOString(),
+				updated_at: new Date(0).toISOString(),
 			};
 		}
 

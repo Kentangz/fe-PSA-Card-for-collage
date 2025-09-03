@@ -7,9 +7,10 @@ import Sidebar from "../../../components/SideBar";
 import ProfileMenu from "../../../components/ProfileMenu";
 import SubmissionFilter from "../../../components/SubmissionFilter";
 import axiosInstance from "../../../lib/axiosInstance";
-import formatDate from "../../../utils/FormatDate";
+import formatDate from "../../../utils/formatDate";
 import { filterAndSortSubmissions } from "../../../utils/submissionUtils";
-import type { CardType, CardsResponse, ApiResponse, FilterOptions, UserType, BatchType } from "../../../types/submission";
+import type { CardType, CardsResponse, ApiResponse, FilterOptions, UserType } from "../../../types/submission";
+import type { Batch } from "../../../types/batch.types";
 import Cookies from "js-cookie";
 import { batchService } from "../../../services/batchService";
 
@@ -132,7 +133,7 @@ export default function RejectedSubmissions() {
   const [cards, setCards] = useState<CardsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [batches, setBatches] = useState<BatchType[]>([]);
+  const [batches, setBatches] = useState<Batch[]>([]);
   const [filters, setFilters] = useState<FilterOptions>({
     searchTerm: '',
     sortBy: 'created_at',

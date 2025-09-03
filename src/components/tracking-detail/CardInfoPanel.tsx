@@ -1,5 +1,5 @@
 import React from "react";
-import formatDate from "@/utils/FormatDate";
+import formatDate from "@/utils/formatDate";
 import StatusBadge from "@/components/StatusBadge";
 import CategoryBadge from "@/components/CategoryBadge";
 import type { Card } from "@/types/card.types";

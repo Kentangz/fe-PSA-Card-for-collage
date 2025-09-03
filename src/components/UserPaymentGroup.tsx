@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
 import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
-import formatDate from "@/utils/FormatDate";
+import formatDate from "@/utils/formatDate";
 import { getPaymentButtonState, formatSentAt } from "@/utils/batchPaymentUtils";
 import StatusBadge from "@/components/StatusBadge";
 import { PATHS } from "@/routes/paths";

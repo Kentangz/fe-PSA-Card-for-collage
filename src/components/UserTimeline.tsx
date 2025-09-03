@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
-import formatDate from "@/utils/FormatDate";
+import formatDate from "@/utils/formatDate";
 import { getStatusStyling } from "@/utils/statusUtils";
 import { useTimelineData } from "@/hooks/useTimelineData";
 import TimelineItem from "@/components/TimelineItem";
