@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { MdAssignment } from "react-icons/md";
 import UserPaymentGroup from "./UserPaymentGroup";
@@ -11,6 +11,56 @@ import type {
   UserPaymentGroup as UserPaymentGroupType,
   BatchPaymentsResponse 
 } from "../types/submission";
+import { queueService } from "../services/queueService";
+import {
+  DndContext,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  rectIntersection,
+} from "@dnd-kit/core";
+import type { DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+interface DraggableUserRowProps {
+  id: number;
+  isSyncing: boolean;
+  children: ReactNode;
+  onKeyboardReorder: (payload: { id: number; direction: 'up' | 'down' }) => void;
+}
+
+const DraggableUserRow: React.FC<DraggableUserRowProps> = ({ id, isSyncing, children, onKeyboardReorder }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`relative bg-white ${isDragging ? 'z-10 shadow-lg ring-1 ring-slate-200 scale-[1.01]' : ''}`}
+      onKeyDown={(e) => {
+        if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+          e.preventDefault();
+          onKeyboardReorder({ id, direction: e.key === 'ArrowUp' ? 'up' : 'down' });
+        }
+      }}
+      {...listeners}
+      {...attributes}
+      aria-roledescription="Draggable user row"
+      role="listitem"
+      title="Drag with mouse or Ctrl+Arrow to reorder"
+    >
+      <div className={`${isSyncing ? 'opacity-90' : 'opacity-100'} cursor-grab active:cursor-grabbing`}>
+        {children}
+      </div>
+    </div>
+  );
+};
 
 interface BatchAccordionProps {
   batch: BatchType;
@@ -33,6 +83,17 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
   const [expandedUsers, setExpandedUsers] = useState<Set<number>>(new Set());
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedUserGroup, setSelectedUserGroup] = useState<UserPaymentGroupType | null>(null);
+  const [userQueueOrder, setUserQueueOrder] = useState<number[] | null>(null);
+  const previousOrderRef = useRef<number[] | null>(null);
+  const [isSyncingQueue, setIsSyncingQueue] = useState(false);
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 50, tolerance: 5 },
+    })
+  );
   
   const statusText = batch.is_active ? "Open" : "Closed";
   const statusStyle = batch.is_active 
@@ -57,7 +118,109 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
     fetchPaymentData();
   }, [isOpen, batch.id, paymentDataLoaded, submissions.length]);
 
+  // Fetch and sync queue order as source of truth
+  useEffect(() => {
+    const fetchQueue = async () => {
+      if (!isOpen) return;
+      try {
+        const res = await queueService.getBatchUserQueue(batch.id);
+        const orderedIds = [...res.data.user_queues]
+          .sort((a, b) => a.queue_order - b.queue_order)
+          .map((item) => item.user.id);
+        setUserQueueOrder(orderedIds);
+      } catch (error) {
+        console.error('Failed to fetch user queue order:', error);
+        // Fallback to current order from submissions grouping
+        setUserQueueOrder(null);
+      }
+    };
+    fetchQueue();
+  }, [isOpen, batch.id]);
+
   const userPaymentGroups = transformToUserPaymentGroups(submissions, batchPaymentsData || undefined);
+
+  // Compute sorted groups based on queue order when available
+  const sortedUserGroups = useMemo(() => {
+    if (!userPaymentGroups || userPaymentGroups.length === 0) return [] as UserPaymentGroupType[];
+    if (!userQueueOrder) return userPaymentGroups;
+    const orderIndex = new Map<number, number>();
+    userQueueOrder.forEach((userId, index) => orderIndex.set(userId, index));
+    return [...userPaymentGroups].sort((a, b) => {
+      const ai = orderIndex.has(a.user.id) ? (orderIndex.get(a.user.id) as number) : Number.MAX_SAFE_INTEGER;
+      const bi = orderIndex.has(b.user.id) ? (orderIndex.get(b.user.id) as number) : Number.MAX_SAFE_INTEGER;
+      if (ai !== bi) return ai - bi;
+      return a.user.id - b.user.id;
+    });
+  }, [userPaymentGroups, userQueueOrder]);
+
+  const arrayMove = (arr: number[], from: number, to: number) => {
+    const copy = arr.slice();
+    const [item] = copy.splice(from, 1);
+    copy.splice(to, 0, item);
+    return copy;
+  };
+
+  const notify = (message: string) => {
+    // Minimal inline toast using a temporary fixed element (no external deps)
+    const el = document.createElement('div');
+    el.textContent = message;
+    el.className = 'fixed left-1/2 -translate-x-1/2 top-4 z-[9999] bg-red-600 text-white text-sm px-3 py-2 rounded shadow-md animate-in fade-in duration-150';
+    document.body.appendChild(el);
+    setTimeout(() => {
+      el.classList.add('opacity-0');
+      setTimeout(() => el.remove(), 300);
+    }, 2000);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    // Build current order from sortedUserGroups to ensure consistency
+    const currentOrder = (userQueueOrder && userQueueOrder.length === sortedUserGroups.length)
+      ? userQueueOrder
+      : sortedUserGroups.map((g) => g.user.id);
+    const fromIndex = currentOrder.indexOf(Number(active.id));
+    const toIndex = currentOrder.indexOf(Number(over.id));
+    if (fromIndex === -1 || toIndex === -1) return;
+
+    const optimistic = arrayMove(currentOrder, fromIndex, toIndex);
+    previousOrderRef.current = currentOrder;
+    setUserQueueOrder(optimistic);
+    setIsSyncingQueue(true);
+    try {
+      await queueService.updateBatchUserQueue(batch.id, optimistic);
+    } catch {
+      // Revert on failure
+      setUserQueueOrder(previousOrderRef.current);
+      notify('Failed to update queue order. Reverting changes.');
+    } finally {
+      setIsSyncingQueue(false);
+    }
+  };
+
+  // No overlay; we keep the drag UX minimal without extra UI
+
+  const handleKeyboardReorder = async (payload: { id: number; direction: 'up' | 'down' }) => {
+    const currentOrder = (userQueueOrder && userQueueOrder.length === sortedUserGroups.length)
+      ? userQueueOrder
+      : sortedUserGroups.map((g) => g.user.id);
+    const index = currentOrder.indexOf(payload.id);
+    if (index === -1) return;
+    const toIndex = payload.direction === 'up' ? Math.max(0, index - 1) : Math.min(currentOrder.length - 1, index + 1);
+    if (toIndex === index) return;
+    const optimistic = arrayMove(currentOrder, index, toIndex);
+    previousOrderRef.current = currentOrder;
+    setUserQueueOrder(optimistic);
+    setIsSyncingQueue(true);
+    try {
+      await queueService.updateBatchUserQueue(batch.id, optimistic);
+    } catch {
+      setUserQueueOrder(previousOrderRef.current);
+      notify('Failed to update queue order. Reverting changes.');
+    } finally {
+      setIsSyncingQueue(false);
+    }
+  };
 
   const handleToggleBatchStatus = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -277,17 +440,41 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
               <p className="text-sm sm:text-base">Loading user payment data...</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
-              {userPaymentGroups.map((userGroup) => (
-                <UserPaymentGroup
-                  key={userGroup.user.id}
-                  userGroup={userGroup}
-                  isOpen={expandedUsers.has(userGroup.user.id)}
-                  onToggle={() => toggleUserGroup(userGroup.user.id)}
-                  onPaymentAction={handlePaymentAction}
-                />
-              ))}
-            </div>
+            <DndContext
+              sensors={sensors}
+              onDragEnd={handleDragEnd}
+              collisionDetection={rectIntersection}
+            >
+              <SortableContext items={sortedUserGroups.map(g => g.user.id)} strategy={verticalListSortingStrategy}>
+                <div className="divide-y divide-gray-100">
+                {sortedUserGroups.map((userGroup, index) => (
+                  <DraggableUserRow
+                    key={userGroup.user.id}
+                    id={userGroup.user.id}
+                    isSyncing={isSyncingQueue}
+                    onKeyboardReorder={handleKeyboardReorder}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex flex-col items-center select-none">
+                        <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold mt-2">
+                          {index + 1}
+                        </span>
+                        <span className="mt-1 h-4 w-1 rounded-full bg-slate-200" />
+                      </div>
+                      <div className="flex-1">
+                        <UserPaymentGroup
+                          userGroup={userGroup}
+                          isOpen={expandedUsers.has(userGroup.user.id)}
+                          onToggle={() => toggleUserGroup(userGroup.user.id)}
+                          onPaymentAction={handlePaymentAction}
+                        />
+                      </div>
+                    </div>
+                  </DraggableUserRow>
+                ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
       )}

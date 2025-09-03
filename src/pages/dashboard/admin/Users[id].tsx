@@ -15,7 +15,7 @@ interface User {
   name: string;
   email: string;
   phone_number: string;
-  role: string;
+  role: "admin" | "user";
   is_active: boolean;
 }
 
