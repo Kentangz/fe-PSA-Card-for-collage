@@ -54,7 +54,7 @@ export default function SubmissionFilter({
       <div className="p-2">
         {/* Mobile Layout */}
         <div className="block lg:hidden space-y-3">
-          {/* Search Input with Add Batch - Mobile */}
+          {/* Search Input - Mobile */}
           <div className="flex gap-2">
             <div className="relative flex-1">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -76,16 +76,6 @@ export default function SubmissionFilter({
                 </button>
               )}
             </div>
-            {/* Add Batch Button - Mobile (beside search) */}
-            {showAddBatch && (
-              <button
-                onClick={onAddBatch}
-                className="inline-flex items-center px-3 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors flex-shrink-0"
-              >
-                <span className="hidden sm:inline">Add Batch</span>
-                <span className="sm:hidden">+</span>
-              </button>
-            )}
           </div>
 
           {/* Mobile Controls Row */}
@@ -96,8 +86,17 @@ export default function SubmissionFilter({
                 {totalResults} result{totalResults !== 1 ? 's' : ''}
               </span>
             </div>
-            {/* Filter Button - Mobile */}
+            {/* Right Controls - Mobile */}
             <div className="flex items-center gap-2">
+              {showAddBatch && (
+                <button
+                  onClick={onAddBatch}
+                  className="inline-flex items-center px-3 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors flex-shrink-0"
+                >
+                  <span className="hidden sm:inline">Add Batch</span>
+                  <span className="sm:hidden">+</span>
+                </button>
+              )}
               <button
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                 className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
@@ -122,7 +121,7 @@ export default function SubmissionFilter({
 
         {/* Desktop Layout */}
         <div className="hidden lg:flex lg:items-center lg:justify-between lg:gap-6">
-          {/* Search Input with Add Batch - Desktop */}
+          {/* Search Input - Desktop */}
           <div className="flex items-center gap-3 flex-1">
             <div className="relative flex-1 max-w-md">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -144,7 +143,15 @@ export default function SubmissionFilter({
                 </button>
               )}
             </div>
-            {/* Add Batch Button - Desktop (beside search) */}
+          </div>
+
+          {/* Desktop Controls */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {/* Results Count - Desktop */}
+            <span className="text-sm text-gray-500 whitespace-nowrap mr-2">
+              {totalResults} result{totalResults !== 1 ? 's' : ''} found
+            </span>
+
             {showAddBatch && (
               <button
                 onClick={onAddBatch}
@@ -153,16 +160,7 @@ export default function SubmissionFilter({
                 + Add Batch
               </button>
             )}
-          </div>
 
-          {/* Desktop Controls */}
-          <div className="flex items-center gap-4 flex-shrink-0">
-            {/* Results Count - Desktop */}
-            <span className="text-sm text-gray-500 whitespace-nowrap">
-              {totalResults} result{totalResults !== 1 ? 's' : ''} found
-            </span>
-            
-            {/* Filter Toggle - Desktop */}
             <button
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
               className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"

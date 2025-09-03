@@ -19,6 +19,16 @@ const fields = [
   { label: "Submitted at", name: "submitted_at", shortLabel: "Date" },
 ];
 
+const colVisibility: Record<string, string> = {
+  name: "table-cell",
+  year: "hidden lg:table-cell",
+  brand: "hidden lg:table-cell",
+  serial_number: "hidden xl:table-cell",
+  grade: "hidden lg:table-cell",
+  status: "table-cell",
+  submitted_at: "hidden xl:table-cell",
+};
+
 interface UserPaymentGroupProps {
   userGroup: UserPaymentGroupType;
   isOpen: boolean;
@@ -58,13 +68,13 @@ const UserPaymentGroup: React.FC<UserPaymentGroupProps> = ({
   };
 
   return (
-    <div className="border-l-2 border-gray-100 ml-4">
+    <div className="md:border-l-2 md:border-gray-100 md:ml-4 border-t md:border-t-0">
       {/* User Header */}
-      <div className="flex items-center hover:bg-gray-50 transition-colors duration-200 bg-gray-50/50">
+      <div className="flex flex-col sm:flex-row sm:items-center hover:bg-gray-50 transition-colors duration-200 bg-gray-50/50">
         {/* Toggle Button */}
         <button
           onClick={onToggle}
-          className="flex-1 px-4 py-3 flex items-center focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-inset min-w-0"
+          className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 flex items-center focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-inset min-w-0"
           aria-expanded={isOpen}
         >
           <div className="flex items-center space-x-3 min-w-0 flex-1">
@@ -92,11 +102,11 @@ const UserPaymentGroup: React.FC<UserPaymentGroupProps> = ({
         </button>
 
         {/* Payment Button - Separated from toggle button */}
-        <div className="flex items-center px-4 py-3 flex-shrink-0 border-l border-gray-200">
+        <div className="flex items-center px-3 sm:px-4 py-2.5 sm:py-3 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-gray-200">
           <button
             onClick={handlePaymentAction}
             disabled={buttonState.disabled || isProcessing}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap ${getButtonStyles()}`}
+            className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg border transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap ${getButtonStyles()}`}
           >
             {isProcessing ? (
               <div className="flex items-center space-x-1">
@@ -107,7 +117,7 @@ const UserPaymentGroup: React.FC<UserPaymentGroupProps> = ({
               <>
                 {buttonState.text}
                 {buttonState.sentAt && (
-                  <div className="text-xs text-gray-500 mt-0.5">
+                  <div className="text-[10px] sm:text-xs text-gray-500 mt-0.5">
                     {formatSentAt(buttonState.sentAt)}
                   </div>
                 )}
@@ -125,8 +135,8 @@ const UserPaymentGroup: React.FC<UserPaymentGroupProps> = ({
             <div className="divide-y divide-gray-100">
               {submissions.map((item: CardType, index: number) => (
                 <div key={item.id || index} className="p-3">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex-1 min-w-0 mr-3">
+                  <div className="flex flex-wrap justify-between items-start mb-2 gap-2">
+                    <div className="flex-1 min-w-0 mr-1">
                       <h3 className="text-sm font-medium text-gray-900 truncate" title={item.name}>
                         {item.name}
                       </h3>
@@ -139,16 +149,13 @@ const UserPaymentGroup: React.FC<UserPaymentGroupProps> = ({
                     </span>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-gray-600 mb-2">
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs text-gray-600 mb-2">
                     <div className="truncate">
                       <span className="font-medium">Serial:</span> 
-                      <span className="ml-1" title={item.serial_number}>
+                      <span className="ml-1 break-all" title={item.serial_number}>
                         {item.serial_number}
                       </span>
                     </div>
-                    {/* <div>
-                      <span className="font-medium">Target:</span> {item.grade_target}
-                    </div> */}
                     <div>
                       <span className="font-medium">Grade:</span> {item.grade}
                     </div>
@@ -175,7 +182,7 @@ const UserPaymentGroup: React.FC<UserPaymentGroupProps> = ({
             </div>
           </div>
 
-          {/* Desktop Table View */}
+          {/* Desktop Table View (md+) */}
           <div className="hidden md:block">
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left min-w-full">
@@ -183,14 +190,14 @@ const UserPaymentGroup: React.FC<UserPaymentGroupProps> = ({
                   <tr>
                     {fields.map(field => (
                       <th 
-                        className="py-2 px-4 font-medium text-gray-600 whitespace-nowrap text-xs" 
+                        className={`py-2 px-3 lg:px-4 font-medium text-gray-600 whitespace-nowrap text-[11px] sm:text-xs ${colVisibility[field.name] || ''}`} 
                         key={field.name}
                       >
                         <span className="hidden lg:inline">{field.label}</span>
                         <span className="lg:hidden">{field.shortLabel}</span>
                       </th>
                     ))}
-                    <th className="py-2 px-4 font-medium text-gray-600 whitespace-nowrap text-xs">
+                    <th className="py-2 px-3 lg:px-4 font-medium text-gray-600 whitespace-nowrap text-[11px] sm:text-xs">
                       Detail
                     </th>
                   </tr>
@@ -198,39 +205,44 @@ const UserPaymentGroup: React.FC<UserPaymentGroupProps> = ({
                 <tbody className="divide-y divide-gray-100">
                   {submissions.map((item: CardType, index: number) => (
                     <tr key={item.id || index} className="hover:bg-gray-25 transition-colors duration-150">
-                      <td className="py-2 px-4 text-gray-800">
+                      {/* name */}
+                      <td className={`py-1.5 lg:py-2 px-3 lg:px-4 text-gray-800 ${colVisibility['name']}`}>
                         <div className="truncate max-w-32 md:max-w-40 lg:max-w-48 xl:max-w-none" title={item.name}>
                           {item.name}
                         </div>
                       </td>
-                      <td className="py-2 px-4 whitespace-nowrap text-gray-600 text-xs">
+                      {/* year */}
+                      <td className={`py-1.5 lg:py-2 px-3 lg:px-4 whitespace-nowrap text-gray-600 text-xs ${colVisibility['year']}`}>
                         {item.year}
                       </td>
-                      <td className="py-2 px-4 text-gray-600">
+                      {/* brand */}
+                      <td className={`py-1.5 lg:py-2 px-3 lg:px-4 text-gray-600 ${colVisibility['brand']}`}>
                         <div className="truncate max-w-20 md:max-w-28 lg:max-w-32 xl:max-w-none" title={item.brand}>
                           {item.brand}
                         </div>
                       </td>
-                      <td className="py-2 px-4 text-gray-600">
+                      {/* serial */}
+                      <td className={`py-1.5 lg:py-2 px-3 lg:px-4 text-gray-600 ${colVisibility['serial_number']}`}>
                         <div className="truncate max-w-20 md:max-w-32 lg:max-w-40 xl:max-w-none" title={item.serial_number}>
                           {item.serial_number}
                         </div>
                       </td>
-                      {/* <td className="py-2 px-4 whitespace-nowrap text-gray-600 text-xs">
-                        {item.grade_target}
-                      </td> */}
-                      <td className="py-2 px-4 whitespace-nowrap text-gray-600 text-xs">
+                      {/* grade */}
+                      <td className={`py-1.5 lg:py-2 px-3 lg:px-4 whitespace-nowrap text-gray-600 text-xs ${colVisibility['grade']}`}>
                         {item.grade}
                       </td>
-                      <td className="py-2 px-4 whitespace-nowrap">
+                      {/* status */}
+                      <td className={`py-1.5 lg:py-2 px-3 lg:px-4 whitespace-nowrap ${colVisibility['status']}`}>
                         <StatusBadge status={item.latest_status.status} />
                       </td>
-                      <td className="py-2 px-4 whitespace-nowrap text-gray-600 text-xs">
+                      {/* submitted_at */}
+                      <td className={`py-1.5 lg:py-2 px-3 lg:px-4 whitespace-nowrap text-gray-600 text-xs ${colVisibility['submitted_at']}`}>
                         <div className="truncate max-w-20 md:max-w-24 lg:max-w-none">
                           {formatDate(new Date(item.created_at))}
                         </div>
                       </td>
-                      <td className="py-2 px-4 whitespace-nowrap">
+                      {/* detail */}
+                      <td className="py-1.5 lg:py-2 px-3 lg:px-4 whitespace-nowrap">
                         <Link 
                           to={PATHS.DASHBOARD.ADMIN.SUBMISSION_DETAIL(String(item.id))}
                           className="text-blue-600 hover:text-blue-800 transition-colors duration-200 inline-flex items-center justify-center w-7 h-7 rounded-full hover:bg-blue-50"

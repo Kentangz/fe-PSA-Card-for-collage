@@ -283,6 +283,13 @@ export default function Submission() {
           </div>
           
           <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
+            {/* Header Add Batch (desktop) */}
+            <button
+              onClick={handleAddBatch}
+              className="hidden lg:inline-flex items-center px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            >
+              + Add Batch
+            </button>
             <ProfileMenu currentUser={currentUser} />
           </div>
         </div>
@@ -300,7 +307,7 @@ export default function Submission() {
               onFilterChange={handleFilterChange}
               totalResults={filteredSubmissions.length}
               isLoading={loading}
-              showAddBatch={true}
+              showAddBatch={false}
               onAddBatch={handleAddBatch}
             />
           </div>
@@ -350,6 +357,15 @@ export default function Submission() {
           )}
         </div>
       </div>
+
+      {/* Floating Add Batch Button (mobile) */}
+      <button
+        onClick={handleAddBatch}
+        className="lg:hidden fixed bottom-6 right-6 inline-flex items-center justify-center h-12 w-12 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        aria-label="Add Batch"
+      >
+        +
+      </button>
       
       {/* Add Batch Modal */}
       <AddBatchModal
