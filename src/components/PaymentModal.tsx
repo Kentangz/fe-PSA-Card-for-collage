@@ -78,16 +78,16 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+      <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl max-w-md w-full mx-4 border border-white/20">
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200/50">
           <h3 className="text-lg font-semibold text-gray-900">
             {modalTitle}
           </h3>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+            className="text-gray-400 hover:text-gray-600 transition-colors duration-200 p-1 rounded-full hover:bg-gray-100"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
@@ -96,7 +96,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         {/* Modal Body */}
         <form onSubmit={handleSubmit} className="p-4">
           {/* User Info */}
-          <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+          <div className="mb-4 p-3 bg-gray-50/80 rounded-lg border border-gray-200/50">
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium text-gray-900">{userGroup.user.name}</p>
@@ -120,7 +120,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               id="paymentUrl"
               value={paymentUrl}
               onChange={(e) => setPaymentUrl(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              className="w-full px-3 py-2 border border-gray-300/70 rounded-lg focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-200 bg-white/80 backdrop-blur-sm"
               placeholder="https://payment.example.com/..."
               required
             />
@@ -131,7 +131,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
           {/* Error Message */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="mb-4 p-3 bg-red-50/80 border border-red-200/50 rounded-lg backdrop-blur-sm">
               <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
@@ -139,7 +139,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           {/* Submission List */}
           <div className="mb-6">
             <h4 className="text-sm font-medium text-gray-700 mb-2">Submissions included:</h4>
-            <div className="max-h-32 overflow-y-auto bg-gray-50 rounded-lg p-2">
+            <div className="max-h-32 overflow-y-auto bg-gray-50/80 rounded-lg p-2 border border-gray-200/50 backdrop-blur-sm">
               {userGroup.submissions.map((submission) => (
                 <div key={submission.id} className="flex items-center justify-between py-1 px-2 text-xs">
                   <span className="truncate mr-2" title={submission.name}>
@@ -158,7 +158,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-300/70 rounded-lg hover:bg-gray-50/90 transition-all duration-200"
               disabled={isSubmitting}
             >
               Cancel
@@ -166,7 +166,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600/90 backdrop-blur-sm rounded-lg hover:bg-blue-700/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
             >
               {isSubmitting ? (
                 <div className="flex items-center space-x-2">
