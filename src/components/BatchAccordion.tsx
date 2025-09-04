@@ -86,6 +86,7 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
   const [userQueueOrder, setUserQueueOrder] = useState<number[] | null>(null);
   const previousOrderRef = useRef<number[] | null>(null);
   const [isSyncingQueue, setIsSyncingQueue] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
@@ -101,48 +102,53 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
     : "bg-red-100 text-red-800";
 
   useEffect(() => {
-    const fetchPaymentData = async () => {
-      if (isOpen && !paymentDataLoaded && submissions.length > 0) {
-        try {
-          const data = await batchPaymentService.getByBatch(batch.id);
-          setBatchPaymentsData(data);
-        } catch (error) {
-          console.error('Failed to fetch batch payment data:', error);
-          setBatchPaymentsData(null);
-        } finally {
-          setPaymentDataLoaded(true);
-        }
-      }
-    };
-
-    fetchPaymentData();
-  }, [isOpen, batch.id, paymentDataLoaded, submissions.length]);
-
-  // Fetch and sync queue order as source of truth
-  useEffect(() => {
-    const fetchQueue = async () => {
-      if (!isOpen) return;
+    const fetchData = async () => {
+      if (!isOpen || paymentDataLoaded || submissions.length === 0) return;
+      
+      setIsInitialLoading(true);
+      
+      const minLoadingTime = new Promise(resolve => setTimeout(resolve, 300));
+      
       try {
-        const res = await queueService.getBatchUserQueue(batch.id);
-        const orderedIds = [...res.data.user_queues]
-          .sort((a, b) => a.queue_order - b.queue_order)
-          .map((item) => item.user.id);
-        setUserQueueOrder(orderedIds);
+        const [queueRes, paymentData] = await Promise.all([
+          queueService.getBatchUserQueue(batch.id).catch(() => null),
+          batchPaymentService.getByBatch(batch.id).catch(() => null)
+        ]);
+
+        await minLoadingTime;
+
+        if (queueRes?.data?.user_queues) {
+          const orderedIds = [...queueRes.data.user_queues]
+            .sort((a, b) => a.queue_order - b.queue_order)
+            .map((item) => item.user.id);
+          setUserQueueOrder(orderedIds);
+        } else {
+          setUserQueueOrder(null);
+        }
+
+        setBatchPaymentsData(paymentData);
       } catch (error) {
-        console.error('Failed to fetch user queue order:', error);
-        // Fallback to current order from submissions grouping
+        console.error('Failed to fetch batch data:', error);
+        setBatchPaymentsData(null);
         setUserQueueOrder(null);
+      } finally {
+        setPaymentDataLoaded(true);
+        setIsInitialLoading(false);
       }
     };
-    fetchQueue();
-  }, [isOpen, batch.id]);
+
+    fetchData();
+  }, [isOpen, batch.id, paymentDataLoaded, submissions.length]);
 
   const userPaymentGroups = transformToUserPaymentGroups(submissions, batchPaymentsData || undefined);
 
-  // Compute sorted groups based on queue order when available
   const sortedUserGroups = useMemo(() => {
     if (!userPaymentGroups || userPaymentGroups.length === 0) return [] as UserPaymentGroupType[];
+    
+    if (isInitialLoading) return [] as UserPaymentGroupType[];
+    
     if (!userQueueOrder) return userPaymentGroups;
+    
     const orderIndex = new Map<number, number>();
     userQueueOrder.forEach((userId, index) => orderIndex.set(userId, index));
     return [...userPaymentGroups].sort((a, b) => {
@@ -151,7 +157,7 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
       if (ai !== bi) return ai - bi;
       return a.user.id - b.user.id;
     });
-  }, [userPaymentGroups, userQueueOrder]);
+  }, [userPaymentGroups, userQueueOrder, isInitialLoading]);
 
   const arrayMove = (arr: number[], from: number, to: number) => {
     const copy = arr.slice();
@@ -161,7 +167,6 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
   };
 
   const notify = (message: string) => {
-    // Minimal inline toast using a temporary fixed element (no external deps)
     const el = document.createElement('div');
     el.textContent = message;
     el.className = 'fixed left-1/2 -translate-x-1/2 top-4 z-[9999] bg-red-600 text-white text-sm px-3 py-2 rounded shadow-md animate-in fade-in duration-150';
@@ -175,7 +180,6 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    // Build current order from sortedUserGroups to ensure consistency
     const currentOrder = (userQueueOrder && userQueueOrder.length === sortedUserGroups.length)
       ? userQueueOrder
       : sortedUserGroups.map((g) => g.user.id);
@@ -190,15 +194,12 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
     try {
       await queueService.updateBatchUserQueue(batch.id, optimistic);
     } catch {
-      // Revert on failure
       setUserQueueOrder(previousOrderRef.current);
       notify('Failed to update queue order. Reverting changes.');
     } finally {
       setIsSyncingQueue(false);
     }
   };
-
-  // No overlay; we keep the drag UX minimal without extra UI
 
   const handleKeyboardReorder = async (payload: { id: number; direction: 'up' | 'down' }) => {
     const currentOrder = (userQueueOrder && userQueueOrder.length === sortedUserGroups.length)
@@ -247,14 +248,12 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
       switch (action) {
         case 'create':
         case 'update':
-          // Open modal for create/update
           setSelectedUserGroup(userGroup);
           setShowPaymentModal(true);
           break;
         case 'send':
           if (userGroup.paymentInfo?.id) {
             await batchPaymentService.sendPaymentLink(userGroup.paymentInfo.id);
-            // Refresh payment data
             await refreshPaymentData();
           }
           break;
@@ -288,7 +287,7 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
 
   return (
     <div className="border border-gray-200 rounded-lg shadow-sm mb-4 bg-white overflow-hidden">
-      {/* Accordion Header - Fixed: Separated buttons */}
+      {/* Accordion Header */}
       <div className="flex items-center hover:bg-gray-50 transition-colors duration-200">
         {/* Accordion Toggle Button */}
         <button
@@ -392,7 +391,7 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
           </div>
         </button>
 
-        {/* Separate Toggle Batch Status Button - Now outside the accordion button */}
+        {/* Toggle Batch Status Button */}
         <div className="flex items-center px-2 sm:px-3 lg:px-4 py-3 sm:py-4 flex-shrink-0 border-l border-gray-200">
           <button
             onClick={handleToggleBatchStatus}
@@ -423,7 +422,7 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
         </div>
       </div>
 
-      {/* Accordion Content */}
+      {/* Content */}
       {isOpen && (
         <div 
           id={`batch-content-${batch.id}`}
@@ -434,10 +433,14 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
               <MdAssignment className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-300 mb-3 sm:mb-4" />
               <p className="text-sm sm:text-base">There is no submission yet</p>
             </div>
-          ) : userPaymentGroups.length === 0 ? (
+          ) : isInitialLoading || (userPaymentGroups.length === 0 && !paymentDataLoaded) ? (
             <div className="py-8 sm:py-12 text-center text-gray-500">
-              <MdAssignment className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-300 mb-3 sm:mb-4" />
-              <p className="text-sm sm:text-base">Loading user payment data...</p>
+              <div className="flex flex-col items-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+                <p className="text-sm sm:text-base">
+                  {isInitialLoading ? 'Loading batch data...' : 'Loading user payment data...'}
+                </p>
+              </div>
             </div>
           ) : (
             <DndContext
@@ -479,7 +482,7 @@ const BatchAccordion: React.FC<BatchAccordionProps> = ({
         </div>
       )}
       
-      {/* Payment Modal */}
+      {/* Modal */}
       <PaymentModal
         isOpen={showPaymentModal}
         onClose={handlePaymentModalClose}

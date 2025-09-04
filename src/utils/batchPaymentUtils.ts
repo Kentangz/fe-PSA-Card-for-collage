@@ -61,7 +61,7 @@ export const transformToUserPaymentGroups = (
 export const getPaymentButtonState = (paymentInfo: BatchPaymentType | null) => {
 	if (!paymentInfo) {
 		return {
-			text: "Send Payment Link",
+			text: "Create Payment Link",
 			variant: "primary" as const,
 			disabled: false,
 			action: "create" as const,
