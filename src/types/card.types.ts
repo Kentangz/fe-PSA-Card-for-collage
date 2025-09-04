@@ -1,4 +1,5 @@
 import type { Batch } from "./batch.types";
+import type { User } from "./user.types";
 
 export interface CardStatus {
 	id: number;
@@ -11,6 +12,7 @@ export interface CardStatus {
 export interface Card {
 	id: string;
 	user_id: number;
+	user: User;
 	name: string;
 	year: number;
 	brand: string;

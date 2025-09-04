@@ -31,14 +31,15 @@ export const transformToUserPaymentGroups = (
 
 	submissionsByUser.forEach((userSubmissions, userId) => {
 		const paymentInfo = paymentsByUser.get(userId) || null;
+		const email = userSubmissions[0].user.email;
 		let user: User;
 		if (paymentInfo?.user) {
 			user = paymentInfo.user as User;
 		} else {
 			user = {
 				id: userId,
-				name: `User ${userId}`,
-				email: "",
+				name: `User : ${userId}`,
+				email: `${email}`,
 				phone_number: "",
 				role: "user",
 				is_active: true,
