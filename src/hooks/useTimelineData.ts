@@ -65,21 +65,41 @@ export const useTimelineData = (
 	}, [statuses]);
 
 	const getGroupStatus = (groupStatuses: string[]) => {
-		const completed = sortedStatuses.filter((s) =>
+		const completedCount = sortedStatuses.filter((s) =>
 			groupStatuses.includes(s.status)
 		).length;
+
+		const totalCount = groupStatuses.length;
 		const hasCurrent = groupStatuses.includes(currentStatus);
-		if (completed === 0) return { status: "pending", progress: 0 } as const;
-		if (hasCurrent)
+
+		if (completedCount === 0 && !hasCurrent) {
+			return { status: "pending", progress: 0 } as const;
+		}
+
+		if (hasCurrent) {
+			const currentIndex = groupStatuses.indexOf(currentStatus);
+			const progressBasedOnPosition = ((currentIndex + 1) / totalCount) * 100;
+			const progressBasedOnCompleted = (completedCount / totalCount) * 100;
+
+			const progress = Math.min(
+				Math.max(progressBasedOnPosition, progressBasedOnCompleted),
+				100
+			);
+
 			return {
 				status: "current",
-				progress: (completed / groupStatuses.length) * 100,
+				progress: Math.round(progress),
 			} as const;
-		if (completed === groupStatuses.length)
+		}
+
+		if (completedCount >= totalCount) {
 			return { status: "completed", progress: 100 } as const;
+		}
+
+		const progress = Math.min((completedCount / totalCount) * 100, 100);
 		return {
 			status: "partial",
-			progress: (completed / groupStatuses.length) * 100,
+			progress: Math.round(progress),
 		} as const;
 	};
 

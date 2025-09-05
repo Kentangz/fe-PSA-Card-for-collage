@@ -19,7 +19,6 @@ const CardInfoPanel: React.FC<Props> = ({ card, compact = false, className }) =>
           {!compact && <span className="text-sm text-gray-600">({card.year})</span>}
           {compact && <p className="text-sm text-gray-600">{card.brand} • {card.year}</p>}
         </div>
-        <StatusBadge status={card.latest_status.status} />
       </div>
 
       <div className={[compact ? "grid grid-cols-1 gap-3 text-sm" : "space-y-3", ""].join(" ")}>

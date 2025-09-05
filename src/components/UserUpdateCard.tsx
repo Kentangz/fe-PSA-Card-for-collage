@@ -8,6 +8,7 @@ import ActionButtons from "@/components/user-update/ActionButtons";
 import UploadDropzone from "@/components/user-update/UploadDropzone";
 import { validateFiles } from "@/utils/fileValidation";
 import { ImageModal } from "@/components/tracking-detail";
+import { Toaster } from "react-hot-toast";
 
 type LatestStatus = {
   status: string;
@@ -98,7 +99,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
     }
   }, [currentStatus, fetchDeliveryProofs]);
 
-  const { handleUpdateSubmission } = useStatusActions(card?.id);
+ const { handleUpdateSubmission, isLoading } = useStatusActions(card?.id);
 
   const generateFileId = () => {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -306,12 +307,22 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
           
           <button 
             onClick={() => handleUpdateSubmission("delivery_to_jp")}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors text-sm sm:text-base flex items-center justify-center gap-2"
+            disabled={isLoading("delivery_to_jp")}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg font-medium transition-colors text-sm sm:text-base flex items-center justify-center gap-2"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            Confirm Sent to Grading Facility
+            {isLoading("delivery_to_jp") ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Confirming...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Confirm Sent to Grading Facility
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -356,15 +367,25 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
               </div>
             )}
 
-            <button 
-              onClick={() => handleUpdateSubmission("delivery_to_customer")}
-              className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors text-sm sm:text-base flex items-center justify-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Confirm Payment
-            </button>
+          <button 
+            onClick={() => handleUpdateSubmission("delivery_to_customer")}
+            disabled={isLoading("delivery_to_customer")}
+            className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg font-medium transition-colors text-sm sm:text-base flex items-center justify-center gap-2"
+          >
+            {isLoading("delivery_to_customer") ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Confirming...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Confirm Payment
+              </>
+            )}
+          </button>
 
             <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
               <h5 className="text-xs font-medium text-gray-700 mb-2">Instructions:</h5>
@@ -473,15 +494,25 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
             )}
 
             {deliveryProofs.length > 0 && (
-              <button 
-                onClick={() => handleUpdateSubmission("done")}
-                className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors text-sm sm:text-base flex items-center justify-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
-                </svg>
-                Complete Submission
-              </button>
+            <button 
+              onClick={() => handleUpdateSubmission("done")}
+              disabled={isLoading("done")}
+              className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg font-medium transition-colors text-sm sm:text-base flex items-center justify-center gap-2"
+            >
+              {isLoading("done") ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
+                  </svg>
+                  Complete Submission
+                </>
+              )}
+            </button>
             )}
 
             <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
@@ -498,6 +529,14 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
         </div>
 
         <ImageModal url={selectedImage} onClose={() => setSelectedImage(null)} />
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            error: {
+              duration: 5000,
+            },
+          }}
+        />
       </div>
     );
   }

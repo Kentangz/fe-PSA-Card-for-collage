@@ -11,6 +11,7 @@ import axiosInstance from "../../../lib/axiosInstance";
 import { BE_URL} from "../../../lib/api";
 import formatDate from "../../../utils/formatDate";
 import Cookies from "js-cookie";
+import StatusBadge from "@/components/StatusBadge";
 
 // Type definitions
 interface CardStatus {
@@ -83,30 +84,6 @@ const menu = [
     icon: MdAssignment
   }
 ];
-
-const getStatusStyle = (status: string) => {
-  const normalizedStatus = status.toLowerCase().trim();
-  
-  switch (normalizedStatus) {
-    case 'submitted':
-      return 'bg-orange-100 text-orange-800 border-orange-200';
-    case 'accepted':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    case 'rejected':
-      return 'bg-red-100 text-red-800 border-red-200';
-    case 'on process':
-    case 'processing':
-    case 'in_process':
-      return 'bg-blue-100 text-blue-800 border-blue-200';
-    case 'done':
-    case 'completed':
-      return 'bg-green-100 text-green-800 border-green-200';
-    case 'pending':
-      return 'bg-gray-100 text-gray-800 border-gray-200';
-    default:
-      return 'bg-gray-100 text-gray-800 border-gray-200';
-  }
-};
 
 const getBatchCategoryStyle = (category: string) => {
   switch (category) {
@@ -414,9 +391,7 @@ export default function SubmissionDetail() {
                       />
                       <p className="text-sm text-gray-600">{card.brand} • {card.year}</p>
                     </div>
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusStyle(card.latest_status.status)} flex-shrink-0`}>
-                      {card.latest_status.status}
-                    </span>
+                    {/* <StatusBadge status={card.latest_status.status} /> */}
                   </div>
                   <div className="grid grid-cols-1 gap-3 text-sm">
                     <div className="flex justify-between">
@@ -441,9 +416,7 @@ export default function SubmissionDetail() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Status:</span>
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusStyle(card.latest_status.status)}`}>
-                        {card.latest_status.status}
-                      </span>
+                      <StatusBadge status={card.latest_status.status} />
                     </div>
                     {/* Batch Information - Mobile */}
                     {card.batch && (
@@ -509,9 +482,7 @@ export default function SubmissionDetail() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600 font-medium">Status:</span>
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusStyle(card.latest_status.status)}`}>
-                        {card.latest_status.status}
-                      </span>
+                      <StatusBadge status={card.latest_status.status} />
                     </div>
                     {/* Batch Information - Desktop */}
                     {card.batch && (
