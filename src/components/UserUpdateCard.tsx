@@ -29,7 +29,7 @@ interface ApiError {
   };
 }
 
-export default function UserUpdateCard({ card }: { card?: CardType }) {
+export default function UserUpdateCard({ card, onStatusUpdated }: { card?: CardType, onStatusUpdated?: (nextStatus: string) => void }) {
   const [uploadingProof, setUploadingProof] = useState(false);
   const { deliveryProofs, fetchProofs, uploadFiles, deleteProof, deletingId } = useDeliveryProofs(card?.id);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -99,7 +99,11 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
     }
   }, [currentStatus, fetchDeliveryProofs]);
 
- const { handleUpdateSubmission, isLoading } = useStatusActions(card?.id);
+ const { handleUpdateSubmission, isLoading } = useStatusActions(card?.id, {
+   onSuccess: (status) => {
+     onStatusUpdated?.(status);
+   }
+ });
 
   const generateFileId = () => {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -529,14 +533,7 @@ export default function UserUpdateCard({ card }: { card?: CardType }) {
         </div>
 
         <ImageModal url={selectedImage} onClose={() => setSelectedImage(null)} />
-        <Toaster 
-          position="top-right"
-          toastOptions={{
-            error: {
-              duration: 5000,
-            },
-          }}
-        />
+        <Toaster position="top-center" />
       </div>
     );
   }

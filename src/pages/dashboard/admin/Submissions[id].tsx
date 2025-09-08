@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useState } from "react";
+import { useParams, Link } from "react-router-dom";
 import { BsPeopleFill, BsArrowLeft, BsImage, BsPencil, BsCheck, BsX } from "react-icons/bs";
 import { ImHome } from "react-icons/im";
 import { MdAssignment } from "react-icons/md";
@@ -7,11 +7,13 @@ import Sidebar from "../../../components/SideBar";
 import ProfileMenu from "../../../components/ProfileMenu";
 import UpdateCard from "../../../components/UpdateCard";
 import EnhancedTimeline from "../../../components/AdminTimeline";
+import { useDeliveryProofs } from "@/hooks/useDeliveryProofs";
 import axiosInstance from "../../../lib/axiosInstance";
 import { BE_URL} from "../../../lib/api";
 import formatDate from "../../../utils/formatDate";
-import Cookies from "js-cookie";
+// Cookies handled in hook
 import StatusBadge from "@/components/StatusBadge";
+import { useAdminSubmissionDetail } from "@/hooks/useAdminSubmissionDetail";
 
 // Type definitions
 interface CardStatus {
@@ -42,7 +44,6 @@ export interface CardType {
   brand: string;
   serial_number: string;
   grade: string | null;
-  grade_target: string;
   payment_url?: string | null;
   created_at: string;
   images: CardImage[];
@@ -51,20 +52,11 @@ export interface CardType {
   batch?: Batch;
 }
 
-interface CardResponse {
-  data: CardType;
-}
+// CardResponse handled in hook types
 
-interface ApiResponse {
-  card?: CardType;
-  data?: CardType | CardResponse;
-}
+// API response shape handled in hook
 
-type CurrentUserType = {
-  name: string;
-  email: string;
-  role: string;
-};
+// User type handled in hook
 
 // Menu configuration
 const menu = [
@@ -100,18 +92,18 @@ const getBatchCategoryStyle = (category: string) => {
 
 export default function SubmissionDetail() {
   const { id } = useParams<{ id: string }>();
-  const [currentUser, setCurrentUser] = useState<CurrentUserType | undefined>(undefined);
-  const [card, setCard] = useState<CardType | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { currentUser, card, loading, error, setCard, refresh } = useAdminSubmissionDetail(id);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const { deliveryProofs, uploading } = useDeliveryProofs(card?.id);
   
   // Edit name states
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [isUpdatingName, setIsUpdatingName] = useState(false);
   
-  const navigate = useNavigate();
+  // navigate not used directly here
+
+  const refreshCard = () => { refresh(); };
 
   // Function to handle name update
   const handleUpdateName = async () => {
@@ -132,10 +124,8 @@ export default function SubmissionDetail() {
       }
       
       setIsEditingName(false);
-      setError(null);
     } catch (error) {
       console.error('Error updating card name:', error);
-      setError('Failed to update card name');
     } finally {
       setIsUpdatingName(false);
     }
@@ -151,61 +141,7 @@ export default function SubmissionDetail() {
     setIsEditingName(true);
   };
 
-  // Auth and fetch logic
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      try {
-        const token = Cookies.get("token");
-        const role = Cookies.get("role");
-        
-        if (!token || role !== "admin") {
-          navigate("/signin", { replace: true });
-          return;
-        }
-        const response = await axiosInstance.get<CurrentUserType>("/user");
-        setCurrentUser(response.data);
-      } catch (error) {
-        console.error(error);
-        Cookies.remove("token");
-        Cookies.remove("role");
-        navigate("/signin", { replace: true });
-      }
-    };
-    
-    getCurrentUser();
-  }, [navigate]);
-
-  useEffect(() => {
-    const fetchCard = async () => {
-      if (!id || !currentUser) return;
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await axiosInstance.get<ApiResponse | CardType | CardResponse>(`/card/${id}`);
-        
-        if (response.data && typeof response.data === 'object') {
-          const data = response.data as ApiResponse;
-          if (data.data && typeof data.data === 'object') {
-            if ('data' in data.data) {
-              setCard((data.data as CardResponse).data);
-            } else {
-              setCard(data.data as CardType);
-            }
-          } else if (data.card) {
-            setCard(data.card);
-          } else if ('name' in data && 'brand' in data) {
-            setCard(data as CardType);
-          }
-        }
-        
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load submission details');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCard();
-  }, [id, currentUser]);
+  // Data fetching and auth handled in hook
 
   // EditableCardName Component
   const EditableCardName = ({ 
@@ -403,10 +339,6 @@ export default function SubmissionDetail() {
                       <span className="text-gray-900 font-medium">{card.serial_number}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Target Grade:</span>
-                      <span className="text-gray-900 font-medium">{card.grade_target}</span>
-                    </div>
-                    <div className="flex justify-between">
                       <span className="text-gray-600">Verified Grade:</span>
                       <span className="text-gray-900 font-medium">{card.grade ?? "Pending"}</span>
                     </div>
@@ -473,10 +405,6 @@ export default function SubmissionDetail() {
                       <span className="text-gray-900">{card.grade ?? "Pending"}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600 font-medium">Target Grade:</span>
-                      <span className="text-gray-900">{card.grade_target}</span>
-                    </div>
-                    <div className="flex justify-between">
                       <span className="text-gray-600 font-medium">Submitted:</span>
                       <span className="text-gray-900">{formatDate(new Date(card.created_at))}</span>
                     </div>
@@ -541,13 +469,32 @@ export default function SubmissionDetail() {
                     statuses={card.statuses}
                     currentStatus={card.latest_status.status}
                     grade={card.grade}
-                    cardId={card.id}
+                    deliveryProofs={deliveryProofs}
+                    loadingProofs={uploading}
                   />
                 </div>
 
                 {/* Update Card Component */}
                 <div className="w-80">
-                  <UpdateCard card={card} />
+                  <UpdateCard 
+                    card={card}
+                    onStatusUpdated={(nextStatus, extra) => {
+                      setCard((prev) => {
+                        if (!prev) return prev;
+                        const now = new Date().toISOString();
+                        const updated: CardType = {
+                          ...prev,
+                          latest_status: { status: nextStatus, created_at: now },
+                          statuses: [...prev.statuses, { status: nextStatus, created_at: now }],
+                          grade: typeof extra?.grade !== 'undefined' ? (extra?.grade as string | null) : prev.grade,
+                          serial_number: typeof extra?.serial_number !== 'undefined' ? (extra?.serial_number as string | null) : prev.serial_number,
+                        } as CardType;
+                        return updated;
+                      });
+                      // Also fetch from server shortly to reconcile
+                      setTimeout(() => { refreshCard(); }, 500);
+                    }}
+                  />
                 </div>
               </div>
 
@@ -557,7 +504,8 @@ export default function SubmissionDetail() {
                   statuses={card.statuses}
                   currentStatus={card.latest_status.status}
                   grade={card.grade}
-                  cardId={card.id}
+                  deliveryProofs={deliveryProofs}
+                  loadingProofs={uploading}
                 />
               </div>
 

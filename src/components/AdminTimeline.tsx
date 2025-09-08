@@ -1,8 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { BsImage } from "react-icons/bs";
 import formatDate from "../utils/formatDate";
-import axiosInstance from "../lib/axiosInstance";
 import { BE_URL } from "../lib/api";
 // Import from statusUtils
 import { getStatusDisplayText, getStatusStyling } from "../utils/statusUtils";
@@ -21,9 +20,7 @@ interface DeliveryProof {
   updated_at: string;
 }
 
-interface DeliveryProofResponse {
-  delivery_proofs: DeliveryProof[];
-}
+// Delivery proofs are now provided via props (MVVM)
 
 interface TimelinePhase {
   id: string;
@@ -43,7 +40,8 @@ interface EnhancedTimelineProps {
   statuses: StatusType[];
   currentStatus: string;
   grade?: string | null;
-  cardId: string | number; 
+  deliveryProofs?: DeliveryProof[];
+  loadingProofs?: boolean;
 }
 
 const TIMELINE_PHASES: TimelinePhase[] = [
@@ -136,35 +134,14 @@ const TIMELINE_PHASES: TimelinePhase[] = [
   }
 ];
 
-export default function EnhancedTimeline({ statuses, currentStatus, grade, cardId }: EnhancedTimelineProps) {
+export default function EnhancedTimeline({ statuses, currentStatus, grade, deliveryProofs = [], loadingProofs = false }: EnhancedTimelineProps) {
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
-  const [deliveryProofs, setDeliveryProofs] = useState<DeliveryProof[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [loadingProofs, setLoadingProofs] = useState(false);
 
   const currentStatusObj = statuses.find(s => s.status === currentStatus);
   const isCompleted = currentStatus === "done" || currentStatus === "completed";
 
-  const fetchDeliveryProofs = useCallback(async () => {
-    try {
-      setLoadingProofs(true);
-      const response = await axiosInstance.get(`/card/${cardId}/delivery-proof`);
-      const data = response.data as DeliveryProofResponse;
-      if (data && data.delivery_proofs) {
-        setDeliveryProofs(data.delivery_proofs);
-      }
-    } catch (error) {
-      console.error('Failed to fetch delivery proofs:', error);
-    } finally {
-      setLoadingProofs(false);
-    }
-  }, [cardId]);
-
-  useEffect(() => {
-    if (isCompleted && cardId) {
-      fetchDeliveryProofs();
-    }
-  }, [isCompleted, cardId, fetchDeliveryProofs]);
+  // Delivery proofs are fetched by ViewModel and passed in
 
   const getPhaseStatus = (phase: TimelinePhase) => {
     const phaseStatuses = statuses.filter(s => phase.statuses.includes(s.status));

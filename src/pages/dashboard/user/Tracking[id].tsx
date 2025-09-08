@@ -27,7 +27,7 @@ const menu = [
 
 export default function UserTrackingDetail() {
   const { id } = useParams<{ id: string }>();
-  const { currentUser, card, loading, error } = useTrackingDetail(id);
+  const { currentUser, card, loading, error, applyLocalUpdate, refresh } = useTrackingDetail(id);
   const { selectedImage, open, close } = useImageModal();
 
   
@@ -65,7 +65,13 @@ export default function UserTrackingDetail() {
 
               {/* Mobile User Action Card */}
               <div className="block lg:hidden">
-                <UserUpdateCard card={card} />
+                <UserUpdateCard 
+                  card={card}
+                  onStatusUpdated={(nextStatus) => {
+                    applyLocalUpdate(nextStatus);
+                    setTimeout(() => refresh(), 500);
+                  }}
+                />
               </div>
 
               {/* Desktop Layout */}
@@ -90,7 +96,13 @@ export default function UserTrackingDetail() {
                 {/* Desktop User Action Card */}
                 <div className="w-80">
                   <Suspense fallback={<div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 h-40 animate-pulse"></div>}>
-                    <UserUpdateCard card={card} />
+                    <UserUpdateCard 
+                      card={card}
+                      onStatusUpdated={(nextStatus) => {
+                        applyLocalUpdate(nextStatus);
+                        setTimeout(() => refresh(), 500);
+                      }}
+                    />
                   </Suspense>
                 </div>
               </div>

@@ -5,6 +5,8 @@ import { Link } from "react-router-dom";
 import { batchPaymentService } from "../services/batchPaymentService";
 import type { BatchPaymentType } from "../types/submission";
 import { getStatusDisplayText } from "../utils/statusUtils";
+import { useStatusActions } from "@/hooks/useStatusActions";
+import { Toaster } from "react-hot-toast";
 
 // Type definition
 type LatestStatus = {
@@ -35,13 +37,19 @@ type DeliveryProofResponse = {
 
 type ButtonColor = 'green' | 'blue' | 'orange' | 'red' | 'gray';
 
-export default function UpdateCard({ card }: { card?: CardType }) {
+export default function UpdateCard({ card, onStatusUpdated }: { card?: CardType, onStatusUpdated?: (nextStatus: string, extra?: { grade?: string | FormDataEntryValue | null; serial_number?: string | FormDataEntryValue | null }) => void }) {
   const [deliveryProofs, setDeliveryProofs] = useState<DeliveryProof[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [batchPayment, setBatchPayment] = useState<BatchPaymentType | null>(null);
   const [isFetchingBatchPayment, setIsFetchingBatchPayment] = useState(false);
   const [batchPaymentError, setBatchPaymentError] = useState<string | null>(null);
   const [certificates, setCertificates] = useState<{cert_url: string}[]>([{cert_url: ''}]);
+
+  const { handleUpdateSubmission, isLoading } = useStatusActions(card?.id, {
+    onSuccess: (status) => {
+      onStatusUpdated?.(status);
+    }
+  });
 
     const fetchBatchPayment = useCallback(async () => {
     if (!card?.batch_id || !card?.user_id) return;
@@ -91,6 +99,7 @@ export default function UpdateCard({ card }: { card?: CardType }) {
         certificates: certificates
       });
       if (response.status === 200) {
+        onStatusUpdated?.("received_by_wh_id", { grade, serial_number: serialNumber });
         await handleUpdateSubmission("received_by_wh_id");
       }
     } catch (error) {
@@ -119,19 +128,7 @@ export default function UpdateCard({ card }: { card?: CardType }) {
     );
     setCertificates(newCertificates);
   };
-  const handleUpdateSubmission = async (status: string) => {
-    try {
-      const response = await axiosInstance.post("/status", { 
-        card_id: card?.id, 
-        status: status 
-      });
-      if (response.status === 200) {
-        window.location.reload(); 
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const submitStatus = (status: string) => handleUpdateSubmission(status);
     const handleSendPaymentLink = async () => {
     if (!batchPayment?.id) return;
     
@@ -494,17 +491,19 @@ const getStatusConfig = (currentStatus: string) => {
             <div className="flex flex-col sm:flex-row gap-3">
               <button 
                 type="submit" 
-                className={`${getButtonStyle('green')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base flex-1 sm:flex-initial min-w-0`}
+                className={`${getButtonStyle('green')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base flex-1 sm:flex-initial min-w-0 disabled:opacity-50 disabled:cursor-not-allowed`}
+                disabled={isLoading("received_by_wh_id")}
               >
-                {statusConfig.nextLabel}
+                {isLoading("received_by_wh_id") ? "Updating..." : statusConfig.nextLabel}
               </button>
               {statusConfig.hasReject && (
                 <button 
                   type="button"
-                  onClick={() => handleUpdateSubmission("rejected")} 
-                  className={`${getButtonStyle('red')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base flex-1 sm:flex-initial min-w-0`}
+                  onClick={() => submitStatus("rejected")} 
+                  className={`${getButtonStyle('red')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base flex-1 sm:flex-initial min-w-0 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  disabled={isLoading("rejected")}
                 >
-                  Reject
+                  {isLoading("rejected") ? "Processing..." : "Reject"}
                 </button>
               )}
             </div>
@@ -634,10 +633,11 @@ const getStatusConfig = (currentStatus: string) => {
                     </div>
                   </div>
                   <button 
-                    onClick={() => handleUpdateSubmission("payment_request")}
-                    className={`${getButtonStyle('green')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base w-full sm:w-auto`}
+                    onClick={() => submitStatus("payment_request")}
+                    disabled={isLoading("payment_request")}
+                    className={`${getButtonStyle('green')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
-                    Proceed to Payment Request Status
+                    {isLoading("payment_request") ? "Updating..." : "Proceed to Payment Request Status"}
                   </button>
                 </div>
               </div>
@@ -662,17 +662,19 @@ const getStatusConfig = (currentStatus: string) => {
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <button 
-              onClick={() => handleUpdateSubmission(statusConfig.nextStatus)} 
-              className={`${getButtonStyle('green')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base flex-1 sm:flex-initial min-w-0`}
+              onClick={() => submitStatus(statusConfig.nextStatus)} 
+              disabled={isLoading(statusConfig.nextStatus)}
+              className={`${getButtonStyle('green')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base flex-1 sm:flex-initial min-w-0 disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              {statusConfig.nextLabel}
+              {isLoading(statusConfig.nextStatus) ? "Updating..." : statusConfig.nextLabel}
             </button>
             {statusConfig.hasReject && (
               <button 
-                onClick={() => handleUpdateSubmission("rejected")} 
-                className={`${getButtonStyle('red')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base flex-1 sm:flex-initial min-w-0`}
+                onClick={() => submitStatus("rejected")} 
+                disabled={isLoading("rejected")}
+                className={`${getButtonStyle('red')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base flex-1 sm:flex-initial min-w-0 disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                Reject
+                {isLoading("rejected") ? "Processing..." : "Reject"}
               </button>
             )}
           </div>
@@ -687,17 +689,19 @@ const getStatusConfig = (currentStatus: string) => {
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <button 
-              onClick={() => handleUpdateSubmission(statusConfig.nextStatus)} 
-              className={`${getButtonStyle('green')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base flex-1 sm:flex-initial min-w-0`}
+              onClick={() => submitStatus(statusConfig.nextStatus)} 
+              disabled={isLoading(statusConfig.nextStatus)}
+              className={`${getButtonStyle('green')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base flex-1 sm:flex-initial min-w-0 disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              {statusConfig.nextLabel}
+              {isLoading(statusConfig.nextStatus) ? "Updating..." : statusConfig.nextLabel}
             </button>
             {statusConfig.hasReject && (
               <button 
-                onClick={() => handleUpdateSubmission("rejected")} 
-                className={`${getButtonStyle('red')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base flex-1 sm:flex-initial min-w-0`}
+                onClick={() => submitStatus("rejected")} 
+                disabled={isLoading("rejected")}
+                className={`${getButtonStyle('red')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base flex-1 sm:flex-initial min-w-0 disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                Reject
+                {isLoading("rejected") ? "Processing..." : "Reject"}
               </button>
             )}
           </div>
@@ -712,17 +716,19 @@ const getStatusConfig = (currentStatus: string) => {
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <button 
-              onClick={() => handleUpdateSubmission(statusConfig.nextStatus)} 
-              className={`${getButtonStyle('green')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base flex-1 sm:flex-initial min-w-0`}
+              onClick={() => submitStatus(statusConfig.nextStatus)} 
+              disabled={isLoading(statusConfig.nextStatus)}
+              className={`${getButtonStyle('green')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base flex-1 sm:flex-initial min-w-0 disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              {statusConfig.nextLabel}
+              {isLoading(statusConfig.nextStatus) ? "Updating..." : statusConfig.nextLabel}
             </button>
             {statusConfig.hasReject && (
               <button 
-                onClick={() => handleUpdateSubmission("rejected")} 
-                className={`${getButtonStyle('red')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base flex-1 sm:flex-initial min-w-0`}
+                onClick={() => submitStatus("rejected")} 
+                disabled={isLoading("rejected")}
+                className={`${getButtonStyle('red')} px-6 py-3 border rounded-lg cursor-pointer transition-colors font-medium text-base flex-1 sm:flex-initial min-w-0 disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                Reject
+                {isLoading("rejected") ? "Processing..." : "Reject"}
               </button>
             )}
           </div>
@@ -769,7 +775,7 @@ const getStatusConfig = (currentStatus: string) => {
         <select 
           onChange={(e) => {
             if (e.target.value) {
-              handleUpdateSubmission(e.target.value);
+              submitStatus(e.target.value);
             }
           }}
           className="text-sm px-3 py-2 border border-gray-300 rounded-lg bg-white w-full h-10 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -817,6 +823,7 @@ const getStatusConfig = (currentStatus: string) => {
           </div>
         </div>
       )}
+      <Toaster position="top-center" />
     </div>
   );
 }

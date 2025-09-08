@@ -12,7 +12,12 @@ interface ApiError {
 	message?: string;
 }
 
-export const useStatusActions = (cardId: string | number | undefined) => {
+export const useStatusActions = (
+	cardId: string | number | undefined,
+	options?: {
+		onSuccess?: (nextStatus: string) => void;
+	}
+) => {
 	const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(
 		{}
 	);
@@ -25,7 +30,10 @@ export const useStatusActions = (cardId: string | number | undefined) => {
 
 			try {
 				await updateCardStatus(cardId, status);
-				window.location.reload();
+				toast.success("Status updated successfully", {
+					position: "top-center",
+				});
+				options?.onSuccess?.(status);
 			} catch (error) {
 				console.error("Failed to update status:", error);
 				const apiError = error as ApiError;
@@ -33,11 +41,11 @@ export const useStatusActions = (cardId: string | number | undefined) => {
 					apiError?.response?.data?.message ||
 					apiError?.message ||
 					"Failed to update status. Please try again.";
-				toast.error(errorMessage);
+				toast.error(errorMessage, { position: "top-center" });
 				setLoadingStates((prev) => ({ ...prev, [status]: false }));
 			}
 		},
-		[cardId]
+		[cardId, options]
 	);
 
 	const isLoading = useCallback(
