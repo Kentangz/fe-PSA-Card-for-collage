@@ -3,6 +3,8 @@ import ProfileMenu from "@/components/ProfileMenu";
 import React, { Suspense } from "react";
 const UserUpdateCard = React.lazy(() => import("@/components/UserUpdateCard"));
 import { TimelineSection, CardInfoPanel, ImageGallery, ImageModal } from "@/components/tracking-detail";
+import { useDeliveryProofs } from "@/hooks/useDeliveryProofs";
+import { getImageUrl } from "@/utils";
 import UserLayout from "@/layouts/UserLayout";
 import { PATHS } from "@/routes/paths";
 import { useTrackingDetail } from "@/hooks/useTrackingDetail";
@@ -29,8 +31,22 @@ export default function UserTrackingDetail() {
   const { id } = useParams<{ id: string }>();
   const { currentUser, card, loading, error, applyLocalUpdate, refresh } = useTrackingDetail(id);
   const { selectedImage, open, close } = useImageModal();
+  const { deliveryProofs, fetchProofs } = useDeliveryProofs(card?.id);
 
-  
+  // Prefer proofs from card detail payload if present, else fallback to fetched
+  const cardDeliveryProofs = ((): { id: number; image_path: string; created_at: string }[] | undefined => {
+    if (!card) return undefined;
+    const rec = card as unknown as Record<string, unknown>;
+    const value = rec["delivery_proofs"];
+    return Array.isArray(value) ? (value as { id: number; image_path: string; created_at: string }[]) : undefined;
+  })();
+  const proofs = (cardDeliveryProofs ?? deliveryProofs);
+
+  React.useEffect(() => {
+    if (card?.id && (!cardDeliveryProofs || cardDeliveryProofs.length === 0)) {
+      fetchProofs();
+    }
+  }, [card?.id, cardDeliveryProofs, fetchProofs]);
 
   return (
     <UserLayout
@@ -91,6 +107,42 @@ export default function UserTrackingDetail() {
                 {/* Timeline Section */}
                 <div className="flex-1">
                   <TimelineSection statuses={card.statuses} currentStatus={card.latest_status.status} grade={card.grade} variant="full" />
+                  {/* Delivery Proofs (Below PSA Grade, same UI as admin) */}
+                  {(card.latest_status.status === "done" || card.latest_status.status === "completed") && (
+                    <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 lg:p-6 mt-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <BsImage className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
+                        <h4 className="font-semibold text-gray-900 text-base sm:text-lg">Delivery Confirmation</h4>
+                      </div>
+                      {proofs && proofs.length > 0 ? (
+                        <div>
+                          <p className="text-xs sm:text-sm text-gray-600 mb-4">
+                            Customer delivery confirmation images ({proofs.length} image{proofs.length > 1 ? 's' : ''})
+                          </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {proofs.map((p, index) => (
+                              <div key={p.id} className="aspect-w-16 aspect-h-9 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden group">
+                                <img
+                                  src={getImageUrl(p.image_path)}
+                                  alt={`Delivery proof ${index + 1}`}
+                                  className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200 group-hover:opacity-90"
+                                  onClick={() => open(getImageUrl(p.image_path))}
+                                />
+                                <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {/* optional timestamp */}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <BsImage className="mx-auto h-8 w-8 sm:h-12 sm:w-12 text-gray-300 mb-2 sm:mb-4" />
+                          <p className="text-xs sm:text-sm">No delivery confirmation images available</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Desktop User Action Card */}
@@ -110,6 +162,34 @@ export default function UserTrackingDetail() {
               {/* Mobile Timeline */}
               <div className="block lg:hidden">
                 <TimelineSection statuses={card.statuses} currentStatus={card.latest_status.status} grade={card.grade} variant="compact" />
+                {/* Delivery Proofs (Below PSA Grade, same UI as admin) */}
+                {(card.latest_status.status === "done" || card.latest_status.status === "completed") && (
+                  <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 mt-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <BsImage className="h-5 w-5 text-gray-600" />
+                      <h4 className="text-lg font-medium text-gray-800">Delivery Confirmation</h4>
+                    </div>
+                    {proofs && proofs.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-3">
+                        {proofs.map((p, index) => (
+                          <div key={p.id} className="aspect-w-16 aspect-h-9 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden">
+                            <img
+                              src={getImageUrl(p.image_path)}
+                              alt={`Delivery proof ${index + 1}`}
+                              className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200"
+                              onClick={() => open(getImageUrl(p.image_path))}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <BsImage className="mx-auto h-8 w-8 text-gray-300 mb-2" />
+                        <p className="text-xs">No delivery confirmation images</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Card Images - Mobile Only */}

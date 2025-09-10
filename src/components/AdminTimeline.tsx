@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { BsImage } from "react-icons/bs";
 import formatDate from "../utils/formatDate";
-import { BE_URL } from "../lib/api";
+import { getImageUrl } from "@/utils";
 // Import from statusUtils
 import { getStatusDisplayText, getStatusStyling } from "../utils/statusUtils";
 
@@ -410,10 +410,10 @@ export default function EnhancedTimeline({ statuses, currentStatus, grade, deliv
                     className="aspect-w-16 aspect-h-9 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden group"
                   >
                     <img
-                      src={`${BE_URL}/storage/${proof.image_path}`}
+                      src={getImageUrl(proof.image_path)}
                       alt={`Delivery proof ${index + 1}`}
                       className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200 group-hover:opacity-90"
-                      onClick={() => setSelectedImage(`${BE_URL}/storage/${proof.image_path}`)}
+                      onClick={() => setSelectedImage(getImageUrl(proof.image_path))}
                     />
                     <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                       {formatDate(new Date(proof.created_at))}

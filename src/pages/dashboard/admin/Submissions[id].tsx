@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { BsPeopleFill, BsArrowLeft, BsImage, BsPencil, BsCheck, BsX } from "react-icons/bs";
 import { ImHome } from "react-icons/im";
@@ -9,7 +9,7 @@ import UpdateCard from "@/components/UpdateCard";
 import EnhancedTimeline from "@/components/AdminTimeline";
 import { useDeliveryProofs } from "@/hooks/useDeliveryProofs";
 import axiosInstance from "@/lib/axiosInstance";
-import { BE_URL} from "@/lib/api";
+import { getImageUrl } from "@/utils";
 import formatDate from "@/utils/formatDate";
 // Cookies handled in hook
 import StatusBadge from "@/components/StatusBadge";
@@ -17,6 +17,7 @@ import { useAdminSubmissionDetail } from "@/hooks/useAdminSubmissionDetail";
 
 // Import types from centralized location
 import type { CardStatus, CardImage } from "@/types/card.types";
+import type { DeliveryProof } from "@/services/cardService";
 
 interface Batch {
   id: string | number;
@@ -43,6 +44,7 @@ export interface CardType {
   statuses: CardStatus[];
   latest_status: CardStatus;
   batch?: Batch;
+  delivery_proofs?: DeliveryProof[];
 }
 
 // CardResponse handled in hook types
@@ -87,7 +89,22 @@ export default function SubmissionDetail() {
   const { id } = useParams<{ id: string }>();
   const { currentUser, card, loading, error, setCard, refresh } = useAdminSubmissionDetail(id);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const { deliveryProofs, uploading } = useDeliveryProofs(card?.id);
+  const { deliveryProofs, uploading, fetchProofs } = useDeliveryProofs(card?.id);
+ 
+  // Prefer proofs from card detail payload (snake_case from backend); only fetch if not present
+  const cardDeliveryProofs = ((): DeliveryProof[] | undefined => {
+    if (!card) return undefined;
+    const rec = card as Record<string, unknown>;
+    const value = rec["delivery_proofs"];
+    return Array.isArray(value) ? (value as DeliveryProof[]) : undefined;
+  })();
+  const deliveryProofsData: DeliveryProof[] = (cardDeliveryProofs ?? deliveryProofs) as DeliveryProof[];
+ 
+  useEffect(() => {
+    if (card?.id && (!cardDeliveryProofs || cardDeliveryProofs.length === 0)) {
+      fetchProofs();
+    }
+  }, [card?.id, cardDeliveryProofs, fetchProofs]);
   
   // Edit name states
   const [isEditingName, setIsEditingName] = useState(false);
@@ -439,10 +456,10 @@ export default function SubmissionDetail() {
                             className="aspect-w-16 aspect-h-9 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden"
                           >
                             <img
-                              src={`${BE_URL}/storage/${image.path}`}
+                              src={getImageUrl(image.path)}
                               alt={`Card image ${index + 1}`}
                               className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200"
-                              onClick={() => setSelectedImage(`${BE_URL}/storage/${image.path}`)}
+                              onClick={() => setSelectedImage(getImageUrl(image.path))}
                             />
                           </div>
                         ))}
@@ -462,7 +479,7 @@ export default function SubmissionDetail() {
                     statuses={card.statuses}
                     currentStatus={card.latest_status.status}
                     grade={card.grade}
-                    deliveryProofs={deliveryProofs}
+                    deliveryProofs={deliveryProofsData}
                     loadingProofs={uploading}
                   />
                 </div>
@@ -497,7 +514,7 @@ export default function SubmissionDetail() {
                   statuses={card.statuses}
                   currentStatus={card.latest_status.status}
                   grade={card.grade}
-                  deliveryProofs={deliveryProofs}
+                  deliveryProofs={deliveryProofsData}
                   loadingProofs={uploading}
                 />
               </div>
@@ -516,10 +533,10 @@ export default function SubmissionDetail() {
                         className="aspect-w-16 aspect-h-9 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden"
                       >
                         <img
-                          src={`${BE_URL}/storage/${image.path}`}
+                          src={getImageUrl(image.path)}
                           alt={`Card image ${index + 1}`}
                           className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200"
-                          onClick={() => setSelectedImage(`${BE_URL}/storage/${image.path}`)}
+                          onClick={() => setSelectedImage(getImageUrl(image.path))}
                         />
                       </div>
                     ))}
