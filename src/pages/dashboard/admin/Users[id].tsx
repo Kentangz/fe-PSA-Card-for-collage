@@ -3,10 +3,10 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { BsPeopleFill, BsArrowLeft } from "react-icons/bs";
 import { ImHome } from "react-icons/im";
 import { MdAssignment } from "react-icons/md";
-import Sidebar from "../../../components/SideBar";
-import ProfileMenu from "../../../components/ProfileMenu";
-import UserForm from "../../../components/UserForm";
-import axiosInstance from "../../../lib/axiosInstance";
+import Sidebar from "@/components/SideBar";
+import ProfileMenu from "@/components/ProfileMenu";
+import UserForm from "@/components/UserForm";
+import axiosInstance from "@/lib/axiosInstance";
 import Cookies from "js-cookie";
 
 // Type definitions
@@ -29,11 +29,7 @@ interface ApiResponse {
   data?: User | UserResponse;
 }
 
-type CurrentUserType = {
-  name: string;
-  email: string;
-  role: string;
-};
+import type { CurrentUser } from "@/types/user.types";
 
 // Menu configuration 
 const menu = [
@@ -56,7 +52,7 @@ const menu = [
 
 export default function UserDetail() {
   const { id } = useParams<{ id: string }>();
-  const [currentUser, setCurrentUser] = useState<CurrentUserType | undefined>(undefined);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | undefined>(undefined);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,7 +69,7 @@ export default function UserDetail() {
           return;
         }
 
-        const response = await axiosInstance.get<CurrentUserType>("/user");
+        const response = await axiosInstance.get<CurrentUser>("/user");
         setCurrentUser(response.data);
       } catch (error) {
         console.error(error);

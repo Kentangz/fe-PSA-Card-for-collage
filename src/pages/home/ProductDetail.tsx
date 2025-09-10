@@ -4,21 +4,7 @@ import axiosInstance from '../../lib/axiosInstance';
 import Navbar from '../../components/landing-page/Navbar';
 import Footer from '../../components/landing-page/Footer';
 
-interface CardImage {
-  id: number;
-  card_id: string;
-  path: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface CardStatus {
-  id: number;
-  card_id: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
+import type { CardImage, CardStatus } from "@/types/card.types";
 
 interface DisplayImage {
   type: 'certificate' | 'upload';
@@ -97,7 +83,6 @@ const ProductDetail: React.FC = () => {
             } as ResolvedImage;
           }
         } catch (error) {
-          console.log(`Primary image failed for index ${index}:`, error);
         }
 
         // Fallback to images array if available
@@ -113,7 +98,6 @@ const ProductDetail: React.FC = () => {
               } as ResolvedImage;
             }
           } catch (error) {
-            console.log(`Fallback image failed for index ${index}:`, error);
           }
         }
 

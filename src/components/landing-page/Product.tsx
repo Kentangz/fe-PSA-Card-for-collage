@@ -4,10 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../lib/axiosInstance';
 import { BE_URL } from '../../lib/api';
 
-interface CardImage {
-  id: string;
-  path: string;
-}
+import type { CardImage } from "@/types/card.types";
 
 interface LatestCard {
   id: string;

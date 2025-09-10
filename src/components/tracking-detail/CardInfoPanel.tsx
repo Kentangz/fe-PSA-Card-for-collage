@@ -1,4 +1,3 @@
-import React from "react";
 import formatDate from "@/utils/formatDate";
 import StatusBadge from "@/components/StatusBadge";
 import CategoryBadge from "@/components/CategoryBadge";

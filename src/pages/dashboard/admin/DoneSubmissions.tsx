@@ -4,16 +4,16 @@ import { BsEye, BsPeopleFill } from "react-icons/bs";
 import { MdFileDownload } from "react-icons/md";
 import { ImHome } from "react-icons/im";
 import { MdAssignment } from "react-icons/md";
-import Sidebar from "../../../components/SideBar";
-import ProfileMenu from "../../../components/ProfileMenu";
-import SubmissionFilter from "../../../components/SubmissionFilter";
-import axiosInstance from "../../../lib/axiosInstance";
-import formatDate from "../../../utils/formatDate";
-import { filterAndSortSubmissions } from "../../../utils/submissionUtils";
-import type { CardType, CardsResponse, ApiResponse, FilterOptions, UserType } from "../../../types/submission";
-import type { Batch } from "../../../types/batch.types";
+import Sidebar from "@/components/SideBar";
+import ProfileMenu from "@/components/ProfileMenu";
+import SubmissionFilter from "@/components/SubmissionFilter";
+import axiosInstance from "@/lib/axiosInstance";
+import formatDate from "@/utils/formatDate";
+import { filterAndSortSubmissions } from "@/utils/submissionUtils";
+import type { CardType, CardsResponse, ApiResponse, FilterOptions, UserType } from "@/types/submission";
+import type { Batch } from "@/types/batch.types";
 import Cookies from "js-cookie";
-import { batchService } from "../../../services/batchService";
+import { batchService } from "@/services/batchService";
 
 // Menu configuration with submenu
 const menu = [

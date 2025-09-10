@@ -1,4 +1,3 @@
-// import Input from "./FieldInput"; // Not needed anymore
 import type { ChangeEvent } from "react";
 import { useState } from "react";
 import { LuUpload, LuCamera } from "react-icons/lu";

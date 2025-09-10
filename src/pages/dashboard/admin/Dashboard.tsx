@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import Sidebar from "../../../components/SideBar";
-import ProfileMenu from "../../../components/ProfileMenu";
-import DashboardStats from "../../../components/DashboardStats";
-import UserNotifications from "../../../components/AdminNotifications";
-import axiosInstance from "../../../lib/axiosInstance";
+import Sidebar from "@/components/SideBar";
+import ProfileMenu from "@/components/ProfileMenu";
+import DashboardStats from "@/components/DashboardStats";
+import UserNotifications from "@/components/AdminNotifications";
+import axiosInstance from "@/lib/axiosInstance";
 import { BsPeopleFill } from "react-icons/bs";
 import { ImHome } from "react-icons/im";
 import { MdAssignment } from "react-icons/md";
@@ -28,11 +28,7 @@ const menu = [
   }
 ];
 
-type UserType = {
-  name: string;
-  email: string;
-  role: string;
-};
+import type { UserType } from "@/types/submission";
 
 export default function DashboardAdmin() {
   const [currentUser, setCurrentUser] = useState<UserType | undefined>(undefined);

@@ -1,15 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, X, CheckCircle, Clock, User, Calendar, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import axiosInstance from '../lib/axiosInstance';
+import axiosInstance from '@/lib/axiosInstance';
 
-interface CardStatus {
-  id: number;
-  card_id: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
+import type { CardStatus } from "@/types/card.types";
 
 interface UserCard {
   id: string;

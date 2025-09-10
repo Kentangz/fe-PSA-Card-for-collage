@@ -3,27 +3,20 @@ import { useParams, Link } from "react-router-dom";
 import { BsPeopleFill, BsArrowLeft, BsImage, BsPencil, BsCheck, BsX } from "react-icons/bs";
 import { ImHome } from "react-icons/im";
 import { MdAssignment } from "react-icons/md";
-import Sidebar from "../../../components/SideBar";
-import ProfileMenu from "../../../components/ProfileMenu";
-import UpdateCard from "../../../components/UpdateCard";
-import EnhancedTimeline from "../../../components/AdminTimeline";
+import Sidebar from "@/components/SideBar";
+import ProfileMenu from "@/components/ProfileMenu";
+import UpdateCard from "@/components/UpdateCard";
+import EnhancedTimeline from "@/components/AdminTimeline";
 import { useDeliveryProofs } from "@/hooks/useDeliveryProofs";
-import axiosInstance from "../../../lib/axiosInstance";
-import { BE_URL} from "../../../lib/api";
-import formatDate from "../../../utils/formatDate";
+import axiosInstance from "@/lib/axiosInstance";
+import { BE_URL} from "@/lib/api";
+import formatDate from "@/utils/formatDate";
 // Cookies handled in hook
 import StatusBadge from "@/components/StatusBadge";
 import { useAdminSubmissionDetail } from "@/hooks/useAdminSubmissionDetail";
 
-// Type definitions
-interface CardStatus {
-  status: string;
-  created_at: string;
-}
-
-interface CardImage {
-  path: string;
-}
+// Import types from centralized location
+import type { CardStatus, CardImage } from "@/types/card.types";
 
 interface Batch {
   id: string | number;

@@ -5,12 +5,9 @@ import axiosInstance from "../lib/axiosInstance";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 
-type UserType = {
-  name: string;
-  email: string;
-};
+import type { CurrentUser } from "@/types/user.types";
 
-export default function ProfileMenu({ currentUser }: { currentUser?: UserType }) {
+export default function ProfileMenu({ currentUser }: { currentUser?: CurrentUser }) {
   const [profileMenu, setProfileMenu] = useState(false);
   const navigate = useNavigate();
 
@@ -19,7 +16,6 @@ export default function ProfileMenu({ currentUser }: { currentUser?: UserType })
       await axiosInstance.post('/logout');
     } catch (error){
       console.error(error);
-      // console.log('Logout API call failed');
     } finally {
       Cookies.remove('token');
       Cookies.remove('role');

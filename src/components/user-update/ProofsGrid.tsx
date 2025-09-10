@@ -1,4 +1,3 @@
-import React from "react";
 import { getImageUrl } from "@/utils/imageUtils";
 
 type Proof = {

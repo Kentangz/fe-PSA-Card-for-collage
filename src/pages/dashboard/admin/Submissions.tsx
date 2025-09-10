@@ -3,17 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { BsPeopleFill } from "react-icons/bs";
 import { ImHome } from "react-icons/im";
 import { MdAssignment } from "react-icons/md";
-import Sidebar from "../../../components/SideBar";
-import ProfileMenu from "../../../components/ProfileMenu";
-import SubmissionFilter from "../../../components/SubmissionFilter";
-import AddBatchModal from "../../../components/AddBatchModal";
-import BatchAccordion from "../../../components/BatchAccordion";
-import axiosInstance from "../../../lib/axiosInstance";
-import { filterAndSortSubmissions } from "../../../utils/submissionUtils";
-import type { CardType, CardsResponse, ApiResponse, FilterOptions, UserType } from "../../../types/submission";
-import type { Batch } from "../../../types/batch.types";
+import Sidebar from "@/components/SideBar";
+import ProfileMenu from "@/components/ProfileMenu";
+import SubmissionFilter from "@/components/SubmissionFilter";
+import AddBatchModal from "@/components/AddBatchModal";
+import BatchEntryAccordion from "@/components/BatchEntryAccordion";
+import axiosInstance from "@/lib/axiosInstance";
+import { filterAndSortSubmissions } from "@/utils/submissionUtils";
+import type { CardType, CardsResponse, ApiResponse, FilterOptions, UserType } from "@/types/submission";
+import type { Batch } from "@/types/batch.types";
 import Cookies from "js-cookie";
-import { batchService } from "../../../services/batchService";
+import { batchService } from "@/services/batchService";
 
 // Menu configuration with submenu
 const menu = [
@@ -180,7 +180,6 @@ export default function Submission() {
       const batchesData = await batchService.getAllBatches();
       setBatches(batchesData);
       
-      console.log('Data refreshed successfully');
     } catch (error) {
       console.error('Failed to refresh data:', error);
     }
@@ -343,11 +342,10 @@ export default function Submission() {
             </div>
           ) : (
             <div className="space-y-0">
-              {groupedSubmissions.map(({ batch, submissions }) => (
-                <BatchAccordion
+              {groupedSubmissions.map(({ batch }) => (
+                <BatchEntryAccordion
                   key={batch.id}
                   batch={batch}
-                  submissions={submissions}
                   isOpen={expandedBatches.has(batch.id)}
                   onToggle={() => toggleBatch(batch.id)}
                   onToggleBatchStatus={handleToggleBatchStatus}

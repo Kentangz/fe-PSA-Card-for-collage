@@ -30,12 +30,6 @@ export interface BatchPaymentsResponse {
 	payments: BatchPaymentType[];
 }
 
-export interface UserPaymentGroup {
-	user: UserType;
-	submissions: CardType[];
-	paymentInfo: BatchPaymentType | null;
-}
-
 // Existing types
 export interface CardsResponse {
 	data: CardType[];

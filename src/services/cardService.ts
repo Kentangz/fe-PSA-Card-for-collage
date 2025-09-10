@@ -27,19 +27,42 @@ export type UploadResponse = {
 	};
 };
 
-export const createCard = async (formData: FormData): Promise<void> => {
-	try {
-		await axiosInstance.post("/card", formData, {
-			headers: {
-				"Content-Type": "multipart/form-data",
-			},
-		});
-	} catch (error) {
-		console.error("Failed to create card:", error);
-		throw new Error(
-			"An error occurred while submitting a card. Please try again."
+export interface EntryCardInput {
+	name: string;
+	year: string | number;
+	brand: string;
+	serial_number?: string | null;
+}
+
+export type CreateEntryResponse = {
+	entry: { id: number };
+	cards: Array<{ id: string | number }>;
+};
+
+export const createEntry = async (
+	batchId: number,
+	cards: Array<EntryCardInput & { images?: File[] }>
+): Promise<CreateEntryResponse> => {
+	const formData = new FormData();
+	cards.forEach((card, idx) => {
+		formData.append(`cards[${idx}][name]`, String(card.name));
+		formData.append(`cards[${idx}][year]`, String(card.year));
+		formData.append(`cards[${idx}][brand]`, String(card.brand));
+		if (card.serial_number)
+			formData.append(
+				`cards[${idx}][serial_number]`,
+				String(card.serial_number)
+			);
+		(card.images || []).forEach((file) =>
+			formData.append(`cards[${idx}][images][]`, file)
 		);
-	}
+	});
+	const res = await axiosInstance.post<CreateEntryResponse>(
+		`/batches/${batchId}/entries`,
+		formData,
+		{ headers: { "Content-Type": "multipart/form-data" } }
+	);
+	return res.data;
 };
 
 export const getUserCards = async (): Promise<Card[]> => {

@@ -1,4 +1,3 @@
-import React from "react";
 
 type PreviewItem = { file: File; preview: string; id: string };
 

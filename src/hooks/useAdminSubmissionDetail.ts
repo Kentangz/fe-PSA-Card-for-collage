@@ -3,14 +3,7 @@ import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "@/lib/axiosInstance";
 
-type CardStatus = {
-	status: string;
-	created_at: string;
-};
-
-type CardImage = {
-	path: string;
-};
+import type { CardStatus, CardImage } from "@/types/card.types";
 
 type Batch = {
 	id: string | number;
@@ -42,7 +35,7 @@ export type AdminCard = {
 type CardResponse = { data: AdminCard };
 type ApiResponse = { card?: AdminCard; data?: AdminCard | CardResponse };
 
-type CurrentUser = { name: string; email: string; role: string };
+import type { CurrentUser } from "@/types/user.types";
 
 export const useAdminSubmissionDetail = (cardId: string | undefined) => {
 	const navigate = useNavigate();
@@ -117,10 +110,17 @@ export const useAdminSubmissionDetail = (cardId: string | undefined) => {
 					extra?.serial_number !== null
 						? String(extra?.serial_number)
 						: prev.serial_number;
+				const newStatus: CardStatus = {
+					id: Date.now(), // Temporary ID for local updates
+					card_id: String(prev.id),
+					status: nextStatus,
+					created_at: now,
+					updated_at: now,
+				};
 				return {
 					...prev,
-					latest_status: { status: nextStatus, created_at: now },
-					statuses: [...prev.statuses, { status: nextStatus, created_at: now }],
+					latest_status: newStatus,
+					statuses: [...prev.statuses, newStatus],
 					grade:
 						typeof extra?.grade !== "undefined"
 							? (extra?.grade as string | null)

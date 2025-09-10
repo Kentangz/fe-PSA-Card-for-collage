@@ -1,4 +1,3 @@
-import React from "react";
 import UserTimeline from "@/components/UserTimeline";
 import type { CardStatus } from "@/types/card.types";
 

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import type { Batch } from "@/types/batch.types";
 import type { CurrentUser } from "@/types/user.types";
-import { createCard } from "@/services/cardService";
+import { createEntry } from "@/services/cardService";
 import { userService } from "@/services/userService";
 import { batchService } from "@/services/batchService";
 
@@ -123,17 +123,14 @@ export const useSubmissions = () => {
 		setIsSubmitting(true);
 
 		try {
-			for (const submission of submissions) {
-				const formData = new FormData();
-				formData.append("name", submission.name);
-				formData.append("year", submission.year);
-				formData.append("brand", submission.brand);
-				// formData.append("grade_target", submission.grade_target);
-				formData.append("batch_id", batchId);
-				submission.images.forEach((file) => formData.append("images[]", file));
-
-				await createCard(formData);
-			}
+			// Build cards array for entry endpoint (with images)
+			const cards = submissions.map((s) => ({
+				name: s.name,
+				year: s.year,
+				brand: s.brand,
+				images: s.images,
+			}));
+			await createEntry(Number(batchId), cards);
 			navigate("/dashboard/user");
 		} catch (err) {
 			if (err instanceof Error) {

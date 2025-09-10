@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { BsEye } from 'react-icons/bs';
 import { MdTrackChanges } from 'react-icons/md';

@@ -1,4 +1,3 @@
-import React from "react";
 import { BsImage } from "react-icons/bs";
 import type { CardImage } from "@/types/card.types";
 import { getImageUrl } from "@/utils/imageUtils";

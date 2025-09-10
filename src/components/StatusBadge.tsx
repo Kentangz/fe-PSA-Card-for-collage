@@ -1,4 +1,3 @@
-import React from "react";
 import { getStatusDisplayText, getStatusStyling } from "@/utils/statusUtils";
 
 type Props = {

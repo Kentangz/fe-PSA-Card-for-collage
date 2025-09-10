@@ -1,46 +1,39 @@
 import { useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { batchPaymentService } from "../services/batchPaymentService";
-import type { UserPaymentGroup as UserPaymentGroupType } from "../types/submission";
+import { queueEntryService } from "@/services/queueEntryService";
 
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  userGroup: UserPaymentGroupType | null;
-  batchId: number;
   onSuccess: () => void;
+  // Entry-based props only
+  entryId: number;
+  userInfo: { name: string; email: string };
+  submissions: Array<{ id: string | number; name: string; year: string | number }>;
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({
   isOpen,
   onClose,
-  userGroup,
-  batchId,
-  onSuccess
+  onSuccess,
+  entryId,
+  userInfo,
+  submissions,
 }) => {
   const [paymentUrl, setPaymentUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!isOpen || !userGroup) return null;
+  if (!isOpen) return null;
 
-  const isUpdate = !!userGroup.paymentInfo;
-  const modalTitle = isUpdate ? "Update Payment URL" : "Create Payment URL";
-  const submitText = isUpdate ? "Update Payment" : "Create Payment";
+  const modalTitle = "Set & Send Payment";
+  const submitText = "Set & Send";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!paymentUrl.trim()) {
       setError("Payment URL is required");
-      return;
-    }
-
-    // Basic URL validation
-    try {
-      new URL(paymentUrl);
-    } catch {
-      setError("Please enter a valid URL");
       return;
     }
 
@@ -48,20 +41,18 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     setError(null);
 
     try {
-      const submissionIds = userGroup.submissions.map(s => parseInt(s.id));
-      
-      await batchPaymentService.createOrUpdate({
-        batch_id: batchId,
-        user_id: userGroup.user.id,
-        payment_url: paymentUrl,
-        submission_ids: submissionIds
-      });
+      await queueEntryService.setAndSendPayment(entryId, paymentUrl);
 
       onSuccess();
       onClose();
       setPaymentUrl("");
     } catch (error: unknown) {
-      if (error && typeof error === "object" && "response" in error && error.response && typeof error.response === "object" && "data" in error.response && error.response.data && typeof error.response.data === "object" && "message" in error.response.data) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "response" in error &&
+        (error as { response?: { data?: { message?: string } } }).response?.data?.message
+      ) {
         setError((error as { response: { data: { message: string } } }).response.data.message);
       } else {
         setError("Failed to save payment URL");
@@ -76,6 +67,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     setPaymentUrl("");
     setError(null);
   };
+
+  const displayUserName = userInfo?.name;
+  const displayUserEmail = userInfo?.email;
+  const displaySubmissions = submissions || [];
 
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
@@ -99,12 +94,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           <div className="mb-4 p-3 bg-gray-50/80 rounded-lg border border-gray-200/50">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">{userGroup.user.name}</p>
-                <p className="text-sm text-gray-600">{userGroup.user.email}</p>
+                <p className="font-medium text-gray-900">{displayUserName}</p>
+                <p className="text-sm text-gray-600">{displayUserEmail}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-600">
-                  {userGroup.submissions.length} submission{userGroup.submissions.length > 1 ? 's' : ''}
+                  {displaySubmissions.length} submission{displaySubmissions.length > 1 ? 's' : ''}
                 </p>
               </div>
             </div>
@@ -116,16 +111,15 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               Payment URL
             </label>
             <input
-              type="url"
               id="paymentUrl"
               value={paymentUrl}
               onChange={(e) => setPaymentUrl(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300/70 rounded-lg focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-200 bg-white/80 backdrop-blur-sm"
-              placeholder="https://payment.example.com/..."
+              placeholder="Paste payment link or code"
               required
             />
             <p className="mt-1 text-xs text-gray-500">
-              Enter the payment link that will be sent to the user
+              Enter the payment link or code to send to the user
             </p>
           </div>
 
@@ -140,13 +134,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           <div className="mb-6">
             <h4 className="text-sm font-medium text-gray-700 mb-2">Submissions included:</h4>
             <div className="max-h-32 overflow-y-auto bg-gray-50/80 rounded-lg p-2 border border-gray-200/50 backdrop-blur-sm">
-              {userGroup.submissions.map((submission) => (
-                <div key={submission.id} className="flex items-center justify-between py-1 px-2 text-xs">
-                  <span className="truncate mr-2" title={submission.name}>
-                    {submission.name}
+              {displaySubmissions.map((s) => (
+                <div key={s.id} className="flex items-center justify-between py-1 px-2 text-xs">
+                  <span className="truncate mr-2" title={s.name}>
+                    {s.name}
                   </span>
                   <span className="text-gray-500 flex-shrink-0">
-                    {submission.year}
+                    {s.year}
                   </span>
                 </div>
               ))}

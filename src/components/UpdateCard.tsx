@@ -136,7 +136,6 @@ export default function UpdateCard({ card, onStatusUpdated }: { card?: CardType,
       await batchPaymentService.sendPaymentLink(batchPayment.id);
       await fetchBatchPayment();
       
-      console.log("Payment link sent successfully");
     } catch (error) {
       console.error("Error sending payment link:", error);
     }

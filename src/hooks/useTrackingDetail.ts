@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import axiosInstance from "@/lib/axiosInstance";
 import type { CurrentUser } from "@/types/user.types";
-import type { CardDetail } from "@/types/card.types";
+import type { CardDetail, CardStatus } from "@/types/card.types";
 
 export const useTrackingDetail = (cardId: string | undefined) => {
 	const navigate = useNavigate();
@@ -36,17 +36,24 @@ export const useTrackingDetail = (cardId: string | undefined) => {
 			setCard((prev) => {
 				if (!prev) return prev;
 				const now = new Date().toISOString();
+				const newStatus: CardStatus = {
+					id: Date.now(), 
+					card_id: prev.id,
+					status: nextStatus,
+					created_at: now,
+					updated_at: now,
+				};
 				return {
 					...prev,
-					latest_status: { status: nextStatus, created_at: now },
-					statuses: [...prev.statuses, { status: nextStatus, created_at: now }],
+					latest_status: newStatus,
+					statuses: [...prev.statuses, newStatus],
 					grade:
 						typeof extra?.grade !== "undefined"
 							? (extra?.grade as string | null)
 							: prev.grade,
 					serial_number:
 						typeof extra?.serial_number !== "undefined"
-							? (extra?.serial_number as string | null)
+							? (extra?.serial_number as string) || ""
 							: prev.serial_number,
 				};
 			});

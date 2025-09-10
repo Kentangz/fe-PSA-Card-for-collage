@@ -1,4 +1,3 @@
-import React from "react";
 import { getBatchCategoryStyling } from "@/utils/statusUtils";
 
 type Props = {

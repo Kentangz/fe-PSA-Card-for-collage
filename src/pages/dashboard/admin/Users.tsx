@@ -3,9 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { BsEye, BsPeopleFill, BsSearch } from "react-icons/bs";
 import { ImHome } from "react-icons/im";
 import { MdAssignment } from "react-icons/md";
-import Sidebar from "../../../components/SideBar";
-import ProfileMenu from "../../../components/ProfileMenu";
-import axiosInstance from "../../../lib/axiosInstance";
+import Sidebar from "@/components/SideBar";
+import ProfileMenu from "@/components/ProfileMenu";
+import axiosInstance from "@/lib/axiosInstance";
 import Cookies from "js-cookie";
 
 // Type definitions
@@ -27,11 +27,7 @@ interface ApiResponse {
   data?: User[] | UsersResponse;
 }
 
-type UserType = {
-  name: string;
-  email: string;
-  role: string;
-};
+import type { UserType } from "@/types/submission";
 
 // Menu configuration
 const menu = [
