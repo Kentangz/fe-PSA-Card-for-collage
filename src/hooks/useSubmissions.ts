@@ -12,6 +12,12 @@ export interface SubmissionFormData {
 	brand: string;
 	// grade_target: string;
 	images: File[];
+	error?:{
+		name?: string;
+		year?: string;
+		brand?: string;
+		images?: string;
+	}
 }
 
 export const useSubmissions = () => {
@@ -33,6 +39,12 @@ export const useSubmissions = () => {
 			brand: "",
 			// grade_target: "",
 			images: [],
+			error: {
+				name: "",
+				year: "",
+				brand: "",
+				images: "",
+			}
 		},
 	]);
 
@@ -78,9 +90,49 @@ export const useSubmissions = () => {
 				brand: "",
 				// grade_target: "",
 				images: [],
+				error: {
+					name: "",
+					year: "",
+					brand: "",
+					images: "",
+				}
 			},
 		]);
 	}, []);
+
+const validateField = (
+	name: keyof SubmissionFormData,
+	value: string | File[]
+) => {
+	switch (name) {
+		case "name":
+		case "brand": {
+			const strValue = (value as string).trim();
+			if (strValue.length === 0) {
+				return "This field is required.";
+			}
+			if (strValue.length < 5) {
+				return "Must be at least 5 characters.";
+			}
+			if (strValue.length > 30) {
+				return "Must be 30 characters or less.";
+			}
+			return undefined;
+		}
+		case "year":
+			if (!(value as string) || (value as string).trim().length === 0) {
+				return "Year is required.";
+			}
+			return undefined;
+		case "images":
+			if (!value || (value as File[]).length === 0) {
+				return "At least one image is required.";
+			}
+			return undefined;
+		default:
+			return undefined;
+	}
+};
 
 	const removeSubmission = useCallback(
 		(index: number) => {
@@ -91,31 +143,68 @@ export const useSubmissions = () => {
 		[submissions.length]
 	);
 
-	const updateForm = useCallback(
-		(index: number, data: SubmissionFormData) => {
-			const updated = [...submissions];
-			updated[index] = data;
-			setSubmissions(updated);
-		},
-		[submissions]
-	);
+const updateForm = useCallback(
+	(index: number, field: keyof SubmissionFormData, value: string | File[]) => {
+		const newSubmissions = [...submissions];
+		const updatedSubmission = {
+			...newSubmissions[index],
+			[field]: value,
+		};
 
-	const validateSubmissions = () => {
-		return submissions.every(
-			(sub) =>
-				sub.name &&
-				sub.year &&
-				sub.brand &&
-				// sub.grade_target &&
-				sub.images.length > 0
-		);
-	};
+		// Validasi field yang berubah
+		const error = validateField(field, value);
+
+		updatedSubmission.error = {
+			...updatedSubmission.error,
+			[field]: error,
+		};
+
+		newSubmissions[index] = updatedSubmission;
+		setSubmissions(newSubmissions);
+	},
+	[submissions]
+);
+
+const validateAllForms = () => {
+	let isValid = true;
+	const newSubmissionsState = submissions.map((sub) => {
+		const errors: SubmissionFormData["error"] = {};
+
+		const nameError = validateField("name", sub.name);
+		if (nameError) {
+			errors.name = nameError;
+			isValid = false;
+		}
+
+		const brandError = validateField("brand", sub.brand);
+		if (brandError) {
+			errors.brand = brandError;
+			isValid = false;
+		}
+
+		const yearError = validateField("year", sub.year);
+		if (yearError) {
+			errors.year = yearError;
+			isValid = false;
+		}
+
+		const imagesError = validateField("images", sub.images);
+		if (imagesError) {
+			errors.images = imagesError;
+			isValid = false;
+		}
+
+		return { ...sub, errors };
+	});
+
+	setSubmissions(newSubmissionsState);
+	return isValid;
+};
 
 	const handleSubmitAll = async () => {
-		if (!batchId || !validateSubmissions()) {
-			setError(
-				"Please make sure all fields are filled and at least one image is uploaded for each submission."
-			);
+		const isValid = validateAllForms();
+		if (!batchId || !isValid) {
+			setError("Please fix the errors below and make sure at least one image is uploaded before submitting.");
 			return;
 		}
 

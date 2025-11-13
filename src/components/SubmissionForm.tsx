@@ -15,14 +15,14 @@ export default function SubmissionForm({
 }: {
   index: number;
   data: SubmissionData;
-  onChange: (index: number, data: SubmissionData) => void;
+  onChange: (index: number, field: keyof SubmissionData, value: string | File[]) => void;
   disabled?: boolean;
 }) {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   const updateField = (key: keyof SubmissionData, value: string | File[]) => {
     if (!disabled) {
-      onChange(index, { ...data, [key]: value });
+      onChange(index, key, value);
     }
   };
 
@@ -83,8 +83,15 @@ export default function SubmissionForm({
               onChange={(e: ChangeEvent<HTMLInputElement>) => 
                 updateField("name", e.target.value)
               }
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed text-sm sm:text-base"
+              className={`w-full px-3 sm:px-4 py-2 sm:py-3 border ${
+                data.error?.name ? 'border-red-500' : 'border-gray-300'
+              } bg-white rounded-lg focus:ring-2 ${
+                data.error?.name ? 'focus:ring-red-500' : 'focus:ring-blue-500'
+              } focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed text-sm sm:text-base`}
             />
+            {data.error?.name && (
+              <p className="text-red-500 text-xs mt-1">{data.error.name}</p>
+            )}
           </div>
           
           {/* Year */}
@@ -102,8 +109,15 @@ export default function SubmissionForm({
               onChange={(e: ChangeEvent<HTMLInputElement>) => 
                 updateField("year", e.target.value)
               }
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed text-sm sm:text-base"
+              className={`w-full px-3 sm:px-4 py-2 sm:py-3 border ${
+                data.error?.year ? 'border-red-500' : 'border-gray-300'
+              } bg-white rounded-lg focus:ring-2 ${
+                data.error?.year ? 'focus:ring-red-500' : 'focus:ring-blue-500'
+              } focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed text-sm sm:text-base`}
             />
+            {data.error?.year && (
+              <p className="text-red-500 text-xs mt-1">{data.error.year}</p>
+            )}
           </div>
         </div>
         
@@ -123,8 +137,15 @@ export default function SubmissionForm({
               onChange={(e: ChangeEvent<HTMLInputElement>) => 
                 updateField("brand", e.target.value)
               }
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed text-sm sm:text-base"
+              className={`w-full px-3 sm:px-4 py-2 sm:py-3 border ${
+                data.error?.brand ? 'border-red-500' : 'border-gray-300'
+              } bg-white rounded-lg focus:ring-2 ${
+                data.error?.brand ? 'focus:ring-red-500' : 'focus:ring-blue-500'
+              } focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed text-sm sm:text-base`}
             />
+            {data.error?.brand && (
+              <p className="text-red-500 text-xs mt-1">{data.error.brand}</p>
+            )}
           </div>
         </div>
         
@@ -158,6 +179,9 @@ export default function SubmissionForm({
             </span>
           )}
         </label>
+        {data.error?.images && (
+          <p className="text-red-500 text-xs mb-2">{data.error.images}</p>
+        )}
         
         {/* Image Preview Grid - Responsive */}
         {data.images?.length > 0 && (

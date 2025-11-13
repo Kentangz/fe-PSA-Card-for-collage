@@ -7,8 +7,8 @@ import { PATHS } from "@/routes/paths";
 // Auth pages
 import Signin from "@/pages/auth/Signin";
 import Signup from "@/pages/auth/Signup";
-import ResetPassword from "@/pages/auth/ResetPassword";
-import ForgotPassword from "@/pages/auth/ForgotPassword";
+import ResetPassword from "@/pages/auth/Resetpassword";
+import ForgotPassword from "@/pages/auth/Forgotpassword";
 import NotFound from "@/pages/NotFound";
 
 // Dashboard pages
