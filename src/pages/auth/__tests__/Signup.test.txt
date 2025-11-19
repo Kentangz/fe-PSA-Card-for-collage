@@ -1,0 +1,84 @@
+// src/pages/auth/__tests__/Signup.test.tsx
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import Signup from '../Signup';
+import { BrowserRouter } from 'react-router-dom';
+
+const mockSignUp = vi.fn();
+
+vi.mock('@/hooks/useAuth', () => ({ 
+  useAuth: () => ({
+    signUp: mockSignUp,
+    loading: false,
+    error: null,
+  }),
+}));
+
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
+describe('Halaman Signup', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('harus merender form pendaftaran dengan lengkap', () => {
+    render(
+      <BrowserRouter>
+        <Signup />
+      </BrowserRouter>
+    );
+
+    expect(screen.getByPlaceholderText(/Enter your name/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Enter email/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Enter phone number/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Enter password/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Confirm password/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Create Account/i })).toBeInTheDocument();
+  });
+
+  it('harus memanggil fungsi signUp dengan data yang valid saat tombol diklik', async () => {
+    render(
+      <BrowserRouter>
+        <Signup />
+      </BrowserRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/Enter your name/i), {
+      target: { value: 'Budi Santoso' },
+    });
+    
+    fireEvent.change(screen.getByPlaceholderText(/Enter email/i), {
+      target: { value: 'budi@example.com' },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/Enter phone number/i), {
+      target: { value: '+628123456789' },
+    });
+
+    fireEvent.change(screen.getByPlaceholderText(/Enter password/i), {
+      target: { value: 'rahasia123' },
+    });
+
+    fireEvent.change(screen.getByPlaceholderText(/Confirm password/i), {
+      target: { value: 'rahasia123' },
+    });
+
+    const submitButton = screen.getByRole('button', { name: /Create Account/i });
+    fireEvent.click(submitButton);
+    await waitFor(() => {
+      expect(mockSignUp).toHaveBeenCalledWith({
+        name: 'Budi Santoso',
+        email: 'budi@example.com',
+        phone_number: '+628123456789',
+        password: 'rahasia123',
+        password_confirmation: 'rahasia123',
+      });
+    });
+  });
+});

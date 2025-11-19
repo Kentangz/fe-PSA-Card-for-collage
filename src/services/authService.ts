@@ -1,6 +1,5 @@
-import axios from "axios";
 import Cookies from "js-cookie";
-import { API_URL } from "../lib/api";
+import axiosInstance from "@/lib/axiosInstance";
 import type {
 	LoginCredentials,
 	LoginResponse,
@@ -15,10 +14,7 @@ export const login = async (
 	credentials: LoginCredentials
 ): Promise<LoginResponse> => {
 	try {
-		const response = await axios.post<LoginResponse>(
-			`${API_URL}/login`,
-			credentials
-		);
+		const response = await axiosInstance.post<LoginResponse>("/login",credentials);
 		const data = response.data;
 
 		if (data?.token) {
@@ -39,7 +35,7 @@ export const register = async (
 	credentials: RegisterCredentials
 ): Promise<void> => {
 	try {
-		await axios.post(`${API_URL}/register`, credentials);
+		await axiosInstance.post("/register", credentials);
 	} catch (err: unknown) {
 		const error = err as {
 			response?: {
@@ -62,8 +58,8 @@ export const forgotPassword = async (
 	credentials: ForgotPasswordCredentials
 ): Promise<{ status: string }> => {
 	try {
-		const response = await axios.post<{ status: string }>(
-			`${API_URL}/forgot-password`,
+		const response = await axiosInstance.post<{ status: string }>(
+			"/forgot-password",
 			credentials
 		);
 		return response.data;
@@ -79,7 +75,7 @@ export const resetPassword = async (
 	credentials: ResetPasswordCredentials
 ): Promise<void> => {
 	try {
-		await axios.post(`${API_URL}/reset-password`, credentials);
+		await axiosInstance.post("/reset-password", credentials);
 	} catch (err: unknown) {
 		const error = err as {
 			response?: {

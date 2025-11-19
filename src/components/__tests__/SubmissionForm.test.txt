@@ -1,0 +1,150 @@
+import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import SubmissionForm from '../SubmissionForm';
+
+window.URL.createObjectURL = vi.fn(() => 'mock-url-preview');
+
+vi.mock('@/components/CameraCapture', () => ({
+  default: () => <div data-testid="mock-camera-capture">Camera Modal</div>
+}));
+
+vi.mock('@/utils/fileValidation', () => ({
+  validateFiles: (files: File[]) => ({
+    valid: files,
+    errors: []
+  })
+}));
+
+describe('SubmissionForm Component', () => {
+  const mockOnChange = vi.fn();
+  
+  const defaultData = {
+    name: '',
+    year: '',
+    brand: '',
+    images: [],
+    error: {}
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('harus merender semua input field dengan benar', () => {
+    render(
+      <SubmissionForm
+        index={0}
+        data={defaultData}
+        onChange={mockOnChange}
+      />
+    );
+    expect(screen.getByPlaceholderText(/Enter card name/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Enter year/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Enter brand/i)).toBeInTheDocument();
+    const uploadLabels = screen.getAllByText(/Upload Card Images|Upload Images/i);
+    expect(uploadLabels.length).toBeGreaterThan(0);
+    expect(uploadLabels[0]).toBeInTheDocument();
+  });
+
+  it('harus memanggil onChange saat user mengetik di input text', () => {
+    render(
+      <SubmissionForm
+        index={0}
+        data={defaultData}
+        onChange={mockOnChange}
+      />
+    );
+
+    const nameInput = screen.getByPlaceholderText(/Enter card name/i);
+    fireEvent.change(nameInput, { target: { value: 'Blue Eyes White Dragon' } });
+    
+    expect(mockOnChange).toHaveBeenCalledWith(0, 'name', 'Blue Eyes White Dragon');
+
+    const yearInput = screen.getByPlaceholderText(/Enter year/i);
+    fireEvent.change(yearInput, { target: { value: '2002' } });
+    expect(mockOnChange).toHaveBeenCalledWith(0, 'year', '2002');
+  });
+
+  it('harus memanggil onChange dengan file baru saat upload gambar', () => {
+    // Destructure container untuk mencari elemen hidden tanpa document global
+    const { container } = render(
+      <SubmissionForm
+        index={0}
+        data={defaultData}
+        onChange={mockOnChange}
+      />
+    );
+
+    const file = new File(['(binary data)'], 'yugioh.jpg', { type: 'image/jpeg' });
+    
+    const fileInput = container.querySelector('input[type="file"]');
+    
+    if (fileInput) {
+        fireEvent.change(fileInput, { target: { files: [file] } });
+        expect(mockOnChange).toHaveBeenCalledWith(0, 'images', [file]);
+    } else {
+        throw new Error("Input file tidak ditemukan!");
+    }
+  });
+
+  it('harus menampilkan preview gambar jika ada images di props data', () => {
+    const file = new File(['dummy'], 'preview.jpg', { type: 'image/jpeg' });
+    const dataWithImage = {
+      ...defaultData,
+      images: [file]
+    };
+
+    render(
+      <SubmissionForm
+        index={0}
+        data={dataWithImage}
+        onChange={mockOnChange}
+      />
+    );
+
+    const previewImg = screen.getByAltText('Preview 1');
+    expect(previewImg).toBeInTheDocument();
+    expect(previewImg).toHaveAttribute('src', 'mock-url-preview');
+  });
+
+  it('harus menampilkan pesan error validasi UI', () => {
+    const errorData = {
+      ...defaultData,
+      error: {
+        name: 'Nama wajib diisi',
+        year: 'Tahun tidak valid',
+        images: 'Minimal 1 gambar'
+      }
+    };
+
+    render(
+      <SubmissionForm
+        index={0}
+        data={errorData}
+        onChange={mockOnChange}
+      />
+    );
+
+    expect(screen.getByText('Nama wajib diisi')).toBeInTheDocument();
+    expect(screen.getByText('Tahun tidak valid')).toBeInTheDocument();
+    expect(screen.getByText('Minimal 1 gambar')).toBeInTheDocument();
+  });
+
+  it('harus disable semua input jika props disabled=true', () => {
+    const { container } = render(
+      <SubmissionForm
+        index={0}
+        data={defaultData}
+        onChange={mockOnChange}
+        disabled={true}
+      />
+    );
+
+    expect(screen.getByPlaceholderText(/Enter card name/i)).toBeDisabled();
+    expect(screen.getByPlaceholderText(/Enter year/i)).toBeDisabled();
+    expect(screen.getByPlaceholderText(/Enter brand/i)).toBeDisabled();
+    
+    const fileInput = container.querySelector('input[type="file"]');
+    expect(fileInput).toBeDisabled();
+  });
+});
