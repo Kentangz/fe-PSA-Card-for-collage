@@ -13,10 +13,7 @@ axiosInstance.interceptors.request.use(
 	(config) => {
 		const token = Cookies.get("token");
 		if (token) {
-			if (!config.headers) {
-				config.headers = new axios.AxiosHeaders();
-			}
-			config.headers.Authorization = `Bearer ${token}`;
+			config.headers.set("Authorization", `Bearer ${token}`);
 		}
 		return config;
 	},
@@ -27,8 +24,13 @@ axiosInstance.interceptors.response.use(
 	(response) => response,
 	(error) => {
 		if (error.response && error.response.status === 401) {
-			Cookies.remove("token");
-			window.location.href = "/signin";
+			if (
+				window.location.pathname !== "/signin" &&
+				!error.config.url?.includes("/login")
+			) {
+				Cookies.remove("token");
+				window.location.href = "/signin";
+			}
 		}
 		return Promise.reject(error);
 	}
