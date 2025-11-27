@@ -1,4 +1,3 @@
-// src/services/__tests__/authService.test.ts
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import * as authService from "../authService";
 import axiosInstance from "@/lib/axiosInstance";
