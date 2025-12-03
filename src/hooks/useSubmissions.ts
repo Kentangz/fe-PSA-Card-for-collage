@@ -5,6 +5,7 @@ import type { CurrentUser } from "@/types/user.types";
 import { createEntry } from "@/services/cardService";
 import { userService } from "@/services/userService";
 import { batchService } from "@/services/batchService";
+import { isAxiosError } from "@/utils/errorUtils";
 
 export interface SubmissionFormData {
 	name: string;
@@ -95,44 +96,44 @@ export const useSubmissions = () => {
 					year: "",
 					brand: "",
 					images: "",
-				}
+				},
 			},
 		]);
 	}, []);
 
-const validateField = (
-	name: keyof SubmissionFormData,
-	value: string | File[]
-) => {
-	switch (name) {
-		case "name":
-		case "brand": {
-			const strValue = (value as string).trim();
-			if (strValue.length === 0) {
-				return "This field is required.";
+	const validateField = (
+		name: keyof SubmissionFormData,
+		value: string | File[]
+	) => {
+		switch (name) {
+			case "name":
+			case "brand": {
+				const strValue = (value as string).trim();
+				if (strValue.length === 0) {
+					return "This field is required.";
+				}
+				if (strValue.length < 5) {
+					return "Must be at least 5 characters.";
+				}
+				if (strValue.length > 30) {
+					return "Must be 30 characters or less.";
+				}
+				return undefined;
 			}
-			if (strValue.length < 5) {
-				return "Must be at least 5 characters.";
-			}
-			if (strValue.length > 30) {
-				return "Must be 30 characters or less.";
-			}
-			return undefined;
+			case "year":
+				if (!(value as string) || (value as string).trim().length === 0) {
+					return "Year is required.";
+				}
+				return undefined;
+			case "images":
+				if (!value || (value as File[]).length === 0) {
+					return "At least one image is required.";
+				}
+				return undefined;
+			default:
+				return undefined;
 		}
-		case "year":
-			if (!(value as string) || (value as string).trim().length === 0) {
-				return "Year is required.";
-			}
-			return undefined;
-		case "images":
-			if (!value || (value as File[]).length === 0) {
-				return "At least one image is required.";
-			}
-			return undefined;
-		default:
-			return undefined;
-	}
-};
+	};
 
 	const removeSubmission = useCallback(
 		(index: number) => {
@@ -143,68 +144,74 @@ const validateField = (
 		[submissions.length]
 	);
 
-const updateForm = useCallback(
-	(index: number, field: keyof SubmissionFormData, value: string | File[]) => {
-		const newSubmissions = [...submissions];
-		const updatedSubmission = {
-			...newSubmissions[index],
-			[field]: value,
-		};
+	const updateForm = useCallback(
+		(
+			index: number,
+			field: keyof SubmissionFormData,
+			value: string | File[]
+		) => {
+			const newSubmissions = [...submissions];
+			const updatedSubmission = {
+				...newSubmissions[index],
+				[field]: value,
+			};
 
-		// Validasi field yang berubah
-		const error = validateField(field, value);
+			// Validasi field yang berubah
+			const error = validateField(field, value);
 
-		updatedSubmission.error = {
-			...updatedSubmission.error,
-			[field]: error,
-		};
+			updatedSubmission.error = {
+				...updatedSubmission.error,
+				[field]: error,
+			};
 
-		newSubmissions[index] = updatedSubmission;
-		setSubmissions(newSubmissions);
-	},
-	[submissions]
-);
+			newSubmissions[index] = updatedSubmission;
+			setSubmissions(newSubmissions);
+		},
+		[submissions]
+	);
 
-const validateAllForms = () => {
-	let isValid = true;
-	const newSubmissionsState = submissions.map((sub) => {
-		const errors: SubmissionFormData["error"] = {};
+	const validateAllForms = () => {
+		let isValid = true;
+		const newSubmissionsState = submissions.map((sub) => {
+			const errors: SubmissionFormData["error"] = {};
 
-		const nameError = validateField("name", sub.name);
-		if (nameError) {
-			errors.name = nameError;
-			isValid = false;
-		}
+			const nameError = validateField("name", sub.name);
+			if (nameError) {
+				errors.name = nameError;
+				isValid = false;
+			}
 
-		const brandError = validateField("brand", sub.brand);
-		if (brandError) {
-			errors.brand = brandError;
-			isValid = false;
-		}
+			const brandError = validateField("brand", sub.brand);
+			if (brandError) {
+				errors.brand = brandError;
+				isValid = false;
+			}
 
-		const yearError = validateField("year", sub.year);
-		if (yearError) {
-			errors.year = yearError;
-			isValid = false;
-		}
+			const yearError = validateField("year", sub.year);
+			if (yearError) {
+				errors.year = yearError;
+				isValid = false;
+			}
 
-		const imagesError = validateField("images", sub.images);
-		if (imagesError) {
-			errors.images = imagesError;
-			isValid = false;
-		}
+			const imagesError = validateField("images", sub.images);
+			if (imagesError) {
+				errors.images = imagesError;
+				isValid = false;
+			}
 
-		return { ...sub, errors };
-	});
+			return { ...sub, errors };
+		});
 
-	setSubmissions(newSubmissionsState);
-	return isValid;
-};
+		setSubmissions(newSubmissionsState);
+		return isValid;
+	};
 
 	const handleSubmitAll = async () => {
 		const isValid = validateAllForms();
 		if (!batchId || !isValid) {
-			setError("Please fix the errors below and make sure at least one image is uploaded before submitting.");
+			setError(
+				"Please fix the errors below and make sure at least one image is uploaded before submitting."
+			);
 			return;
 		}
 
@@ -222,7 +229,10 @@ const validateAllForms = () => {
 			await createEntry(Number(batchId), cards);
 			navigate("/dashboard/user");
 		} catch (err) {
-			if (err instanceof Error) {
+			console.error(err);
+			if (isAxiosError(err) && err.response?.data?.message) {
+				setError(err.response.data.message);
+			} else if (err instanceof Error) {
 				setError(err.message);
 			} else {
 				setError("An unknown error occurred.");
