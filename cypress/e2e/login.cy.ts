@@ -34,7 +34,40 @@ describe("Fitur Login PSA Card (Staging Mode)", () => {
 		cy.get('button[type="submit"]').click();
 
 		cy.contains(/invalid|salah|gagal/i).should("be.visible");
+	});
 
+	// TC-LOGIN-004
+	it("TC-LOGIN-004: Validasi Format Email", () => {
+		cy.get('input[name="email"]').type("userdomain");
+		cy.get('input[name="password"]').type("sembarang");
+		cy.get('button[type="submit"]').click();
+
+		cy.get('input[name="email"]')
+			.invoke("prop", "validationMessage")
+			.should("not.be.empty");
+	});
+
+	// TC-LOGIN-005
+	it("TC-LOGIN-005: Validasi Input Kosong", () => {
+		cy.get('button[type="submit"]').click();
+
+		cy.get('input[name="email"]')
+			.invoke("prop", "validationMessage")
+			.should("not.be.empty");
+		cy.get('input[name="password"]')
+			.invoke("prop", "validationMessage")
+			.should("not.be.empty");
+	});
+
+	// TC-LOGIN-006
+	it("TC-LOGIN-006: Akun Inactive", () => {
+		cy.get('input[name="email"]').type("test2@example.com");
+		cy.get('input[name="password"]').type("testing2");
+		cy.get('button[type="submit"]').click();
+
+		cy.contains("Login failed: your account has been deactivate").should(
+			"be.visible"
+		);
 	});
 
 	// TC-LOGIN-007
